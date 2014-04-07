@@ -1,0 +1,14 @@
+{
+  "name": "asteroid",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Paolo Scanferla <paolo.scanferla@gmail.com> (https://github.com/pscanf)",
+  "license": "ISC",
+  "dependencies": {
+    "nedb": "^0.10.5"
+  }
+}
