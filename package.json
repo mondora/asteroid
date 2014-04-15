@@ -1,14 +1,31 @@
 {
   "name": "asteroid",
-  "version": "0.0.1",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "version": "0.1.1",
+  "description": "Aletrnative Meteor client",
+  "main": "dist/asteroid.js",
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mondora/asteroid"
   },
-  "author": "Paolo Scanferla <paolo.scanferla@gmail.com> (https://github.com/pscanf)",
-  "license": "ISC",
+  "keywords": [
+    "ddp",
+    "asteroid",
+    "meteor"
+  ],
+  "author": "Paolo Scanferla <paolo.scanferla@mondora.com> (https://github.com/mondora)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/mondora/asteroid/issues"
+  },
+  "homepage": "https://github.com/mondora/asteroid",
+  "devDependencies": {
+    "gulp": "^3.5.6",
+    "gulp-concat": "^2.2.0",
+    "gulp-load-plugins": "^0.4.0",
+    "gulp-rename": "^1.2.0",
+    "gulp-uglify": "^0.2.1"
+  },
   "dependencies": {
-    "nedb": "^0.10.5"
   }
 }
