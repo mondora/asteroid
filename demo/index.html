@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<title>Asteroid demo</title>
+		<script src="bower_components/ddp.js/ddp.js"></script>
+		<script src="bower_components/ayepromise.js"></script>
+		<script>
+			Q = function () {
+				var def = ayepromise.defer();
+				def.resolve();
+				return def.promise;
+			};
+			Q.defer = ayepromise.defer;
+		</script>
+		<script src="src/asteroid.js"></script>
+		<script src="src/dumbdb.js"></script>
+		<script src="src/collection.js"></script>
+		<script src="src/login.js"></script>
+		<script src="index.js"></script>
+	</head>
+	<body>
+		<button id="fb">Login with Facebook</button>
+		<button id="tw">Login with Twitter</button>
+		<button id="gl">Login with Google</button>
+		<button id="gh">Login with Github</button>
+	</body>
+</html>
