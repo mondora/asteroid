@@ -1,4 +1,4 @@
-function fromQs (obj) {
+function formQs (obj) {
 	var qs = "";
 	for (var key in obj) {
 		qs += key + "=" + obj[key] + "&";

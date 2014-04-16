@@ -39,7 +39,7 @@ Asteroid.prototype._initOauthLogin = function (service, credentialToken, loginUr
 				if (err) return deferred.reject();
 				self.userId = res.id;
 				localStorage[self._host + "__login_token__"] = res.token;
-				//self._emit("login", res);
+				self._emit("login", res);
 				deferred.resolve(res.id);
 			});
 			return deferred.promise;
@@ -60,7 +60,7 @@ Asteroid.prototype._tryResumeLogin = function () {
 				if (err) return deferred.reject();
 				self.userId = res.id;
 				localStorage[self._host + "__login_token__"] = res.token;
-				//self._emit("login", res);
+				self._emit("login", res);
 				deferred.resolve(res.id);
 			});
 			return deferred.promise;
@@ -68,7 +68,7 @@ Asteroid.prototype._tryResumeLogin = function () {
 		.fail(function () {
 			self.userId = null;
 			delete localStorage[self._host + "__login_token__"];
-			//self._emit("logout");
+			self._emit("logout");
 		});
 };
 

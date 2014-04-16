@@ -15,7 +15,35 @@ function clone (obj) {
 	return JSON.parse(JSON.stringify(obj));
 }
 
-function fromQs (obj) {
+var EventEmitter = function () {};
+EventEmitter.prototype = {
+
+	constructor: EventEmitter,
+
+	_events: {},
+
+	on: function (name, handler) {
+		this._events[name] = this._events[name] || [];
+		this._events[name].push(handler);
+	},
+
+	off: function (name, handler) {
+		if (!this._events[name]) return;
+		this._events[name].splice(this._events[name].indexOf(handler), 1);
+	},
+
+	_emit: function (name /* , arguments */) {
+		if (!this._events[name]) return;
+		var args = arguments;
+		var self = this;
+		this._events[name].forEach(function (handler) {
+			handler.apply(self, Array.prototype.slice.call(args, 1));
+		});
+	}
+
+};
+
+function formQs (obj) {
 	var qs = "";
 	for (var key in obj) {
 		qs += key + "=" + obj[key] + "&";
@@ -46,15 +74,16 @@ var Asteroid = function (options) {
 	this.collections = {};
 	this._init();
 };
+Asteroid.prototype = new EventEmitter();
 Asteroid.prototype.constructor = Asteroid;
 
 Asteroid.prototype._init = function () {
 	var self = this;
 	self.ddp = new DDP(this._ddpOptions);
 	self.ddp.on("connected", function () {
-		if (self._do_not_autocreate_collections) return;
 		self._tryResumeLogin();
 		self.ddp.sub("meteor.loginServiceConfiguration");
+		self._emit("connected");
 	});
 	self.ddp.on("added", self._onAdded.bind(self));
 	self.ddp.on("changed", self._onChanged.bind(self));
@@ -63,10 +92,15 @@ Asteroid.prototype._init = function () {
 };
 
 Asteroid.prototype._onAdded = function (data) {
+	var loginConfigCollectionName = "meteor_accounts_loginServiceConfiguration";
 	var cName = data.collection;
 	if (!this.collections[cName]) {
-		if (this._do_not_autocreate_collections) return;
-		this.collections[cName] = new Asteroid.Collection(cName, this, Asteroid.DumbDb);
+		if (this._do_not_autocreate_collections) {
+			if (cName !== loginConfigCollectionName && cName !== "users") {
+				return;
+			}
+		}
+		new Asteroid.Collection(cName, this, Asteroid.DumbDb);
 	}
 	var item = data.fields;
 	item._id = data.id;
@@ -91,9 +125,9 @@ Asteroid.prototype.subscribe = function (name /* , param1, param2, ... */) {
 	var params = Array.prototype.slice.call(arguments, 1);
 	this.ddp.sub(name, params, function (err, id) {
 		if (err) {
-			promise.reject(err, id);
+			deferred.reject(err, id);
 		} else {
-			promise.resolve(id);
+			deferred.resolve(id);
 		}
 	});
 	return deferred.promise;
@@ -129,9 +163,10 @@ Asteroid.prototype.apply = function (method, params) {
 var Collection = function (name, asteroidRef, DbConstructor) {
 	this.name = name;
 	this.asteroid = asteroidRef;
+	this.asteroid.collections[name] = this;
 	this.db = new DbConstructor();
-	this._events = {};
 };
+Collection.prototype = new EventEmitter();
 Collection.prototype.constructor = Collection;
 
 Collection.prototype._localInsert = function (item, fromRemote) {
@@ -244,23 +279,6 @@ Collection.prototype.update = function (id) {
 	this._remoteUpdate(id);
 };
 
-Collection.prototype.on = function (name, handler) {
-	this._events[name] = this._events[name] || [];
-	this._events[name].push(handler);
-};
-Collection.prototype.off = function (name, handler) {
-	if (!this._events[name]) return;
-	this._events[name].splice(this._events[name].indexOf(handler), 1);
-};
-Collection.prototype._emit = function (name /* , arguments */) {
-	if (!this._events[name]) return;
-	var args = arguments;
-	var self = this;
-	this._events[name].forEach(function (handler) {
-		handler.apply(self, Array.prototype.slice.call(args, 1));
-	});
-};
-
 Asteroid.Collection = Collection;
 
 var DumbDb = function () {
@@ -334,7 +352,7 @@ Asteroid.prototype._initOauthLogin = function (service, credentialToken, loginUr
 				if (err) return deferred.reject();
 				self.userId = res.id;
 				localStorage[self._host + "__login_token__"] = res.token;
-				//self._emit("login", res);
+				self._emit("login", res);
 				deferred.resolve(res.id);
 			});
 			return deferred.promise;
@@ -355,7 +373,7 @@ Asteroid.prototype._tryResumeLogin = function () {
 				if (err) return deferred.reject();
 				self.userId = res.id;
 				localStorage[self._host + "__login_token__"] = res.token;
-				//self._emit("login", res);
+				self._emit("login", res);
 				deferred.resolve(res.id);
 			});
 			return deferred.promise;
@@ -363,7 +381,7 @@ Asteroid.prototype._tryResumeLogin = function () {
 		.fail(function () {
 			self.userId = null;
 			delete localStorage[self._host + "__login_token__"];
-			//self._emit("logout");
+			self._emit("logout");
 		});
 };
 

@@ -6,11 +6,14 @@ options.ddpOptions = {
 	SocketConstructor: WebSocket,
 	debug: true
 };
-var Rocket1 = new Asteroid(options);
+var Rocket = new Asteroid(options);
+Rocket.on("connected", function () {
+	console.log("Connected!");
+});
 
 window.onload = function () {
 	document.getElementById("fb").addEventListener("click", function () {
-		Rocket1.loginWithFacebook()
+		Rocket.loginWithFacebook()
 			.then(function (id) {
 				console.log(id);
 			})
@@ -19,17 +22,17 @@ window.onload = function () {
 			});
 	}, false);
 	document.getElementById("tw").addEventListener("click", function () {
-		Rocket1.loginWithTwitter().then(function (id) {
+		Rocket.loginWithTwitter().then(function (id) {
 			console.log(id);
 		});
 	}, false);
 	document.getElementById("gl").addEventListener("click", function () {
-		Rocket1.loginWithGoogle().then(function (id) {
+		Rocket.loginWithGoogle().then(function (id) {
 			console.log(id);
 		});
 	}, false);
 	document.getElementById("gh").addEventListener("click", function () {
-		Rocket1.loginWithGithub().then(function (id) {
+		Rocket.loginWithGithub().then(function (id) {
 			console.log(id);
 		});
 	}, false);

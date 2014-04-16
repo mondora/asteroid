@@ -1,9 +1,10 @@
 var Collection = function (name, asteroidRef, DbConstructor) {
 	this.name = name;
 	this.asteroid = asteroidRef;
+	this.asteroid.collections[name] = this;
 	this.db = new DbConstructor();
-	this._events = {};
 };
+Collection.prototype = new EventEmitter();
 Collection.prototype.constructor = Collection;
 
 Collection.prototype._localInsert = function (item, fromRemote) {
@@ -114,23 +115,6 @@ Collection.prototype._remoteUpdate = function (id, item) {
 Collection.prototype.update = function (id) {
 	this._localMarkForUpdate(id);
 	this._remoteUpdate(id);
-};
-
-Collection.prototype.on = function (name, handler) {
-	this._events[name] = this._events[name] || [];
-	this._events[name].push(handler);
-};
-Collection.prototype.off = function (name, handler) {
-	if (!this._events[name]) return;
-	this._events[name].splice(this._events[name].indexOf(handler), 1);
-};
-Collection.prototype._emit = function (name /* , arguments */) {
-	if (!this._events[name]) return;
-	var args = arguments;
-	var self = this;
-	this._events[name].forEach(function (handler) {
-		handler.apply(self, Array.prototype.slice.call(args, 1));
-	});
 };
 
 Asteroid.Collection = Collection;

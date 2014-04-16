@@ -6,15 +6,16 @@ var Asteroid = function (options) {
 	this.collections = {};
 	this._init();
 };
+Asteroid.prototype = new EventEmitter();
 Asteroid.prototype.constructor = Asteroid;
 
 Asteroid.prototype._init = function () {
 	var self = this;
 	self.ddp = new DDP(this._ddpOptions);
 	self.ddp.on("connected", function () {
-		if (self._do_not_autocreate_collections) return;
 		self._tryResumeLogin();
 		self.ddp.sub("meteor.loginServiceConfiguration");
+		self._emit("connected");
 	});
 	self.ddp.on("added", self._onAdded.bind(self));
 	self.ddp.on("changed", self._onChanged.bind(self));
@@ -23,10 +24,15 @@ Asteroid.prototype._init = function () {
 };
 
 Asteroid.prototype._onAdded = function (data) {
+	var loginConfigCollectionName = "meteor_accounts_loginServiceConfiguration";
 	var cName = data.collection;
 	if (!this.collections[cName]) {
-		if (this._do_not_autocreate_collections) return;
-		this.collections[cName] = new Asteroid.Collection(cName, this, Asteroid.DumbDb);
+		if (this._do_not_autocreate_collections) {
+			if (cName !== loginConfigCollectionName && cName !== "users") {
+				return;
+			}
+		}
+		new Asteroid.Collection(cName, this, Asteroid.DumbDb);
 	}
 	var item = data.fields;
 	item._id = data.id;
@@ -51,9 +57,9 @@ Asteroid.prototype.subscribe = function (name /* , param1, param2, ... */) {
 	var params = Array.prototype.slice.call(arguments, 1);
 	this.ddp.sub(name, params, function (err, id) {
 		if (err) {
-			promise.reject(err, id);
+			deferred.reject(err, id);
 		} else {
-			promise.resolve(id);
+			deferred.resolve(id);
 		}
 	});
 	return deferred.promise;
