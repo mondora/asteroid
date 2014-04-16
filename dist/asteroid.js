@@ -88,7 +88,7 @@ Asteroid.prototype._onChanged = function (data) {
 
 Asteroid.prototype.subscribe = function (name /* , param1, param2, ... */) {
 	var deferred = Q.defer();
-	var params = Array.prototype.call(arguments, 1);
+	var params = Array.prototype.slice.call(arguments, 1);
 	this.ddp.sub(name, params, function (err, id) {
 		if (err) {
 			promise.reject(err, id);
@@ -104,7 +104,7 @@ Asteroid.prototype.unsubscribe = function (id) {
 };
 
 Asteroid.prototype.call = function (method /* , param1, param2, ... */) {
-	var params = Array.prototype.call(arguments, 1);
+	var params = Array.prototype.slice.call(arguments, 1);
 	return this.apply(method, params);
 };
 
