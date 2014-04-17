@@ -102,7 +102,7 @@ Asteroid.prototype._onAdded = function (data) {
 		}
 		new Asteroid.Collection(cName, this, Asteroid.DumbDb);
 	}
-	var item = data.fields;
+	var item = data.fields || {};
 	item._id = data.id;
 	this.collections[cName]._localInsert(item, true);
 };
