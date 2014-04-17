@@ -245,7 +245,7 @@ Collection.prototype._localUpdate = function (id, fields) {
 		return;
 	}
 	for (var field in fields) {
-		existsing[field] = fields[field];
+		existing[field] = fields[field];
 	}
 	this.db.set(id, existing);
 	this.db.del(id + update_suffix);
