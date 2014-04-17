@@ -190,6 +190,7 @@ Collection.prototype.insert = function (item) {
 	if (!item._id) item._id = guid();
 	this._localInsert(item, false);
 	this._remoteInsert(item);
+	return item._id;
 };
 
 var removal_suffix = "__del__";
