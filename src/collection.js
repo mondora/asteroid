@@ -113,9 +113,9 @@ Collection.prototype._remoteUpdate = function (id, item) {
 		}
 	});
 };
-Collection.prototype.update = function (id) {
-	this._localMarkForUpdate(id);
-	this._remoteUpdate(id);
+Collection.prototype.update = function (id, item) {
+	this._localMarkForUpdate(id, item);
+	this._remoteUpdate(id, item);
 };
 
 Asteroid.Collection = Collection;

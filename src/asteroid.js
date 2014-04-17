@@ -46,9 +46,11 @@ Asteroid.prototype._onRemoved = function (data) {
 
 Asteroid.prototype._onChanged = function (data) {
 	if (!this.collections[data.collection]) return;
-	data.cleared.forEach(function (key) {
-		data.fields[key] = undefined;
-	});
+	if (data.cleared) {
+		data.cleared.forEach(function (key) {
+			data.fields[key] = undefined;
+		});
+	}
 	this.collections[data.collection]._localUpdate(data.id, data.fields);
 };
 
