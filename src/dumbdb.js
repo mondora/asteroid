@@ -2,8 +2,10 @@ var DumbDb = function () {
 	this.itemsHash = {};
 	this.itemsArray = [];
 };
+DumbDb.prototype.constructor = DumbDb;
 
 DumbDb.prototype.set = function (id, item) {
+	item = clone(item);
 	this.itemsHash[id] = item;
 	this.itemsArray.push(item);
 };

@@ -1,0 +1,1 @@
+../dist/asteroid.js
