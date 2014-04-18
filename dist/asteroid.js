@@ -11,8 +11,26 @@
 "use strict";
 
 function clone (obj) {
-	if (obj === null) return null;
-	return JSON.parse(JSON.stringify(obj));
+	if (typeof EJSON !== "undefined") {
+		return EJSON.clone(obj);
+	}
+	var type = typeof obj;
+	switch (type) {
+		case "undefined":
+		case "function":
+			return undefined;
+		case "string":
+		case "number":
+		case "boolean":
+			return obj;
+		case "object":
+			if (obj === null) {
+				return null;
+			}
+			return JSON.parse(JSON.stringify(obj));
+		default:
+			return;
+	}
 }
 
 var EventEmitter = function () {};
@@ -72,6 +90,7 @@ var Asteroid = function (options) {
 	this._ddpOptions.do_not_autoconnect = true;
 	this._do_not_autocreate_collections = options._do_not_autocreate_collections;
 	this.collections = {};
+	this.subscriptions = {};
 	this._init();
 };
 Asteroid.prototype = new EventEmitter();
@@ -85,45 +104,64 @@ Asteroid.prototype._init = function () {
 		self.ddp.sub("meteor.loginServiceConfiguration");
 		self._emit("connected");
 	});
-	self.ddp.on("added", self._onAdded.bind(self));
-	self.ddp.on("changed", self._onChanged.bind(self));
-	self.ddp.on("removed", self._onRemoved.bind(self));
+	self.ddp.on("added", function (data) {
+		self._onAdded(data);
+	});
+	self.ddp.on("changed", function (data) {
+		self._onChanged(data);
+	});
+	self.ddp.on("removed", function (data) {
+		self._onRemoved(data);
+	});
 	self.ddp.connect();
 };
 
 Asteroid.prototype._onAdded = function (data) {
-	var loginConfigCollectionName = "meteor_accounts_loginServiceConfiguration";
+	var alwaysAutocreate = [
+		"meteor_accounts_loginServiceConfiguration",
+		"users"
+	];
 	var cName = data.collection;
 	if (!this.collections[cName]) {
 		if (this._do_not_autocreate_collections) {
-			if (cName !== loginConfigCollectionName && cName !== "users") {
+			if (alwaysAutocreate.indexOf(cName) === -1) {
 				return;
 			}
 		}
-		new Asteroid.Collection(cName, this, Asteroid.DumbDb);
+		this.createCollection(cName);
 	}
 	var item = data.fields || {};
 	item._id = data.id;
-	this.collections[cName]._localInsert(item, true);
+	this.collections[cName]._remoteToLocalInsert(item);
 };
 
 Asteroid.prototype._onRemoved = function (data) {
-	if (!this.collections[data.collection]) return;
-	this.collections[data.collection]._localRemove(data.id);
+	if (this.collections[data.collection]) {
+		this.collections[data.collection]._remoteToLocalRemove(data.id);
+	}
 };
 
 Asteroid.prototype._onChanged = function (data) {
-	if (!this.collections[data.collection]) return;
+	if (!this.collections[data.collection]) {
+		return;
+	}
+	if (!data.fields) {
+		data.fields = {};
+	}
 	if (data.cleared) {
 		data.cleared.forEach(function (key) {
 			data.fields[key] = undefined;
 		});
 	}
-	this.collections[data.collection]._localUpdate(data.id, data.fields);
+	this.collections[data.collection]._remoteToLocalUpdate(data.id, data.fields);
 };
 
 Asteroid.prototype.subscribe = function (name /* , param1, param2, ... */) {
+	if (this.subscriptions[name]) {
+		return this.subscriptions[name];
+	}
 	var deferred = Q.defer();
+	this.subscriptions[name] = deferred.promise;
 	var params = Array.prototype.slice.call(arguments, 1);
 	this.ddp.sub(name, params, function (err, id) {
 		if (err) {
@@ -132,7 +170,7 @@ Asteroid.prototype.subscribe = function (name /* , param1, param2, ... */) {
 			deferred.resolve(id);
 		}
 	});
-	return deferred.promise;
+	return this.subscriptions[name];
 };
 
 Asteroid.prototype.unsubscribe = function (id) {
@@ -159,130 +197,177 @@ Asteroid.prototype.apply = function (method, params) {
 		updatedDeferred.resolve();
 	};
 	this.ddp.method(method, params, onResult, onUpdated);
-	return [resultDeferred.promise, updatedDeferred.promise];
+	return {
+		result: resultDeferred.promise,
+		updated: updatedDeferred.promise
+	};
 };
 
+Asteroid.prototype.createCollection = function (name) {
+	if (!this.collections[name]) {
+		this.collections[name] = new Collection(name, this, DumbDb);
+	}
+	return this.collections[name];
+};
+
+// Collection class constructor definition
 var Collection = function (name, asteroidRef, DbConstructor) {
 	this.name = name;
 	this.asteroid = asteroidRef;
-	this.asteroid.collections[name] = this;
 	this.db = new DbConstructor();
 };
 Collection.prototype = new EventEmitter();
 Collection.prototype.constructor = Collection;
 
-Collection.prototype._localInsert = function (item, fromRemote) {
+
+
+// Insert-related private and public methods
+Collection.prototype._localToLocalInsert = function (item) {
 	var existing = this.db.get(item._id);
-	if (fromRemote && isEqual(existing, item)) return;
-	if (!fromRemote && existing) throw new Error("Item exists.");
+	if (existing) {
+		throw new Error("Item exists");
+	}
 	this.db.set(item._id, item);
-	this._emit("change");
+	this._emit("insert", item._id);
 };
-Collection.prototype._remoteInsert = function (item) {
+Collection.prototype._remoteToLocalInsert = function (item) {
+	var existing = this.db.get(item._id);
+	if (isEqual(existing, item)) {
+		return;
+	}
+	this.db.set(item._id, item);
+	this._emit("insert", item._id);
+};
+Collection.prototype._restoreInserted = function (id) {
+	self.db.del(id);
+	self._emit("restore", id);
+};
+Collection.prototype._localToRemoteInsert = function (item) {
 	var self = this;
+	var deferred = Q.defer();
 	var methodName = "/" + self.name + "/insert";
 	this.asteroid.ddp.method(methodName, [item], function (err, res) {
 		if (err) {
-			self._localRemove(item._id);
-			throw err;
+			self._restoreInserted(item._id);
+			deferred.reject(err);
+		} else {
+			deferred.resolve(res);
 		}
 	});
+	return deferred.promise;
 };
 Collection.prototype.insert = function (item) {
-	if (!item._id) item._id = guid();
-	this._localInsert(item, false);
-	this._remoteInsert(item);
-	return item._id;
+	if (!item._id) {
+		item._id = guid();
+	}
+	this._localToLocalInsert(item, false);
+	return this._localToRemoteInsert(item);
 };
 
-var removal_suffix = "__del__";
-Collection.prototype._localRemove = function (id) {
+
+
+// Remove-related private and public methods
+var mf_removal_suffix = "__del__";
+Collection.prototype._localToLocalRemove = function (id) {
+	var existing = this.db.get(id);
+	if (!existing) {
+		console.warn("Item not present.");
+		return;
+	}
+	this.db.set(id + mf_removal_suffix, existing);
+	this.db.del(id);
+	this._emit("remove", id);
+};
+Collection.prototype._remoteToLocalRemove = function (id) {
 	var existing = this.db.get(id);
 	if (!existing) {
 		console.warn("Item not present.");
 		return;
 	}
 	this.db.del(id);
-	this.db.del(id + removal_suffix);
-	this._emit("change");
+	this.db.del(id + mf_removal_suffix);
+	this._emit("remove", id);
 };
-Collection.prototype._localRestoreRemoved = function (id) {
-	var existing = this.db.get(id + removal_suffix);
-	this.db.set(id, existing);
-	this.db.del(id + removal_suffix);
-	this._emit("change");
+Collection.prototype._restoreRemoved = function (id) {
+	var backup = this.db.get(id + mf_removal_suffix);
+	this.db.set(id, backup);
+	this.db.del(id + mf_removal_suffix);
+	this._emit("restore", id);
 };
-Collection.prototype._localMarkForRemoval = function (id) {
-	var existing = this.db.get(id);
-	if (!existing) {
-		console.warn("Item not present.");
-		return;
-	}
-	this.db.set(id + removal_suffix, existing);
-	this.db.del(id);
-	this._emit("change");
-};
-Collection.prototype._remoteRemove = function (id) {
+Collection.prototype._localToRemoteRemove = function (id) {
 	var self = this;
+	var deferred = Q.defer();
 	var methodName = "/" + self.name + "/remove";
 	this.asteroid.ddp.method(methodName, [{_id: id}], function (err, res) {
 		if (err) {
-			self._localRestoreRemoved(id);
-			throw err;
+			self._restoreRemoved(id);
+			deferred.reject(err);
+		} else {
+			deferred.resolve(res);
 		}
 	});
+	return deferred.promise;
 };
 Collection.prototype.remove = function (id) {
-	this._localMarkForRemoval(id);
-	this._remoteRemove(id);
+	this._localToLocalRemove(id);
+	return this._localToRemoteRemove(id);
 };
 
-var update_suffix = "__upd__";
-Collection.prototype._localUpdate = function (id, fields) {
+
+
+// Update-related private and public methods
+var mf_update_suffix = "__upd__";
+Collection.prototype._localToLocalUpdate = function (id, item) {
 	var existing = this.db.get(id);
 	if (!existing) {
-		console.warn("Item not present.");
+		throw new Error("Item not present");
+	}
+	this.db.set(id + mf_update_suffix, existing);
+	this.db.set(id, item);
+	this._emit("update", id);
+};
+Collection.prototype._remoteToLocalUpdate = function (id, fields) {
+	var existing = this.db.get(id);
+	if (!existing) {
+		console.warn("Item not present");
 		return;
 	}
 	for (var field in fields) {
 		existing[field] = fields[field];
 	}
 	this.db.set(id, existing);
-	this.db.del(id + update_suffix);
-	this._emit("change");
+	this.db.del(id + mf_update_suffix);
+	this._emit("update", id);
 };
-Collection.prototype._localRestoreUpdated = function (id) {
-	var existing = this.db.get(id + update_suffix);
-	this.db.set(id, existing);
-	this.db.del(id + update_suffix);
-	this._emit("change");
+Collection.prototype._restoreUpdated = function (id) {
+	var backup = this.db.get(id + mf_update_suffix);
+	this.db.set(id, backup);
+	this.db.del(id + mf_update_suffix);
+	this._emit("restore", id);
 };
-Collection.prototype._localMarkForUpdate = function (id, item) {
-	var existing = this.db.get(id);
-	if (!existing) {
-		console.warn("Item not present.");
-		return;
-	}
-	this.db.set(id + update_suffix, existing);
-	this.db.set(id, item);
-	this._emit("change");
-};
-Collection.prototype._remoteUpdate = function (id, item) {
+Collection.prototype._localToRemoteUpdate = function (id, item) {
 	var self = this;
 	var methodName = "/" + self.name + "/update";
-	this.asteroid.ddp.method(methodName, [{_id: id}, {$set: item}], function (err, res) {
+	var sel = {
+		_id: id
+	};
+	var mod = {
+		$set: item
+	};
+	this.asteroid.ddp.method(methodName, [sel, mod], function (err, res) {
 		if (err) {
-			self._localRestoreUpdated(id);
-			throw err;
+			self._restoreUpdated(id);
+			deferred.reject(err);
+		} else {
+			deferred.resolve(res);
 		}
 	});
+	return deferred.promise;
 };
 Collection.prototype.update = function (id, item) {
-	this._localMarkForUpdate(id, item);
-	this._remoteUpdate(id, item);
+	this._localToLocalUpdate(id, item);
+	return this._localToRemoteUpdate(id, item);
 };
-
-Asteroid.Collection = Collection;
 
 var DumbDb = function () {
 	this.itemsHash = {};
@@ -295,9 +380,7 @@ DumbDb.prototype.set = function (id, item) {
 };
 
 DumbDb.prototype.get = function (id) {
-	if (this.itemsHash[id]) {
-		return clone(this.itemsHash[id]);
-	}
+	return clone(this.itemsHash[id]);
 };
 
 DumbDb.prototype.del = function (id) {
@@ -352,11 +435,19 @@ Asteroid.prototype._initOauthLogin = function (service, credentialToken, loginUr
 				}
 			};
 			self.ddp.method("login", [loginParameters], function (err, res) {
-				if (err) return deferred.reject();
-				self.userId = res.id;
-				localStorage[self._host + "__login_token__"] = res.token;
-				self._emit("login", res);
-				deferred.resolve(res.id);
+				if (err) {
+					delete self.userId;
+					delete self.loggedIn;
+					delete localStorage[self._host + "__login_token__"];
+					deferred.reject(err);
+					self._emit("loginError", err);
+				} else {
+					self.userId = res.id;
+					self.loggedIn = true;
+					localStorage[self._host + "__login_token__"] = res.token;
+					self._emit("login", res);
+					deferred.resolve(res.id);
+				}
 			});
 			return deferred.promise;
 		});
@@ -365,7 +456,9 @@ Asteroid.prototype._initOauthLogin = function (service, credentialToken, loginUr
 Asteroid.prototype._tryResumeLogin = function () {
 	var self = this;
 	var token = localStorage[self._host + "__login_token__"];
-	if (!token) return;
+	if (!token) {
+		return;
+	}
 	return Q()
 		.then(function () {
 			var deferred = Q.defer();
@@ -373,18 +466,21 @@ Asteroid.prototype._tryResumeLogin = function () {
 				resume: token
 			};
 			self.ddp.method("login", [loginParameters], function (err, res) {
-				if (err) return deferred.reject();
-				self.userId = res.id;
-				localStorage[self._host + "__login_token__"] = res.token;
-				self._emit("login", res);
-				deferred.resolve(res.id);
+				if (err) {
+					delete self.userId;
+					delete self.loggedIn;
+					delete localStorage[self._host + "__login_token__"];
+					self._emit("loginError", err);
+					deferred.reject(err);
+				} else {
+					self.userId = res.id;
+					self.loggedIn = true;
+					localStorage[self._host + "__login_token__"] = res.token;
+					self._emit("login", res);
+					deferred.resolve(res.id);
+				}
 			});
 			return deferred.promise;
-		})
-		.fail(function () {
-			self.userId = null;
-			delete localStorage[self._host + "__login_token__"];
-			self._emit("logout");
 		});
 };
 
@@ -437,7 +533,20 @@ Asteroid.prototype.loginWithTwitter = function (scope) {
 };
 
 Asteroid.prototype.logout = function () {
-	
+	var deferred = Q.defer();
+	self.ddp.method("logout", [], function (err, res) {
+		if (err) {
+			self._emit("logoutError", err);
+			deferred.reject(err);
+		} else {
+			delete self.userId;
+			delete self.loggedIn;
+			delete localStorage[self._host + "__login_token__"];
+			self._emit("logout", res);
+			deferred.resolve(res);
+		}
+	});
+	return deferred.promise;
 };
 
 return Asteroid;

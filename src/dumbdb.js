@@ -9,9 +9,7 @@ DumbDb.prototype.set = function (id, item) {
 };
 
 DumbDb.prototype.get = function (id) {
-	if (this.itemsHash[id]) {
-		return clone(this.itemsHash[id]);
-	}
+	return clone(this.itemsHash[id]);
 };
 
 DumbDb.prototype.del = function (id) {

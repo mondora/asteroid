@@ -4,6 +4,7 @@ var Asteroid = function (options) {
 	this._ddpOptions.do_not_autoconnect = true;
 	this._do_not_autocreate_collections = options._do_not_autocreate_collections;
 	this.collections = {};
+	this.subscriptions = {};
 	this._init();
 };
 Asteroid.prototype = new EventEmitter();
@@ -17,45 +18,64 @@ Asteroid.prototype._init = function () {
 		self.ddp.sub("meteor.loginServiceConfiguration");
 		self._emit("connected");
 	});
-	self.ddp.on("added", self._onAdded.bind(self));
-	self.ddp.on("changed", self._onChanged.bind(self));
-	self.ddp.on("removed", self._onRemoved.bind(self));
+	self.ddp.on("added", function (data) {
+		self._onAdded(data);
+	});
+	self.ddp.on("changed", function (data) {
+		self._onChanged(data);
+	});
+	self.ddp.on("removed", function (data) {
+		self._onRemoved(data);
+	});
 	self.ddp.connect();
 };
 
 Asteroid.prototype._onAdded = function (data) {
-	var loginConfigCollectionName = "meteor_accounts_loginServiceConfiguration";
+	var alwaysAutocreate = [
+		"meteor_accounts_loginServiceConfiguration",
+		"users"
+	];
 	var cName = data.collection;
 	if (!this.collections[cName]) {
 		if (this._do_not_autocreate_collections) {
-			if (cName !== loginConfigCollectionName && cName !== "users") {
+			if (alwaysAutocreate.indexOf(cName) === -1) {
 				return;
 			}
 		}
-		new Asteroid.Collection(cName, this, Asteroid.DumbDb);
+		this.createCollection(cName);
 	}
 	var item = data.fields || {};
 	item._id = data.id;
-	this.collections[cName]._localInsert(item, true);
+	this.collections[cName]._remoteToLocalInsert(item);
 };
 
 Asteroid.prototype._onRemoved = function (data) {
-	if (!this.collections[data.collection]) return;
-	this.collections[data.collection]._localRemove(data.id);
+	if (this.collections[data.collection]) {
+		this.collections[data.collection]._remoteToLocalRemove(data.id);
+	}
 };
 
 Asteroid.prototype._onChanged = function (data) {
-	if (!this.collections[data.collection]) return;
+	if (!this.collections[data.collection]) {
+		return;
+	}
+	if (!data.fields) {
+		data.fields = {};
+	}
 	if (data.cleared) {
 		data.cleared.forEach(function (key) {
 			data.fields[key] = undefined;
 		});
 	}
-	this.collections[data.collection]._localUpdate(data.id, data.fields);
+	this.collections[data.collection]._remoteToLocalUpdate(data.id, data.fields);
 };
 
 Asteroid.prototype.subscribe = function (name /* , param1, param2, ... */) {
+	if (this.subscriptions[name]) {
+		return this.subscriptions[name];
+	}
 	var deferred = Q.defer();
+	this.subscriptions[name] = deferred.promise;
 	var params = Array.prototype.slice.call(arguments, 1);
 	this.ddp.sub(name, params, function (err, id) {
 		if (err) {
@@ -64,7 +84,7 @@ Asteroid.prototype.subscribe = function (name /* , param1, param2, ... */) {
 			deferred.resolve(id);
 		}
 	});
-	return deferred.promise;
+	return this.subscriptions[name];
 };
 
 Asteroid.prototype.unsubscribe = function (id) {
@@ -91,5 +111,15 @@ Asteroid.prototype.apply = function (method, params) {
 		updatedDeferred.resolve();
 	};
 	this.ddp.method(method, params, onResult, onUpdated);
-	return [resultDeferred.promise, updatedDeferred.promise];
+	return {
+		result: resultDeferred.promise,
+		updated: updatedDeferred.promise
+	};
+};
+
+Asteroid.prototype.createCollection = function (name) {
+	if (!this.collections[name]) {
+		this.collections[name] = new Collection(name, this, DumbDb);
+	}
+	return this.collections[name];
 };

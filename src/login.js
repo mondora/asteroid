@@ -36,11 +36,19 @@ Asteroid.prototype._initOauthLogin = function (service, credentialToken, loginUr
 				}
 			};
 			self.ddp.method("login", [loginParameters], function (err, res) {
-				if (err) return deferred.reject();
-				self.userId = res.id;
-				localStorage[self._host + "__login_token__"] = res.token;
-				self._emit("login", res);
-				deferred.resolve(res.id);
+				if (err) {
+					delete self.userId;
+					delete self.loggedIn;
+					delete localStorage[self._host + "__login_token__"];
+					deferred.reject(err);
+					self._emit("loginError", err);
+				} else {
+					self.userId = res.id;
+					self.loggedIn = true;
+					localStorage[self._host + "__login_token__"] = res.token;
+					self._emit("login", res);
+					deferred.resolve(res.id);
+				}
 			});
 			return deferred.promise;
 		});
@@ -49,7 +57,9 @@ Asteroid.prototype._initOauthLogin = function (service, credentialToken, loginUr
 Asteroid.prototype._tryResumeLogin = function () {
 	var self = this;
 	var token = localStorage[self._host + "__login_token__"];
-	if (!token) return;
+	if (!token) {
+		return;
+	}
 	return Q()
 		.then(function () {
 			var deferred = Q.defer();
@@ -57,18 +67,21 @@ Asteroid.prototype._tryResumeLogin = function () {
 				resume: token
 			};
 			self.ddp.method("login", [loginParameters], function (err, res) {
-				if (err) return deferred.reject();
-				self.userId = res.id;
-				localStorage[self._host + "__login_token__"] = res.token;
-				self._emit("login", res);
-				deferred.resolve(res.id);
+				if (err) {
+					delete self.userId;
+					delete self.loggedIn;
+					delete localStorage[self._host + "__login_token__"];
+					self._emit("loginError", err);
+					deferred.reject(err);
+				} else {
+					self.userId = res.id;
+					self.loggedIn = true;
+					localStorage[self._host + "__login_token__"] = res.token;
+					self._emit("login", res);
+					deferred.resolve(res.id);
+				}
 			});
 			return deferred.promise;
-		})
-		.fail(function () {
-			self.userId = null;
-			delete localStorage[self._host + "__login_token__"];
-			self._emit("logout");
 		});
 };
 
@@ -121,5 +134,18 @@ Asteroid.prototype.loginWithTwitter = function (scope) {
 };
 
 Asteroid.prototype.logout = function () {
-	
+	var deferred = Q.defer();
+	self.ddp.method("logout", [], function (err, res) {
+		if (err) {
+			self._emit("logoutError", err);
+			deferred.reject(err);
+		} else {
+			delete self.userId;
+			delete self.loggedIn;
+			delete localStorage[self._host + "__login_token__"];
+			self._emit("logout", res);
+			deferred.resolve(res);
+		}
+	});
+	return deferred.promise;
 };

@@ -1,121 +1,158 @@
+// Collection class constructor definition
 var Collection = function (name, asteroidRef, DbConstructor) {
 	this.name = name;
 	this.asteroid = asteroidRef;
-	this.asteroid.collections[name] = this;
 	this.db = new DbConstructor();
 };
 Collection.prototype = new EventEmitter();
 Collection.prototype.constructor = Collection;
 
-Collection.prototype._localInsert = function (item, fromRemote) {
+
+
+// Insert-related private and public methods
+Collection.prototype._localToLocalInsert = function (item) {
 	var existing = this.db.get(item._id);
-	if (fromRemote && isEqual(existing, item)) return;
-	if (!fromRemote && existing) throw new Error("Item exists.");
+	if (existing) {
+		throw new Error("Item exists");
+	}
 	this.db.set(item._id, item);
-	this._emit("change");
+	this._emit("insert", item._id);
 };
-Collection.prototype._remoteInsert = function (item) {
+Collection.prototype._remoteToLocalInsert = function (item) {
+	var existing = this.db.get(item._id);
+	if (isEqual(existing, item)) {
+		return;
+	}
+	this.db.set(item._id, item);
+	this._emit("insert", item._id);
+};
+Collection.prototype._restoreInserted = function (id) {
+	self.db.del(id);
+	self._emit("restore", id);
+};
+Collection.prototype._localToRemoteInsert = function (item) {
 	var self = this;
+	var deferred = Q.defer();
 	var methodName = "/" + self.name + "/insert";
 	this.asteroid.ddp.method(methodName, [item], function (err, res) {
 		if (err) {
-			self._localRemove(item._id);
-			throw err;
+			self._restoreInserted(item._id);
+			deferred.reject(err);
+		} else {
+			deferred.resolve(res);
 		}
 	});
+	return deferred.promise;
 };
 Collection.prototype.insert = function (item) {
-	if (!item._id) item._id = guid();
-	this._localInsert(item, false);
-	this._remoteInsert(item);
-	return item._id;
+	if (!item._id) {
+		item._id = guid();
+	}
+	this._localToLocalInsert(item, false);
+	return this._localToRemoteInsert(item);
 };
 
-var removal_suffix = "__del__";
-Collection.prototype._localRemove = function (id) {
+
+
+// Remove-related private and public methods
+var mf_removal_suffix = "__del__";
+Collection.prototype._localToLocalRemove = function (id) {
+	var existing = this.db.get(id);
+	if (!existing) {
+		console.warn("Item not present.");
+		return;
+	}
+	this.db.set(id + mf_removal_suffix, existing);
+	this.db.del(id);
+	this._emit("remove", id);
+};
+Collection.prototype._remoteToLocalRemove = function (id) {
 	var existing = this.db.get(id);
 	if (!existing) {
 		console.warn("Item not present.");
 		return;
 	}
 	this.db.del(id);
-	this.db.del(id + removal_suffix);
-	this._emit("change");
+	this.db.del(id + mf_removal_suffix);
+	this._emit("remove", id);
 };
-Collection.prototype._localRestoreRemoved = function (id) {
-	var existing = this.db.get(id + removal_suffix);
-	this.db.set(id, existing);
-	this.db.del(id + removal_suffix);
-	this._emit("change");
+Collection.prototype._restoreRemoved = function (id) {
+	var backup = this.db.get(id + mf_removal_suffix);
+	this.db.set(id, backup);
+	this.db.del(id + mf_removal_suffix);
+	this._emit("restore", id);
 };
-Collection.prototype._localMarkForRemoval = function (id) {
-	var existing = this.db.get(id);
-	if (!existing) {
-		console.warn("Item not present.");
-		return;
-	}
-	this.db.set(id + removal_suffix, existing);
-	this.db.del(id);
-	this._emit("change");
-};
-Collection.prototype._remoteRemove = function (id) {
+Collection.prototype._localToRemoteRemove = function (id) {
 	var self = this;
+	var deferred = Q.defer();
 	var methodName = "/" + self.name + "/remove";
 	this.asteroid.ddp.method(methodName, [{_id: id}], function (err, res) {
 		if (err) {
-			self._localRestoreRemoved(id);
-			throw err;
+			self._restoreRemoved(id);
+			deferred.reject(err);
+		} else {
+			deferred.resolve(res);
 		}
 	});
+	return deferred.promise;
 };
 Collection.prototype.remove = function (id) {
-	this._localMarkForRemoval(id);
-	this._remoteRemove(id);
+	this._localToLocalRemove(id);
+	return this._localToRemoteRemove(id);
 };
 
-var update_suffix = "__upd__";
-Collection.prototype._localUpdate = function (id, fields) {
+
+
+// Update-related private and public methods
+var mf_update_suffix = "__upd__";
+Collection.prototype._localToLocalUpdate = function (id, item) {
 	var existing = this.db.get(id);
 	if (!existing) {
-		console.warn("Item not present.");
+		throw new Error("Item not present");
+	}
+	this.db.set(id + mf_update_suffix, existing);
+	this.db.set(id, item);
+	this._emit("update", id);
+};
+Collection.prototype._remoteToLocalUpdate = function (id, fields) {
+	var existing = this.db.get(id);
+	if (!existing) {
+		console.warn("Item not present");
 		return;
 	}
 	for (var field in fields) {
 		existing[field] = fields[field];
 	}
 	this.db.set(id, existing);
-	this.db.del(id + update_suffix);
-	this._emit("change");
+	this.db.del(id + mf_update_suffix);
+	this._emit("update", id);
 };
-Collection.prototype._localRestoreUpdated = function (id) {
-	var existing = this.db.get(id + update_suffix);
-	this.db.set(id, existing);
-	this.db.del(id + update_suffix);
-	this._emit("change");
+Collection.prototype._restoreUpdated = function (id) {
+	var backup = this.db.get(id + mf_update_suffix);
+	this.db.set(id, backup);
+	this.db.del(id + mf_update_suffix);
+	this._emit("restore", id);
 };
-Collection.prototype._localMarkForUpdate = function (id, item) {
-	var existing = this.db.get(id);
-	if (!existing) {
-		console.warn("Item not present.");
-		return;
-	}
-	this.db.set(id + update_suffix, existing);
-	this.db.set(id, item);
-	this._emit("change");
-};
-Collection.prototype._remoteUpdate = function (id, item) {
+Collection.prototype._localToRemoteUpdate = function (id, item) {
 	var self = this;
 	var methodName = "/" + self.name + "/update";
-	this.asteroid.ddp.method(methodName, [{_id: id}, {$set: item}], function (err, res) {
+	var sel = {
+		_id: id
+	};
+	var mod = {
+		$set: item
+	};
+	this.asteroid.ddp.method(methodName, [sel, mod], function (err, res) {
 		if (err) {
-			self._localRestoreUpdated(id);
-			throw err;
+			self._restoreUpdated(id);
+			deferred.reject(err);
+		} else {
+			deferred.resolve(res);
 		}
 	});
+	return deferred.promise;
 };
 Collection.prototype.update = function (id, item) {
-	this._localMarkForUpdate(id, item);
-	this._remoteUpdate(id, item);
+	this._localToLocalUpdate(id, item);
+	return this._localToRemoteUpdate(id, item);
 };
-
-Asteroid.Collection = Collection;
