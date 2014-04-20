@@ -135,6 +135,7 @@ Collection.prototype._restoreUpdated = function (id) {
 };
 Collection.prototype._localToRemoteUpdate = function (id, item) {
 	var self = this;
+	var deferred = Q.defer();
 	var methodName = "/" + self.name + "/update";
 	var sel = {
 		_id: id
