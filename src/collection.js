@@ -27,8 +27,8 @@ Collection.prototype._remoteToLocalInsert = function (item) {
 	this._emit("insert", item._id);
 };
 Collection.prototype._restoreInserted = function (id) {
-	self.db.del(id);
-	self._emit("restore", id);
+	this.db.del(id);
+	this._emit("restore", id);
 };
 Collection.prototype._localToRemoteInsert = function (item) {
 	var self = this;
