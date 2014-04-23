@@ -396,7 +396,7 @@ DumbDb.prototype.find = function (selector) {
 	var keys = Object.keys(selector);
 	var matches = [];
 	this.itemsArray.forEach(function (item) {
-		for (var i=0; i<matchers.length; i++) {
+		for (var i=0; i<keys.length; i++) {
 			var itemVal = getItemVal(item, keys[i]);
 			if (itemVal !== selector[keys[i]]) {
 				return;
@@ -405,6 +405,10 @@ DumbDb.prototype.find = function (selector) {
 		matches.push(item);
 	});
 	return matches;
+};
+
+DumbDb.prototype.findOne = function (selector) {
+	return this.find(selector)[0];
 };
 
 DumbDb.prototype.del = function (id) {
