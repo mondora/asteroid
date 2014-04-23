@@ -370,6 +370,14 @@ Collection.prototype.update = function (id, item) {
 	return this._localToRemoteUpdate(id, item);
 };
 
+Collection.prototype.find = function (selector) {
+	return this.db.find(selector);
+};
+
+Collection.prototype.findOne = function (selector) {
+	return this.db.findOne(selector);
+};
+
 var DumbDb = function () {
 	this.itemsHash = {};
 	this.itemsArray = [];

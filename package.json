@@ -1,6 +1,6 @@
 {
   "name": "asteroid",
-  "version": "0.1.12",
+  "version": "0.1.13",
   "description": "Aletrnative Meteor client",
   "main": "dist/asteroid.js",
   "scripts": {},
