@@ -569,6 +569,7 @@ Asteroid.prototype.loginWithTwitter = function (scope) {
 };
 
 Asteroid.prototype.logout = function () {
+	var self = this;
 	var deferred = Q.defer();
 	self.ddp.method("logout", [], function (err, res) {
 		if (err) {
