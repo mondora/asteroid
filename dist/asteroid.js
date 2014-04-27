@@ -399,8 +399,13 @@ DumbDb.prototype.constructor = DumbDb;
 
 DumbDb.prototype.set = function (id, item) {
 	item = clone(item);
+	if (!this.itemsHash[id]) {
+		this.itemsArray.push(item);
+	} else {
+		var index = this.itemsArray.indexOf(this.itemsHash[id]);
+		this.itemsArray[index] = item;
+	}
 	this.itemsHash[id] = item;
-	this.itemsArray.push(item);
 };
 
 DumbDb.prototype.get = function (id) {
