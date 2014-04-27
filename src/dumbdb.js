@@ -30,7 +30,9 @@ DumbDb.prototype.find = function (selector) {
 				return;
 			}
 		}
-		matches.push(clone(item));
+		if (!is_backup(item._id)) {
+			matches.push(clone(item));
+		}
 	});
 	return matches;
 };

@@ -1,3 +1,14 @@
+// Removal and update suffix for backups
+var mf_removal_suffix = "__del__";
+var mf_update_suffix = "__upd__";
+var is_backup = function (id) {
+	var l1 = mf_removal_suffix.length;
+	var l2 = mf_update_suffix.length;
+	var s1 = id.slice(-1 * l1);
+	var s2 = id.slice(-1 * l2);
+	return s1 === mf_removal_suffix || s2 === mf_update_suffix;
+};
+
 // Collection class constructor definition
 var Collection = function (name, asteroidRef, DbConstructor) {
 	this.name = name;
@@ -55,7 +66,6 @@ Collection.prototype.insert = function (item) {
 
 
 // Remove-related private and public methods
-var mf_removal_suffix = "__del__";
 Collection.prototype._localToLocalRemove = function (id) {
 	var existing = this.db.get(id);
 	if (!existing) {
@@ -69,8 +79,12 @@ Collection.prototype._localToLocalRemove = function (id) {
 Collection.prototype._remoteToLocalRemove = function (id) {
 	var existing = this.db.get(id);
 	if (!existing) {
-		console.warn("Item not present.");
-		return;
+		existing = this.db.get(id + mf_removal_suffix);
+		if (!existing) {
+			console.warn("Item not present.");
+		} else {
+			this.db.del(id + mf_removal_suffix);
+		}
 	}
 	this.db.del(id);
 	this.db.del(id + mf_removal_suffix);
@@ -104,7 +118,6 @@ Collection.prototype.remove = function (id) {
 
 
 // Update-related private and public methods
-var mf_update_suffix = "__upd__";
 Collection.prototype._localToLocalUpdate = function (id, item) {
 	var existing = this.db.get(id);
 	if (!existing) {
