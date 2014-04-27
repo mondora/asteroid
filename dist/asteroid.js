@@ -410,7 +410,7 @@ DumbDb.prototype.find = function (selector) {
 				return;
 			}
 		}
-		matches.push(item);
+		matches.push(clone(item));
 	});
 	return matches;
 };
