@@ -40,4 +40,4 @@ ceres.loginWithTwitter();
 
 ##Demo
 
-[Demo todo app](mondora.github.io/asteroid)
+[Demo todo app](https://mondora.github.io/asteroid)
