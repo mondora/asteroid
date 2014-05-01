@@ -40,9 +40,9 @@ ceres.loginWithTwitter();
 
 ##Demo
 
-[Example todo app using AngularJS](https://mondora.github.io/asteroid)
+[Example todo app using AngularJS](https://mondora.github.io/meteor-todo)
 
-[Same app using Meteor's front-end client](https://pscanf.meteor.com)
+[Same app using Meteor's front-end client](https://meteor.meteor.com)
 
 The Asteroid client, which includes AngularJS, is almost half the size of the Meteor's client.
 
