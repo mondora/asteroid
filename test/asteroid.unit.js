@@ -4,67 +4,79 @@ describe("An Asteroid.Set instance", function () {
 
 		var set = new Asteroid.Set();
 
-		it("add", function () {
-			_.isFunction(set.add).should.equal(true);
+		it("put", function () {
+			_.isFunction(set.put).should.equal(true);
 		});
 
-		it("rem", function () {
-			_.isFunction(set.rem).should.equal(true);
+		it("del", function () {
+			_.isFunction(set.del).should.equal(true);
 		});
 
 		it("get", function () {
 			_.isFunction(set.get).should.equal(true);
 		});
 
+		it("contains", function () {
+			_.isFunction(set.contains).should.equal(true);
+		});
+
 		it("filter", function () {
 			_.isFunction(set.filter).should.equal(true);
 		});
 
+		it("toArray", function () {
+			_.isFunction(set.toArray).should.equal(true);
+		});
+
+		it("toHash", function () {
+			_.isFunction(set.toHash).should.equal(true);
+		});
+
 	});
 
-	it("if readonly, should throw when add and rem are called", function () {
+	it("if readonly, should throw when put and del are called", function () {
 
 		var set = new Asteroid.Set(true);
 
-		var add = function () {
-			set.add();
+		var put = function () {
+			set.put();
 		};
-		var rem = function () {
-			set.rem();
+		var del = function () {
+			set.del();
 		};
-		add.should.throw("Attempt to modify readonly set");
-		rem.should.throw("Attempt to modify readonly set");
+		put.should.throw("Attempt to modify readonly set");
+		del.should.throw("Attempt to modify readonly set");
 
 	});
 
 });
 
-describe("The add method", function () {
+describe("The put method", function () {
 
 	var set = new Asteroid.Set();
 	var id = "someRandomId";
 	var item = {};
 
-	it("should add a clone of the element", function () {
-		set.add(id, item);
+	it("should put a clone of the element", function () {
+		set.put(id, item);
 		set._items[id].should.eql(item);
 		set._items[id].should.not.equal(item);
 	});
 
-	it("should fire the add event", function () {
+	it("should fire the put event", function () {
 		set._emit = sinon.spy();
-		set.add(id, item);
-		set._emit.calledWith("add", id).should.equal(true);
+		set.put(id, item);
+		set._emit.calledWith("put", id).should.equal(true);
 	});
 
 	it("should return the set instance", function () {
-		var s = set.add(id, item);
+		var s = set.put(id, item);
 		s.should.equal(set);
 	});
 
 });
 
-describe("The rem method", function () {
+describe("The del method", function () {
 
 	var set;
 	var id = "someRandomId";
@@ -72,23 +84,23 @@ describe("The rem method", function () {
 
 	beforeEach(function () {
 		set = new Asteroid.Set();
-		set.add(id, item);
+		set.put(id, item);
 	});
 
-	it("should remove the element from the hash", function () {
+	it("should delove the element from the hash", function () {
 		set._items[id].should.eql(item);
-		set.rem(id);
+		set.del(id);
 		_.isUndefined(set._items[id]).should.equal(true);
 	});
 
-	it("should fire the rem event", function () {
+	it("should fire the del event", function () {
 		set._emit = sinon.spy();
-		set.rem(id);
-		set._emit.calledWith("rem", id).should.equal(true);
+		set.del(id);
+		set._emit.calledWith("del", id).should.equal(true);
 	});
 
 	it("should return the set instance", function () {
-		var s = set.rem(id);
+		var s = set.del(id);
 		s.should.equal(set);
 	});
 
@@ -99,12 +111,26 @@ describe("The get method", function () {
 	var id = "someRandomId";
 	var item = {};
 	var set = new Asteroid.Set();
-	set.add(id, item);
+	set.put(id, item);
 
 	it("should get a clone of the element", function () {
 		var itm = set.get(id);
 		itm.should.not.equal(item);
 		itm.should.eql(item);
+	});
+
+});
+
+describe("The contains method", function () {
+
+	var id = "someRandomId";
+	var item = {};
+	var set = new Asteroid.Set();
+	set.put(id, item);
+
+	it("should return true if and only if the set contains the item", function () {
+		set.contains(id).should.equal(true);
+		set.contains("anotherRandomId").should.equal(false);
 	});
 
 });
@@ -117,7 +143,7 @@ describe("The filter method", function () {
 		set = new Asteroid.Set();
 		for (var i=0; i<100; i++) {
 			id = ("000" + i).slice(-4);
-			set.add(id, {_id: id});
+			set.put(id, {_id: id});
 		}
 	});
 
@@ -162,8 +188,8 @@ describe("The filter method", function () {
 			return ai > bi;
 		}; 
 
-		set.add("0100", {_id: "0100"});
-		set.add("0101", {_id: "0101"});
+		set.put("0100", {_id: "0100"});
+		set.put("0101", {_id: "0101"});
 
 		odds = [];
 		for (i=0; i<102; i++) {
@@ -179,8 +205,8 @@ describe("The filter method", function () {
 			odds[j].should.eql(found[j]);
 		}
 
-		set.rem("0100");
-		set.rem("0101");
+		set.del("0100");
+		set.del("0101");
 
 		odds = [];
 		for (i=0; i<100; i++) {

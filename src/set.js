@@ -1,11 +1,11 @@
 var Set = function (readonly) {
 	// Allow readonly sets
 	if (readonly) {
-		// Make the add and rem methods private
-		this._add = this.add;
-		this._rem = this.rem;
+		// Make the put and del methods private
+		this._put = this.put;
+		this._del = this.del;
 		// Replace them with a throwy function
-		this.add = this.rem = function () {
+		this.put = this.del = function () {
 			throw new Error("Attempt to modify readonly set");
 		};
 	}
@@ -15,17 +15,17 @@ var Set = function (readonly) {
 Set.prototype = Object.create(EventEmitter.prototype);
 Set.constructor = Set;
 
-Set.prototype.add = function (id, item) {
+Set.prototype.put = function (id, item) {
 	// Save a clone to avoid collateral damage
 	this._items[id] = clone(item);
-	this._emit("add", id);
+	this._emit("put", id);
 	// Return the set instance to allow method chainging
 	return this;
 };
 
-Set.prototype.rem = function (id) {
+Set.prototype.del = function (id) {
 	delete this._items[id];
-	this._emit("rem", id);
+	this._emit("del", id);
 	// Return the set instance to allow method chainging
 	return this;
 };
@@ -33,6 +33,10 @@ Set.prototype.rem = function (id) {
 Set.prototype.get = function (id) {
 	// Return a clone to avoid collateral damage
 	return clone(this._items[id]);
+};
+
+Set.prototype.contains = function (id) {
+	return !!this._items[id];
 };
 
 Set.prototype.filter = function (belongFn) {
@@ -43,7 +47,7 @@ Set.prototype.filter = function (belongFn) {
 	// Keep a reference to the _items hash
 	var items = this._items;
 
-	// Performs the initial adds
+	// Performs the initial puts
 	var ids = Object.keys(items);
 	ids.forEach(function (id) {
 		// Clone the element to avoid
@@ -55,19 +59,19 @@ Set.prototype.filter = function (belongFn) {
 		}
 	});
 
-	// Listens to the add and rem events
+	// Listens to the put and del events
 	// to automatically update the subset
-	this.on("add", function (id) {
+	this.on("put", function (id) {
 		// Clone the element to avoid
 		// collateral damage
 		var itemClone = clone(items[id]);
 		var belongs = belongFn(id, itemClone);
 		if (belongs) {
-			sub._add(id, items[id]);
+			sub._put(id, items[id]);
 		}
 	});
-	this.on("rem", function (id) {
-		sub._rem(id);
+	this.on("del", function (id) {
+		sub._del(id);
 	});
 
 	// Returns the subset
