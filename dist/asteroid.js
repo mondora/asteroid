@@ -430,8 +430,11 @@ Collection.prototype._localToRemoteRemove = function (id) {
 		if (err) {
 			// On error restore the database and reject the promise
 			var backup = self._set.get(id + mf_removal_suffix);
-			self._set.put(id, backup);
-			self._set.del(id + mf_removal_suffix);
+			// Ensure there is a backup
+			if (backup) {
+				self._set.put(id, backup);
+				self._set.del(id + mf_removal_suffix);
+			}
 			deferred.reject(err);
 		} else {
 			// Else, delete the (possible) backup and resolve the promise
@@ -456,20 +459,23 @@ Collection.prototype.remove = function (id) {
 // Update-related private and public methods //
 ///////////////////////////////////////////////
 
-Collection.prototype._localToLocalUpdate = function (id, item) {
+Collection.prototype._localToLocalUpdate = function (id, fields) {
 	// Ensure the item actually exists
 	var existing = this._set.get(id);
 	if (!existing) {
-		throw new Error("Item " + item._id + " doesn't exist");
+		throw new Error("Item " + id + " doesn't exist");
 	}
 	// Ensure the _id property won't get modified
-	if (item._id && item._id !== id) {
+	if (fields._id && fields._id !== id) {
 		throw new Error("Modifying the _id of a document is not allowed");
 	}
 	// Create a backup
 	this._set.put(id + mf_update_suffix, existing);
 	// Perform the update
-	this._set.put(id, item);
+	for (var field in fields) {
+		existing[field] = fields[field];
+	}
+	this._set.put(id, existing);
 	// Return a promise, just for api consistency
 	return Q(id);
 };
@@ -491,7 +497,7 @@ Collection.prototype._remoteToLocalUpdate = function (id, fields) {
 	// Perform the update
 	this._set.put(id, existing);
 };
-Collection.prototype._localToRemoteUpdate = function (id, item) {
+Collection.prototype._localToRemoteUpdate = function (id, fields) {
 	var self = this;
 	var deferred = Q.defer();
 	// Construct the name of the method we need to call
@@ -502,7 +508,7 @@ Collection.prototype._localToRemoteUpdate = function (id, item) {
 	};
 	// Construct the modifier
 	var mod = {
-		$set: item
+		$set: fields
 	};
 	self.asteroid.ddp.method(methodName, [sel, mod], function (err, res) {
 		if (err) {
@@ -519,12 +525,12 @@ Collection.prototype._localToRemoteUpdate = function (id, item) {
 	});
 	return deferred.promise;
 };
-Collection.prototype.update = function (id, item) {
+Collection.prototype.update = function (id, fields) {
 	return {
 		// Perform the local update
-		local: this._localToLocalUpdate(id, item),
+		local: this._localToLocalUpdate(id, fields),
 		// Send the update request
-		remote: this._localToRemoteUpdate(id, item)
+		remote: this._localToRemoteUpdate(id, fields)
 	};
 };
 
@@ -571,6 +577,7 @@ var getFilterFromSelector = function (selector) {
 		// (e.g. "profile.name.first")
 		var getItemVal = function (item, key) {
 			return key.split(".").reduce(function (prev, curr) {
+				if (!prev) return prev;
 				prev = prev[curr];
 				return prev;
 			}, item);
@@ -578,10 +585,9 @@ var getFilterFromSelector = function (selector) {
 
 		// Iterate all the keys in the selector. The first that
 		// doesn't match causes the item to be filtered out.
-		var keys = Object.keys(selector);
-		for (var i=0; i<keys.length; i++) {
-			var itemVal = getItemVal(item, keys[i]);
-			if (itemVal !== selector[keys[i]]) {
+		for (var key in selector) {
+			var itemVal = getItemVal(item, key);
+			if (itemVal !== selector[key]) {
 				return false;
 			}
 		}
@@ -599,7 +605,7 @@ Collection.prototype.reactiveQuery = function (selectorOrFilter) {
 	} else {
 		filter = getFilterFromSelector(selectorOrFilter);
 	}
-	var subset = this._set(filter);
+	var subset = this._set.filter(filter);
 	return new ReactiveQuery(subset);
 };
 
