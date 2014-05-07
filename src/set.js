@@ -16,6 +16,9 @@ Set.prototype = Object.create(EventEmitter.prototype);
 Set.constructor = Set;
 
 Set.prototype.put = function (id, item) {
+	// Assert arguments type
+	must.beString(id);
+	must.beObject(item);
 	// Save a clone to avoid collateral damage
 	this._items[id] = clone(item);
 	this._emit("put", id);
@@ -24,6 +27,8 @@ Set.prototype.put = function (id, item) {
 };
 
 Set.prototype.del = function (id) {
+	// Assert arguments type
+	must.beString(id);
 	delete this._items[id];
 	this._emit("del", id);
 	// Return the set instance to allow method chainging
@@ -31,11 +36,15 @@ Set.prototype.del = function (id) {
 };
 
 Set.prototype.get = function (id) {
+	// Assert arguments type
+	must.beString(id);
 	// Return a clone to avoid collateral damage
 	return clone(this._items[id]);
 };
 
 Set.prototype.contains = function (id) {
+	// Assert arguments type
+	must.beString(id);
 	return !!this._items[id];
 };
 

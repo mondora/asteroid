@@ -32,38 +32,44 @@ Collection.prototype.constructor = Collection;
 ///////////////////////////////////////////////
 
 Collection.prototype._localToLocalInsert = function (item) {
+	// If an item by that id already exists, raise an exception
 	if (this._set.contains(item._id)) {
-		throw new Error("Item exists");
+		throw new Error("Item " + item._id + " already exists");
 	}
 	this._set.put(item._id, item);
+	// Return a promise, just for api consistency
 	return Q(item._id);
 };
 Collection.prototype._remoteToLocalInsert = function (item) {
+	// The server is the SSOT, add directly
 	this._set.put(item._id, item);
-};
-Collection.prototype._restoreInserted = function (id) {
-	this._set.del(id);
 };
 Collection.prototype._localToRemoteInsert = function (item) {
 	var self = this;
 	var deferred = Q.defer();
+	// Construct the name of the method we need to call
 	var methodName = "/" + self.name + "/insert";
-	this.asteroid.ddp.method(methodName, [item], function (err, res) {
+	self.asteroid.ddp.method(methodName, [item], function (err, res) {
 		if (err) {
-			self._restoreInserted(item._id);
+			// On error restore the database and reject the promise
+			self._set.del(item._id);
 			deferred.reject(err);
 		} else {
+			// Else resolve the promise
 			deferred.resolve(item._id);
 		}
 	});
 	return deferred.promise;
 };
 Collection.prototype.insert = function (item) {
+	// If the time has no id, generate one for it
 	if (!item._id) {
 		item._id = guid();
 	}
 	return {
+		// Perform the local insert
 		local: this._localToLocalInsert(item),
+		// Send the insert request
 		remote: this._localToRemoteInsert(item)
 	};
 };
@@ -75,29 +81,36 @@ Collection.prototype.insert = function (item) {
 ///////////////////////////////////////////////
 
 Collection.prototype._localToLocalRemove = function (id) {
+	// Check if the item exists in the database
 	var existing = this._set.get(id);
-	this._set.put(id + mf_removal_suffix, existing);
-	this._set.del(id);
+	if (existing) {
+		// Create a backup of the object to delete
+		this._set.put(id + mf_removal_suffix, existing);
+		// Delete the object
+		this._set.del(id);
+	}
+	// Return a promise, just for api consistency
 	return Q(id);
 };
 Collection.prototype._remoteToLocalRemove = function (id) {
+	// The server is the SSOT, remove directly (item and backup)
 	this._set.del(id);
-	this._set.del(id + mf_removal_suffix);
-};
-Collection.prototype._restoreRemoved = function (id) {
-	var backup = this._set.get(id + mf_removal_suffix);
-	this._set.put(id, backup);
-	this._set.del(id + mf_removal_suffix);
 };
 Collection.prototype._localToRemoteRemove = function (id) {
 	var self = this;
 	var deferred = Q.defer();
+	// Construct the name of the method we need to call
 	var methodName = "/" + self.name + "/remove";
-	this.asteroid.ddp.method(methodName, [{_id: id}], function (err, res) {
+	self.asteroid.ddp.method(methodName, [{_id: id}], function (err, res) {
 		if (err) {
-			self._restoreRemoved(id);
+			// On error restore the database and reject the promise
+			var backup = self._set.get(id + mf_removal_suffix);
+			self._set.put(id, backup);
+			self._set.del(id + mf_removal_suffix);
 			deferred.reject(err);
 		} else {
+			// Else, delete the (possible) backup and resolve the promise
+			self._set.del(id + mf_removal_suffix);
 			deferred.resolve(id);
 		}
 	});
@@ -105,7 +118,9 @@ Collection.prototype._localToRemoteRemove = function (id) {
 };
 Collection.prototype.remove = function (id) {
 	return {
+		// Perform the local remove
 		local: this._localToLocalRemove(id),
+		// Send the remove request
 		remote: this._localToRemoteRemove(id)
 	};
 };
@@ -117,46 +132,63 @@ Collection.prototype.remove = function (id) {
 ///////////////////////////////////////////////
 
 Collection.prototype._localToLocalUpdate = function (id, item) {
+	// Ensure the item actually exists
 	var existing = this._set.get(id);
 	if (!existing) {
-		throw new Error("Item not present");
+		throw new Error("Item " + item._id + " doesn't exist");
 	}
+	// Ensure the _id property won't get modified
+	if (item._id && item._id !== id) {
+		throw new Error("Modifying the _id of a document is not allowed");
+	}
+	// Create a backup
 	this._set.put(id + mf_update_suffix, existing);
+	// Perform the update
 	this._set.put(id, item);
+	// Return a promise, just for api consistency
 	return Q(id);
 };
 Collection.prototype._remoteToLocalUpdate = function (id, fields) {
+	// Ensure the item exixts in the database
 	var existing = this._set.get(id);
 	if (!existing) {
-		console.warn("Item not present");
+		console.warn("Server misbehaviour: item " + id + " doesn't exist");
 		return;
 	}
 	for (var field in fields) {
+		// Ensure the server is not trying to moify the item _id
+		if (field === "_id" && fields._id !== id) {
+			console.warn("Server misbehaviour: modifying the _id of a document is not allowed");
+			return;
+		}
 		existing[field] = fields[field];
 	}
+	// Perform the update
 	this._set.put(id, existing);
-	this._set.del(id + mf_update_suffix);
-};
-Collection.prototype._restoreUpdated = function (id) {
-	var backup = this._set.get(id + mf_update_suffix);
-	this._set.put(id, backup);
-	this._set.del(id + mf_update_suffix);
 };
 Collection.prototype._localToRemoteUpdate = function (id, item) {
 	var self = this;
 	var deferred = Q.defer();
+	// Construct the name of the method we need to call
 	var methodName = "/" + self.name + "/update";
+	// Construct the selector
 	var sel = {
 		_id: id
 	};
+	// Construct the modifier
 	var mod = {
 		$set: item
 	};
-	this.asteroid.ddp.method(methodName, [sel, mod], function (err, res) {
+	self.asteroid.ddp.method(methodName, [sel, mod], function (err, res) {
 		if (err) {
-			self._restoreUpdated(id);
+			// On error restore the database and reject the promise
+			var backup = self._set.get(id + mf_update_suffix);
+			self._set.put(id, backup);
+			self._set.del(id + mf_update_suffix);
 			deferred.reject(err);
 		} else {
+			// Else, delete the (possible) backup and resolve the promise
+			self._set.del(id + mf_update_suffix);
 			deferred.resolve(id);
 		}
 	});
@@ -164,7 +196,9 @@ Collection.prototype._localToRemoteUpdate = function (id, item) {
 };
 Collection.prototype.update = function (id, item) {
 	return {
+		// Perform the local update
 		local: this._localToLocalUpdate(id, item),
+		// Send the update request
 		remote: this._localToRemoteUpdate(id, item)
 	};
 };
@@ -243,3 +277,7 @@ Collection.prototype.reactiveQuery = function (selectorOrFilter) {
 	var subset = this._set(filter);
 	return new ReactiveQuery(subset);
 };
+
+
+
+Asteroid._Collection = Collection;

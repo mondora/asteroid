@@ -86,24 +86,69 @@ function isEqual (obj1, obj2) {
 	return str1 === str2;
 }
 
-var Asteroid = function (options) {
-	this._host = options.host;
-	this._ddpOptions = options.ddpOptions;
-	this._ddpOptions.do_not_autoconnect = true;
-	this._do_not_autocreate_collections = options._do_not_autocreate_collections;
+var must = {};
+
+must._toString = function (thing) {
+	return Object.prototype.toString.call(thing).slice(8, -1);
+};
+
+must.beString = function (s) {
+	var type = this._toString(s);
+	if (type !== "String") {
+		throw new Error("Assertion failed: expected String, instead got " + type);
+	}
+};
+
+must.beObject = function (o) {
+	var type = this._toString(o);
+	if (type !== "Object") {
+		throw new Error("Assertion failed: expected Object, instead got " + type);
+	}
+};
+
+//////////////////////////
+// Asteroid constructor //
+//////////////////////////
+
+var Asteroid = function (host, debug) {
+	// Assert host must be a string
+	must.beString(host);
+	// Configure the instance
+	this._host = "http://" + host;
+	this._ddpOptions = {
+		endpoint: "ws://" + host + "/websocket",
+		SocketConstructor: SockJS,
+		debug: debug
+	};
 	this.collections = {};
 	this.subscriptions = {};
+	// Init the instance
 	this._init();
 };
-Asteroid.prototype = new EventEmitter();
+// Asteroid instances are EventEmitter-s
+Asteroid.prototype = Object.create(EventEmitter.prototype);
 Asteroid.prototype.constructor = Asteroid;
+
+
+
+////////////////////////////////
+// Establishes the connection //
+////////////////////////////////
 
 Asteroid.prototype._init = function () {
 	var self = this;
+	// Creates the DDP instance, that will automatically
+	// connect to the DDP server.
 	self.ddp = new DDP(this._ddpOptions);
+	// Register handlers
 	self.ddp.on("connected", function () {
+		// Upon connection, try resuming the login
 		self._tryResumeLogin();
+		// Subscribe to the meteor.loginServiceConfiguration
+		// collection, which holds the configuration options
+		// to login via third party services (oauth).
 		self.ddp.sub("meteor.loginServiceConfiguration");
+		// Emit the connected event
 		self._emit("connected");
 	});
 	self.ddp.on("added", function (data) {
@@ -115,100 +160,166 @@ Asteroid.prototype._init = function () {
 	self.ddp.on("removed", function (data) {
 		self._onRemoved(data);
 	});
-	self.ddp.connect();
 };
 
+
+
+///////////////////////////////////////
+// Handler for the ddp "added" event //
+///////////////////////////////////////
+
 Asteroid.prototype._onAdded = function (data) {
-	var alwaysAutocreate = [
-		"meteor_accounts_loginServiceConfiguration",
-		"users"
-	];
+	// Get the name of the collection
 	var cName = data.collection;
+	// If the collection does not exist yet, create it
 	if (!this.collections[cName]) {
-		if (this._do_not_autocreate_collections) {
-			if (alwaysAutocreate.indexOf(cName) === -1) {
-				return;
-			}
-		}
-		this.createCollection(cName);
+		this.collections[cName] = new Asteroid._Collection(cName, this);
 	}
+	// data.fields can be undefined if the item added has only
+	// the _id field . To avoid errors down the line, ensure item
+	// is an object.
 	var item = data.fields || {};
 	item._id = data.id;
+	// Perform the remote insert
 	this.collections[cName]._remoteToLocalInsert(item);
 };
 
-Asteroid.prototype._onRemoved = function (data) {
-	if (this.collections[data.collection]) {
-		this.collections[data.collection]._remoteToLocalRemove(data.id);
-	}
-};
 
-Asteroid.prototype._onChanged = function (data) {
+
+/////////////////////////////////////////
+// Handler for the ddp "removed" event //
+/////////////////////////////////////////
+
+Asteroid.prototype._onRemoved = function (data) {
+	// Check the collection exists to avoid exceptions
 	if (!this.collections[data.collection]) {
 		return;
 	}
+	// Perform the reomte remove
+	this.collections[data.collection]._remoteToLocalRemove(data.id);
+};
+
+
+
+/////////////////////////////////////////
+// Handler for the ddp "changes" event //
+/////////////////////////////////////////
+
+Asteroid.prototype._onChanged = function (data) {
+	// Check the collection exists to avoid exceptions
+	if (!this.collections[data.collection]) {
+		return;
+	}
+	// data.fields can be undefined if the update only
+	// removed some properties in the item. Make sure
+	// it's an object
 	if (!data.fields) {
 		data.fields = {};
 	}
+	// If there were cleared fields, explicitly set them
+	// to undefined in the data.fields object. This will
+	// cause those fields to be present in the for ... in
+	// loop the remote update method of the collection
+	// performs, causing then the fields to be actually
+	// cleared from the item
 	if (data.cleared) {
 		data.cleared.forEach(function (key) {
 			data.fields[key] = undefined;
 		});
 	}
+	// Perform the remote update
 	this.collections[data.collection]._remoteToLocalUpdate(data.id, data.fields);
 };
 
+
+
+///////////////////////////////////////
+// Subscribe and unsubscribe methods //
+///////////////////////////////////////
+
 Asteroid.prototype.subscribe = function (name /* , param1, param2, ... */) {
+	// Assert name must be a string
+	must.beString(name);
+	// If we're already subscribed, return the subscription
 	if (this.subscriptions[name]) {
 		return this.subscriptions[name];
 	}
+	// Init the promise that will be returned
 	var deferred = Q.defer();
+	// Keep a reference to the subscription
 	this.subscriptions[name] = deferred.promise;
+	// Get the paramteres for the subscription
 	var params = Array.prototype.slice.call(arguments, 1);
+	// Subscribe via DDP
 	this.ddp.sub(name, params, function (err, id) {
+		// This is the onReady/onNoSub callback
 		if (err) {
+			// Reject the promise if the server answered nosub
 			deferred.reject(err, id);
 		} else {
+			// Resolve the promise if the server answered ready
 			deferred.resolve(id);
 		}
 	});
+	// Return the promise
 	return this.subscriptions[name];
 };
 
 Asteroid.prototype.unsubscribe = function (id) {
+	// Just send a ddp unsub message. We don't care about
+	// the response because the server doesn't give any
+	// meaningful response
 	this.ddp.unsub(id);
 };
 
+
+
+////////////////////////////
+// Call and apply methods //
+////////////////////////////
+
 Asteroid.prototype.call = function (method /* , param1, param2, ... */) {
+	// Get the parameters for apply
 	var params = Array.prototype.slice.call(arguments, 1);
+	// Call apply
 	return this.apply(method, params);
 };
 
 Asteroid.prototype.apply = function (method, params) {
+	// Create the result and updated promises
 	var resultDeferred = Q.defer();
 	var updatedDeferred = Q.defer();
 	var onResult = function (err, res) {
+		// The onResult handler takes care of errors
 		if (err) {
+			// If errors ccur, reject both promises
 			resultDeferred.reject(err);
 			updatedDeferred.reject();
 		} else {
+			// Otherwise resolve the result one
 			resultDeferred.resolve(res);
 		}
 	};
 	var onUpdated = function () {
+		// Just resolve the updated promise
 		updatedDeferred.resolve();
 	};
+	// Perform the method call
 	this.ddp.method(method, params, onResult, onUpdated);
+	// Return an object containing both promises
 	return {
 		result: resultDeferred.promise,
 		updated: updatedDeferred.promise
 	};
 };
 
-Asteroid.prototype.createCollection = function (name) {
-	if (!this.collections[name]) {
-		this.collections[name] = new Collection(name, this, DumbDb);
-	}
+
+
+/////////////////////
+// Syntactic sugar //
+/////////////////////
+
+Asteroid.prototype.getCollection = function (name) {
 	return this.collections[name];
 };
 
@@ -246,38 +357,44 @@ Collection.prototype.constructor = Collection;
 ///////////////////////////////////////////////
 
 Collection.prototype._localToLocalInsert = function (item) {
+	// If an item by that id already exists, raise an exception
 	if (this._set.contains(item._id)) {
-		throw new Error("Item exists");
+		throw new Error("Item " + item._id + " already exists");
 	}
 	this._set.put(item._id, item);
+	// Return a promise, just for api consistency
 	return Q(item._id);
 };
 Collection.prototype._remoteToLocalInsert = function (item) {
+	// The server is the SSOT, add directly
 	this._set.put(item._id, item);
-};
-Collection.prototype._restoreInserted = function (id) {
-	this._set.del(id);
 };
 Collection.prototype._localToRemoteInsert = function (item) {
 	var self = this;
 	var deferred = Q.defer();
+	// Construct the name of the method we need to call
 	var methodName = "/" + self.name + "/insert";
-	this.asteroid.ddp.method(methodName, [item], function (err, res) {
+	self.asteroid.ddp.method(methodName, [item], function (err, res) {
 		if (err) {
-			self._restoreInserted(item._id);
+			// On error restore the database and reject the promise
+			self._set.del(item._id);
 			deferred.reject(err);
 		} else {
+			// Else resolve the promise
 			deferred.resolve(item._id);
 		}
 	});
 	return deferred.promise;
 };
 Collection.prototype.insert = function (item) {
+	// If the time has no id, generate one for it
 	if (!item._id) {
 		item._id = guid();
 	}
 	return {
+		// Perform the local insert
 		local: this._localToLocalInsert(item),
+		// Send the insert request
 		remote: this._localToRemoteInsert(item)
 	};
 };
@@ -289,29 +406,36 @@ Collection.prototype.insert = function (item) {
 ///////////////////////////////////////////////
 
 Collection.prototype._localToLocalRemove = function (id) {
+	// Check if the item exists in the database
 	var existing = this._set.get(id);
-	this._set.put(id + mf_removal_suffix, existing);
-	this._set.del(id);
+	if (existing) {
+		// Create a backup of the object to delete
+		this._set.put(id + mf_removal_suffix, existing);
+		// Delete the object
+		this._set.del(id);
+	}
+	// Return a promise, just for api consistency
 	return Q(id);
 };
 Collection.prototype._remoteToLocalRemove = function (id) {
+	// The server is the SSOT, remove directly (item and backup)
 	this._set.del(id);
-	this._set.del(id + mf_removal_suffix);
-};
-Collection.prototype._restoreRemoved = function (id) {
-	var backup = this._set.get(id + mf_removal_suffix);
-	this._set.put(id, backup);
-	this._set.del(id + mf_removal_suffix);
 };
 Collection.prototype._localToRemoteRemove = function (id) {
 	var self = this;
 	var deferred = Q.defer();
+	// Construct the name of the method we need to call
 	var methodName = "/" + self.name + "/remove";
-	this.asteroid.ddp.method(methodName, [{_id: id}], function (err, res) {
+	self.asteroid.ddp.method(methodName, [{_id: id}], function (err, res) {
 		if (err) {
-			self._restoreRemoved(id);
+			// On error restore the database and reject the promise
+			var backup = self._set.get(id + mf_removal_suffix);
+			self._set.put(id, backup);
+			self._set.del(id + mf_removal_suffix);
 			deferred.reject(err);
 		} else {
+			// Else, delete the (possible) backup and resolve the promise
+			self._set.del(id + mf_removal_suffix);
 			deferred.resolve(id);
 		}
 	});
@@ -319,7 +443,9 @@ Collection.prototype._localToRemoteRemove = function (id) {
 };
 Collection.prototype.remove = function (id) {
 	return {
+		// Perform the local remove
 		local: this._localToLocalRemove(id),
+		// Send the remove request
 		remote: this._localToRemoteRemove(id)
 	};
 };
@@ -331,46 +457,63 @@ Collection.prototype.remove = function (id) {
 ///////////////////////////////////////////////
 
 Collection.prototype._localToLocalUpdate = function (id, item) {
+	// Ensure the item actually exists
 	var existing = this._set.get(id);
 	if (!existing) {
-		throw new Error("Item not present");
+		throw new Error("Item " + item._id + " doesn't exist");
 	}
+	// Ensure the _id property won't get modified
+	if (item._id && item._id !== id) {
+		throw new Error("Modifying the _id of a document is not allowed");
+	}
+	// Create a backup
 	this._set.put(id + mf_update_suffix, existing);
+	// Perform the update
 	this._set.put(id, item);
+	// Return a promise, just for api consistency
 	return Q(id);
 };
 Collection.prototype._remoteToLocalUpdate = function (id, fields) {
+	// Ensure the item exixts in the database
 	var existing = this._set.get(id);
 	if (!existing) {
-		console.warn("Item not present");
+		console.warn("Server misbehaviour: item " + id + " doesn't exist");
 		return;
 	}
 	for (var field in fields) {
+		// Ensure the server is not trying to moify the item _id
+		if (field === "_id" && fields._id !== id) {
+			console.warn("Server misbehaviour: modifying the _id of a document is not allowed");
+			return;
+		}
 		existing[field] = fields[field];
 	}
+	// Perform the update
 	this._set.put(id, existing);
-	this._set.del(id + mf_update_suffix);
-};
-Collection.prototype._restoreUpdated = function (id) {
-	var backup = this._set.get(id + mf_update_suffix);
-	this._set.put(id, backup);
-	this._set.del(id + mf_update_suffix);
 };
 Collection.prototype._localToRemoteUpdate = function (id, item) {
 	var self = this;
 	var deferred = Q.defer();
+	// Construct the name of the method we need to call
 	var methodName = "/" + self.name + "/update";
+	// Construct the selector
 	var sel = {
 		_id: id
 	};
+	// Construct the modifier
 	var mod = {
 		$set: item
 	};
-	this.asteroid.ddp.method(methodName, [sel, mod], function (err, res) {
+	self.asteroid.ddp.method(methodName, [sel, mod], function (err, res) {
 		if (err) {
-			self._restoreUpdated(id);
+			// On error restore the database and reject the promise
+			var backup = self._set.get(id + mf_update_suffix);
+			self._set.put(id, backup);
+			self._set.del(id + mf_update_suffix);
 			deferred.reject(err);
 		} else {
+			// Else, delete the (possible) backup and resolve the promise
+			self._set.del(id + mf_update_suffix);
 			deferred.resolve(id);
 		}
 	});
@@ -378,7 +521,9 @@ Collection.prototype._localToRemoteUpdate = function (id, item) {
 };
 Collection.prototype.update = function (id, item) {
 	return {
+		// Perform the local update
 		local: this._localToLocalUpdate(id, item),
+		// Send the update request
 		remote: this._localToRemoteUpdate(id, item)
 	};
 };
@@ -414,7 +559,37 @@ ReactiveQuery.prototype._getResult = function () {
 };
 
 var getFilterFromSelector = function (selector) {
-	return filter;
+	// Return the filter function
+	return function (id, item) {
+
+		// Filter out backups
+		if (is_backup(id)) {
+			return false;
+		}
+
+		// Get the value of the object from a compund key
+		// (e.g. "profile.name.first")
+		var getItemVal = function (item, key) {
+			return key.split(".").reduce(function (prev, curr) {
+				prev = prev[curr];
+				return prev;
+			}, item);
+		};
+
+		// Iterate all the keys in the selector. The first that
+		// doesn't match causes the item to be filtered out.
+		var keys = Object.keys(selector);
+		for (var i=0; i<keys.length; i++) {
+			var itemVal = getItemVal(item, keys[i]);
+			if (itemVal !== selector[keys[i]]) {
+				return false;
+			}
+		}
+
+		// At this point the item matches the selector
+		return true;
+
+	};
 };
 
 Collection.prototype.reactiveQuery = function (selectorOrFilter) {
@@ -429,25 +604,8 @@ Collection.prototype.reactiveQuery = function (selectorOrFilter) {
 };
 
 
-DumbDb.prototype.find = function (selector) {
-	var getItemVal = function (item, key) {
-		return key.split(".").reduce(function (prev, curr) {
-			prev = prev[curr];
-			return prev;
-		}, item);
-	};
-	var keys = Object.keys(selector);
-	keys.forEach(function (key) {
-		var itemVal = getItemVal(item, keys[i]);
-		if (itemVal !== selector[keys[i]]) {
-			return;
-		}
-	});
 
-		if (!is_backup(item._id)) {
-			matches.push(clone(item));
-		}
-};
+Asteroid._Collection = Collection;
 
 var DumbDb = function () {
 	this.itemsHash = {};
@@ -682,6 +840,9 @@ Set.prototype = Object.create(EventEmitter.prototype);
 Set.constructor = Set;
 
 Set.prototype.put = function (id, item) {
+	// Assert arguments type
+	must.beString(id);
+	must.beObject(item);
 	// Save a clone to avoid collateral damage
 	this._items[id] = clone(item);
 	this._emit("put", id);
@@ -690,6 +851,8 @@ Set.prototype.put = function (id, item) {
 };
 
 Set.prototype.del = function (id) {
+	// Assert arguments type
+	must.beString(id);
 	delete this._items[id];
 	this._emit("del", id);
 	// Return the set instance to allow method chainging
@@ -697,11 +860,15 @@ Set.prototype.del = function (id) {
 };
 
 Set.prototype.get = function (id) {
+	// Assert arguments type
+	must.beString(id);
 	// Return a clone to avoid collateral damage
 	return clone(this._items[id]);
 };
 
 Set.prototype.contains = function (id) {
+	// Assert arguments type
+	must.beString(id);
 	return !!this._items[id];
 };
 

@@ -69,6 +69,20 @@ describe("The put method", function () {
 		set._emit.calledWith("put", id).should.equal(true);
 	});
 
+	it("should throw if the first argument is not a string", function () {
+		var troublemaker = function () {
+			set.put({}, {});
+		};
+		troublemaker.should.throw("Assertion failed: expected String, instead got Object");
+	});
+
+	it("should throw if the second argument is not an object", function () {
+		var troublemaker = function () {
+			set.put("", "");
+		};
+		troublemaker.should.throw("Assertion failed: expected Object, instead got String");
+	});
+
 	it("should return the set instance", function () {
 		var s = set.put(id, item);
 		s.should.equal(set);
@@ -99,6 +113,13 @@ describe("The del method", function () {
 		set._emit.calledWith("del", id).should.equal(true);
 	});
 
+	it("should throw if the first argument is not a string", function () {
+		var troublemaker = function () {
+			set.del({});
+		};
+		troublemaker.should.throw("Assertion failed: expected String, instead got Object");
+	});
+
 	it("should return the set instance", function () {
 		var s = set.del(id);
 		s.should.equal(set);
@@ -119,6 +140,13 @@ describe("The get method", function () {
 		itm.should.eql(item);
 	});
 
+	it("should throw if the first argument is not a string", function () {
+		var troublemaker = function () {
+			set.get({});
+		};
+		troublemaker.should.throw("Assertion failed: expected String, instead got Object");
+	});
+
 });
 
 describe("The contains method", function () {
@@ -131,6 +159,13 @@ describe("The contains method", function () {
 	it("should return true if and only if the set contains the item", function () {
 		set.contains(id).should.equal(true);
 		set.contains("anotherRandomId").should.equal(false);
+	});
+
+	it("should throw if the first argument is not a string", function () {
+		var troublemaker = function () {
+			set.contains({});
+		};
+		troublemaker.should.throw("Assertion failed: expected String, instead got Object");
 	});
 
 });
