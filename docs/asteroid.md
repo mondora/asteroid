@@ -1,6 +1,10 @@
 ##API
 
+
+
 ##Asteroid methods
+
+
 
 ###new Asteroid(host, ssl, debug)
 
@@ -229,4 +233,143 @@ automatically created. We can then get a reference to that
 collection by calling `createCollection` (or by accessing
 the semi-private Asteroid.collections dictionary).
 
+
+
+##Asteroid.Collection methods
+
+All the following methods use latency compensation.
+
+
+
+###Collection.insert(item)
+
+Inserts an item into a collection. If the item does not
+have an _id property, one will be automatically generated
+for it.
+
+#####Arguments
+
+* `item` **object** _required_: the object to insert. Must
+  be JSON serializable. Optional support for EJSON is
+  planned.
+
+#####Returns
+
+An object with two properties: `local` and `remote`. Both
+properties are promises.
+
+The local promise is immediately resolved with the _id of
+the inserted item. That is, unless an error occurred. In
+that case, an exception will be raised. (TODO: this is a bit
+of an API inconsistency which should be fixed).
+
+The remote promise is resolved with the _id of the inserted
+item if the remote insert is successful. Otherwise it's
+rejected with the reason of the failure.
+
 ------------------------------------------------------------
+
+###Collection.update(id, item)
+
+Updates the specified item.
+
+#####Arguments
+
+* `id` **string** _required_: the id of the item to update.
+
+* `item` **object** _required_: the object that will
+  replace the old one.
+
+#####Returns
+
+An object with two properties: `local` and `remote`. Both
+properties are promises.
+
+The local promise is immediately resolved with the _id of
+the updated item. That is, unless an error occurred. In
+that case, an exception will be raised. (TODO: this is a bit
+of an API inconsistency which should be fixed).
+
+The remote promise is resolved with the _id of the updated
+item if the remote update is successful. Otherwise it's
+rejected with the reason of the failure.
+
+#####Note
+
+<span style="color:red;">The API greatly differs from
+Meteor's API. Aligning the two is on the TODO list.</span>
+
+------------------------------------------------------------
+
+###Collection.remove(id)
+
+Removes the specified item.
+
+#####Arguments
+
+* `id` **string** _required_: the id of the item to remove.
+
+#####Returns
+
+An object with two properties: `local` and `remote`. Both
+properties are promises.
+
+The local promise is immediately resolved with the _id of
+the removed item. That is, unless an error occurred. In
+that case, an exception will be raised. (TODO: this is a bit
+of an API inconsistency which should be fixed).
+
+The remote promise is resolved with the _id of the removed
+item if the remote remove is successful. Otherwise it's
+rejected with the reason of the failure.
+
+------------------------------------------------------------
+
+###Collection.reactiveQuery(selector)
+
+Gets a "reactive" subset of the collection.
+
+#####Arguments
+
+* `selector` **object or function** _required_: a
+  MongoDB-style selector. Actually for now only a simple
+  selector is supported (example `{key1: val1, key2.subkey1:
+  val2}`). To compensate for this, you can also pass in a
+  filter function which will be invoked on each item of the
+  collection. If the function returns a truthy value, the
+  item will be included, otherwise it will be left out.
+  Help on adding support for more complex selectors is
+  appreciated.
+
+#####Returns
+
+A ReactiveQuery instance.
+
+
+
+##ReactiveQuery methods and properties
+
+
+
+###ReactiveQuery.result
+
+The array of items in the collection that matched the query.
+
+------------------------------------------------------------
+
+###ReactiveQuery.on(event, handler)
+
+Registers a handler for an event.
+
+#####Arguments
+
+* `event` **string** _required_: the name of the event.
+
+* `handler` **function** _required_: the handler for the
+  event.
+
+Possible events are:
+
+* `change`: emitted whenever the result of the query
+  changes. The id of the item that changed is passed to the
+  handler.
