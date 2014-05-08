@@ -23,8 +23,7 @@ platform without having to compromise on the front-end.
 
 ##Example
 
-<span style="color:red;">Warning: the API is in flux and needs to be cleaned up. This is what using
-Asteroid will look like in a couple of weeks.</span>
+<span style="color:red;">Warning: the API is in still a bit in flux.</span>
 
 ```javascript
 // Connect to a Meteor backend
