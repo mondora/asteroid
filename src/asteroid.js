@@ -2,16 +2,19 @@
 // Asteroid constructor //
 //////////////////////////
 
-var Asteroid = function (host, debug) {
-	// Assert host must be a string
+var Asteroid = function (host, ssl, debug) {
+	// Assert arguments type
 	must.beString(host);
 	// Configure the instance
-	this._host = "http://" + host;
+	this._host = (ssl ? "https://" : "http://") + host;
+	// If SockJS is available, use it, otherwise, use WebSocket
+	// Note: SockJS is required for IE9 support
 	this._ddpOptions = {
-		endpoint: "ws://" + host + "/websocket",
-		SocketConstructor: SockJS,
+		endpoint: (ssl ? "wss://" : "ws://") + host + (window.SockJS ? "/sockjs" : "/websocket"),
+		SocketConstructor: window.SockJS || window.WebSocket,
 		debug: debug
 	};
+	// Reference containers
 	this.collections = {};
 	this.subscriptions = {};
 	// Init the instance
@@ -171,6 +174,8 @@ Asteroid.prototype.unsubscribe = function (id) {
 ////////////////////////////
 
 Asteroid.prototype.call = function (method /* , param1, param2, ... */) {
+	// Assert name must be a string
+	must.beString(method);
 	// Get the parameters for apply
 	var params = Array.prototype.slice.call(arguments, 1);
 	// Call apply
@@ -178,6 +183,8 @@ Asteroid.prototype.call = function (method /* , param1, param2, ... */) {
 };
 
 Asteroid.prototype.apply = function (method, params) {
+	// Assert name must be a string
+	must.beString(method);
 	// Create the result and updated promises
 	var resultDeferred = Q.defer();
 	var updatedDeferred = Q.defer();
