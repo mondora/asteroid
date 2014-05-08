@@ -48,13 +48,8 @@ ceres.loginWithTwitter();
 
 [Same app using Meteor's front-end client](https://mondora.meteor.com)
 
-The Asteroid client, which includes AngularJS, is almost half the size of the Meteor's client.
+The [Asteroid client](http://s27.postimg.org/hc1qjnjsz/Asteroid.png), which includes AngularJS (not required, but included for the demo), is almost half the size of the [Meteor client](http://s29.postimg.org/3mxaifziv/Meteor.png).
 
-Asteroid
-<img src="http://s27.postimg.org/hc1qjnjsz/Asteroid.png" alt="Asteroid network inspector" />
-
-Meteor
-<img src="http://s29.postimg.org/3mxaifziv/Meteor.png" alt="Meteor network inspector" />
 
 
 ##API
