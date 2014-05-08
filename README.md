@@ -17,6 +17,10 @@ platform without having to compromise on the front-end.
 
     bower install asteroid
 
+##Test
+
+	npm test
+
 ##Example
 
 <span style="color:red;">Warning: the API is in flux and needs to be cleaned up. This is what using
@@ -26,13 +30,14 @@ Asteroid will look like in a couple of weeks.</span>
 // Connect to a Meteor backend
 var ceres = new Asteroid("localhost:3000");
 
-// Use real-time collection
-var tasks = ceres.createCollection("tasks");
+// Use real-time collections
 ceres.subscribe("tasks");
+var tasks = ceres.getCollection("tasks");
 tasks.insert({
   description: "Do the laundry"
 });
-var laundryTask = tasks.find({description: "Do the laundry"});
+var laundryTaskQuery = tasks.reactiveQuery({description: "Do the laundry"});
+console.log(laundryTaskQuery.result); // Logs the array of results
 
 // Login your user
 ceres.loginWithTwitter();
