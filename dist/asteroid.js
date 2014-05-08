@@ -291,7 +291,7 @@ Asteroid.prototype.call = function (method /* , param1, param2, ... */) {
 };
 
 Asteroid.prototype.apply = function (method, params) {
-	// Assert name must be a string
+	// Assert method must be a string
 	must.beString(method);
 	// Create the result and updated promises
 	var resultDeferred = Q.defer();
@@ -326,7 +326,13 @@ Asteroid.prototype.apply = function (method, params) {
 // Syntactic sugar //
 /////////////////////
 
-Asteroid.prototype.getCollection = function (name) {
+Asteroid.prototype.createCollection = function (name) {
+	// Assert on arguments type
+	must.beString(name);
+	// Only create the collection if it doesn't exist
+	if (!this.collections[name]) {
+		this.collections[name] = new Asteroid._Collection(name, this);
+	}
 	return this.collections[name];
 };
 

@@ -32,7 +32,7 @@ var ceres = new Asteroid("localhost:3000");
 
 // Use real-time collections
 ceres.subscribe("tasks");
-var tasks = ceres.getCollection("tasks");
+var tasks = ceres.createCollection("tasks");
 tasks.insert({
   description: "Do the laundry"
 });
