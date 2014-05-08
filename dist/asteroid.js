@@ -684,17 +684,9 @@ Asteroid.DumbDb = DumbDb;
 
 Asteroid.prototype._getOauthClientId = function (serviceName) {
 	var loginConfigCollectionName = "meteor_accounts_loginServiceConfiguration";
-	var services = this.collections[loginConfigCollectionName].db.itemsArray;
-	var clientId = "";
-	services.forEach(function (service) {
-		if (service.service === serviceName) {
-			if (serviceName === "facebook") clientId = service.appId;
-			if (serviceName === "google") clientId = service.clientId;
-			if (serviceName === "github") clientId = service.clientId;
-			if (serviceName === "twitter") clientId = service.consumerKey;
-		}
-	});
-	return clientId;
+	var loginConfigCollection = this.collections[loginConfigCollectionName];
+	var service = loginConfigCollection.reactiveQuery({service: serviceName}).result[0];
+	return service.clientId;
 };
 
 Asteroid.prototype._initOauthLogin = function (service, credentialToken, loginUrl) {

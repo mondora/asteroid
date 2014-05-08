@@ -1,19 +1,11 @@
-var options = {
-	host: "http://localhost:3000"
-};
-options.ddpOptions = {
-	endpoint: "ws://localhost:3000/websocket",
-	SocketConstructor: WebSocket,
-	debug: true
-};
-var Rocket = new Asteroid(options);
-Rocket.on("connected", function () {
+var ceres = new Asteroid("localhost:3000");
+ceres.on("connected", function () {
 	console.log("Connected!");
 });
 
 window.onload = function () {
 	document.getElementById("fb").addEventListener("click", function () {
-		Rocket.loginWithFacebook()
+		ceres.loginWithFacebook()
 			.then(function (id) {
 				console.log(id);
 			})
@@ -22,17 +14,17 @@ window.onload = function () {
 			});
 	}, false);
 	document.getElementById("tw").addEventListener("click", function () {
-		Rocket.loginWithTwitter().then(function (id) {
+		ceres.loginWithTwitter().then(function (id) {
 			console.log(id);
 		});
 	}, false);
 	document.getElementById("gl").addEventListener("click", function () {
-		Rocket.loginWithGoogle().then(function (id) {
+		ceres.loginWithGoogle().then(function (id) {
 			console.log(id);
 		});
 	}, false);
 	document.getElementById("gh").addEventListener("click", function () {
-		Rocket.loginWithGithub().then(function (id) {
+		ceres.loginWithGithub().then(function (id) {
 			console.log(id);
 		});
 	}, false);
