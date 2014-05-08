@@ -14,13 +14,13 @@ transport. Otherwise `WebSocket` will be used. Note that
 
 #####Arguments
 
-* `host` *string* _required_: the address of the Meteor
+* `host` **string** _required_: the address of the Meteor
   server, e.g. `example.meteor.com`
 
-* `ssl` *boolean* _optional_: whether to use SSL. Defaults
+* `ssl` **boolean** _optional_: whether to use SSL. Defaults
   to `false`.
 
-* `debug`*boolean* _optional_: if set to `true`, DDP messages
+* `debug`**boolean** _optional_: if set to `true`, DDP messages
   will be logged in the console. Defaults to `false`.
 
 #####Returns
@@ -35,9 +35,9 @@ Registers an event handler for the specified event.
 
 #####Arguments
 
-* `event` *string* _required_: the name of the event.
+* `event` **string** _required_: the name of the event.
 
-* `handler` *function* _required_: the handler.
+* `handler` **function** _required_: the handler.
 
 An Asteroid instance emits the following events:
 
@@ -63,13 +63,13 @@ service.
 
 #####Available services
 
-* *facebook*: `loginWithFacebook`
+* **facebook**: `loginWithFacebook`
 
-* *google*: `loginWithGoogle`
+* **google**: `loginWithGoogle`
 
-* *twitter*: `loginWithTwitter`
+* **twitter**: `loginWithTwitter`
 
-* *github*: `loginWithGithub`
+* **github**: `loginWithGithub`
 
 #####Returns
 
@@ -87,9 +87,9 @@ Logs the user in using the SRP protocol.
 
 #####Arguments
 
-* `username` *string* _required_: the username
+* `username` **string** _required_: the username
 
-* `password` *string* _required_: the password. Note: since
+* `password` **string** _required_: the password. Note: since
   Meteor uses the SRP protocol, the password is never
   actually sent to the server.
 
@@ -121,7 +121,7 @@ Subscribes to the specified subscription.
 
 #####Arguments
 
-* `name` *string* _required_: the name of the subscription.
+* `name` **string** _required_: the name of the subscription.
 
 * `param1, param2, ...` _optional_: a list of parameters
   that will be passed to the publish function on the server.
@@ -140,7 +140,7 @@ Unsubscribes from the specified subscription.
 
 #####Arguments
 
-* `id` *string* _required_: the `id` of the subscription, as
+* `id` **string** _required_: the `id` of the subscription, as
   returned by the `subscribe` method
 
 #####Returns
@@ -155,7 +155,7 @@ Calls a server-side method with the specified arguments.
 
 #####Arguments
 
-* `method` *string* _required_: the name of the method to
+* `method` **string** _required_: the name of the method to
   call.
 
 * `param1, param2, ...` _optional_: a list of parameters
@@ -188,10 +188,10 @@ instead of a list.
 
 #####Arguments
 
-* `method` *string* _required_: the name of the method to
+* `method` **string** _required_: the name of the method to
   call.
 
-* `params` *array* _optional_: an array of parameters that
+* `params` **array** _optional_: an array of parameters that
   will be passed to the method on the server.
 
 #####Returns
@@ -207,7 +207,7 @@ exists, nothing changes and the existing one is returned.
 
 #####Arguments
 
-* `name` *string* _required_: the name of the collection to
+* `name` **string** _required_: the name of the collection to
   create.
 
 #####Returns
