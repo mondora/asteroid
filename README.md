@@ -64,8 +64,14 @@ The [Asteroid client](http://s27.postimg.org/hc1qjnjsz/Asteroid.png), which incl
 
 Creates a new Asteroid instance, that is, a connection to a
 Meteor server (via DDP).
+
 After being constructed, the instance will connect itself
-to the Meteor backend.
+to the Meteor backend. It will also try, upon connection,
+to resume a previous login session (with a token saved in
+localstorage). The `Asteroid.resumeLoginPromise` property
+stores a promise which will be resolved if the resume was
+successful, rejected otherwise.
+
 If `SockJS` is defined, it will be used as the socket
 transport. Otherwise `WebSocket` will be used. Note that
 `SockJS` is required for IE9 support.

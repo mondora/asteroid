@@ -38,7 +38,8 @@ Asteroid.prototype._init = function () {
 	// Register handlers
 	self.ddp.on("connected", function () {
 		// Upon connection, try resuming the login
-		self._tryResumeLogin();
+		// Save the pormise it returns
+		self.resumeLoginPromise = self._tryResumeLogin();
 		// Subscribe to the meteor.loginServiceConfiguration
 		// collection, which holds the configuration options
 		// to login via third party services (oauth).

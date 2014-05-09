@@ -146,7 +146,8 @@ Asteroid.prototype._init = function () {
 	// Register handlers
 	self.ddp.on("connected", function () {
 		// Upon connection, try resuming the login
-		self._tryResumeLogin();
+		// Save the pormise it returns
+		self.resumeLoginPromise = self._tryResumeLogin();
 		// Subscribe to the meteor.loginServiceConfiguration
 		// collection, which holds the configuration options
 		// to login via third party services (oauth).
@@ -678,33 +679,31 @@ Asteroid.prototype._initOauthLogin = function (service, credentialToken, loginUr
 
 Asteroid.prototype._tryResumeLogin = function () {
 	var self = this;
+	var deferred = Q.defer();
 	var token = localStorage[self._host + "__login_token__"];
 	if (!token) {
-		return;
+		deferred.reject("No login token");
+		return deferred.promise;
 	}
-	return Q()
-		.then(function () {
-			var deferred = Q.defer();
-			var loginParameters = {
-				resume: token
-			};
-			self.ddp.method("login", [loginParameters], function (err, res) {
-				if (err) {
-					delete self.userId;
-					delete self.loggedIn;
-					delete localStorage[self._host + "__login_token__"];
-					self._emit("loginError", err);
-					deferred.reject(err);
-				} else {
-					self.userId = res.id;
-					self.loggedIn = true;
-					localStorage[self._host + "__login_token__"] = res.token;
-					self._emit("login", res.id);
-					deferred.resolve(res.id);
-				}
-			});
-			return deferred.promise;
-		});
+	var loginParameters = {
+		resume: token
+	};
+	self.ddp.method("login", [loginParameters], function (err, res) {
+		if (err) {
+			delete self.userId;
+			delete self.loggedIn;
+			delete localStorage[self._host + "__login_token__"];
+			self._emit("loginError", err);
+			deferred.reject(err);
+		} else {
+			self.userId = res.id;
+			self.loggedIn = true;
+			localStorage[self._host + "__login_token__"] = res.token;
+			self._emit("login", res.id);
+			deferred.resolve(res.id);
+		}
+	});
+	return deferred.promise;
 };
 
 Asteroid.prototype.loginWithFacebook = function (scope) {
