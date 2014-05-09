@@ -243,9 +243,11 @@ Asteroid.prototype._onChanged = function (data) {
 Asteroid.prototype.subscribe = function (name /* , param1, param2, ... */) {
 	// Assert name must be a string
 	must.beString(name);
-	// If we're already subscribed, return the subscription
-	if (this.subscriptions[name]) {
-		return this.subscriptions[name];
+	// If we're already subscribed, unsubscribe before re-subscribing
+	var subPromise = this.subscriptions[name];
+	if (subPromise && subPromise.isFulfilled()) {
+		var subId = subPromise.inspect().value;
+		this.unsubscribe(subId);
 	}
 	// Init the promise that will be returned
 	var deferred = Q.defer();
@@ -258,7 +260,7 @@ Asteroid.prototype.subscribe = function (name /* , param1, param2, ... */) {
 		// This is the onReady/onNoSub callback
 		if (err) {
 			// Reject the promise if the server answered nosub
-			deferred.reject(err, id);
+			deferred.reject(err);
 		} else {
 			// Resolve the promise if the server answered ready
 			deferred.resolve(id);

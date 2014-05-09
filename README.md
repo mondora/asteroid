@@ -175,7 +175,9 @@ successful. Otherwise it'll be rejected with the error.
 ------------------------------------------------------------
 ###Asteroid.subscribe(name, [param1, param2, ...])
 
-Subscribes to the specified subscription.
+Subscribes to the specified subscription. If a subscription
+by that name is already present (and successful), first
+Asteroid unsubscribes from it.
 
 #####Arguments
 
