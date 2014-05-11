@@ -25,6 +25,16 @@ Then, add the necessary libraries to your index.html:
     <script src="bower_components/q/q.js"></script>
     <script src="bower_components/asteroid/dist/asteroid.js"></script>
 
+##Features
+
+* Small footprint. The library is about ~10Kb minified. It depends on ddp.js (~5Kb minified), and q (~23Kb minified). Replacing q by another, more lightweight, promise library is on the short-term todo list.
+
+* Framework agnostic. Use the tools you already know and love to build your app.
+
+* Allows to use Meteor as a full-blown backend or just as a real-time platform pluggable into any existing project.
+
+* Easily connect to multiple Meteor servers at the same time, perfect for building admin interfaces.
+
 ##Test
 
     npm test
