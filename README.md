@@ -27,7 +27,7 @@ Then, add the necessary libraries to your index.html:
 
 ##Advantages over the canonical Meteor front-end
 
-* Small footprint. The library is about ~10Kb minified. It depends on ddp.js (~5Kb minified), and q (~23Kb minified). Replacing q by another, more lightweight, promise library is on the short-term todo list.
+* Small footprint. The library is about ~10Kb minified. It depends on ddp.js (~5Kb minified), and a q-compatible promise library (q is ~23Kb minified, if you prefer a more lightweight alternative, check out my fork of [ayepromise](https://github.com/mondora/ayepromise), ~3Kb minified).
 
 * Framework agnostic. Use the tools you already know and love to build your app.
 
