@@ -11,6 +11,13 @@ must.beString = function (s) {
 	}
 };
 
+must.beArray = function (o) {
+	var type = this._toString(o);
+	if (type !== "Array") {
+		throw new Error("Assertion failed: expected Array, instead got " + type);
+	}
+};
+
 must.beObject = function (o) {
 	var type = this._toString(o);
 	if (type !== "Object") {

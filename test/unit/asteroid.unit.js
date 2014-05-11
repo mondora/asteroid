@@ -168,7 +168,19 @@ describe("The Asteroid.subscribe method", function () {
 
 });
 
-describe("The Asteroid.apply function", function () {
+describe("The Asteroid.unsubscribe method", function () {
+
+	it("should throw if the first argument is not a string", function () {
+		var ceres = new Asteroid("example.com");	
+		var troublemaker = function () {
+			ceres.unsubscribe({});
+		};
+		troublemaker.should.throw("Assertion failed: expected String, instead got Object");
+	});
+
+});
+
+describe("The Asteroid.apply method", function () {
 
 	beforeEach(function () {
 		window.DDP = function () {
@@ -194,6 +206,14 @@ describe("The Asteroid.apply function", function () {
 			ceres.apply({});
 		};
 		troublemaker.should.throw("Assertion failed: expected String, instead got Object");
+	});
+
+	it("should throw if the second argument is not an array", function () {
+		var ceres = new Asteroid("example.com");	
+		var troublemaker = function () {
+			ceres.apply("", {});
+		};
+		troublemaker.should.throw("Assertion failed: expected Array, instead got Object");
 	});
 
 	it("should return an object containing two promises", function () {

@@ -99,6 +99,13 @@ must.beString = function (s) {
 	}
 };
 
+must.beArray = function (o) {
+	var type = this._toString(o);
+	if (type !== "Array") {
+		throw new Error("Assertion failed: expected Array, instead got " + type);
+	}
+};
+
 must.beObject = function (o) {
 	var type = this._toString(o);
 	if (type !== "Object") {
@@ -242,7 +249,7 @@ Asteroid.prototype._onChanged = function (data) {
 ///////////////////////////////////////
 
 Asteroid.prototype.subscribe = function (name /* , param1, param2, ... */) {
-	// Assert name must be a string
+	// Assert arguments type
 	must.beString(name);
 	// If we're already subscribed, unsubscribe before re-subscribing
 	var subPromise = this.subscriptions[name];
@@ -272,6 +279,8 @@ Asteroid.prototype.subscribe = function (name /* , param1, param2, ... */) {
 };
 
 Asteroid.prototype.unsubscribe = function (id) {
+	// Assert arguments type
+	must.beString(id);
 	// Just send a ddp unsub message. We don't care about
 	// the response because the server doesn't give any
 	// meaningful response
@@ -285,7 +294,7 @@ Asteroid.prototype.unsubscribe = function (id) {
 ////////////////////////////
 
 Asteroid.prototype.call = function (method /* , param1, param2, ... */) {
-	// Assert name must be a string
+	// Assert arguments type
 	must.beString(method);
 	// Get the parameters for apply
 	var params = Array.prototype.slice.call(arguments, 1);
@@ -294,8 +303,9 @@ Asteroid.prototype.call = function (method /* , param1, param2, ... */) {
 };
 
 Asteroid.prototype.apply = function (method, params) {
-	// Assert method must be a string
+	// Assert arguments type
 	must.beString(method);
+	must.beArray(params);
 	// Create the result and updated promises
 	var resultDeferred = Q.defer();
 	var updatedDeferred = Q.defer();
@@ -330,7 +340,7 @@ Asteroid.prototype.apply = function (method, params) {
 /////////////////////
 
 Asteroid.prototype.createCollection = function (name) {
-	// Assert on arguments type
+	// Assert arguments type
 	must.beString(name);
 	// Only create the collection if it doesn't exist
 	if (!this.collections[name]) {
