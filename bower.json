@@ -6,7 +6,7 @@
     "Paolo Scanferla <paolo.scanferla@mondora.com>"
   ],
   "description": "A lightweight and flexible alternative to Meteor's client-side framework",
-  "main": "src/Asteroid.js",
+  "main": "dist/asteroid.js",
   "moduleType": [
     "amd",
     "globals",
@@ -23,7 +23,10 @@
     "node_modules",
     "bower_components",
     "test",
-    "tests"
+    "tests",
+	"src",
+	"demo",
+	"gulpfile.js"
   ],
   "dependencies": {
     "ddp.js": "~0.4.0",
