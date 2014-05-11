@@ -142,6 +142,10 @@ Asteroid.prototype.subscribe = function (name /* , param1, param2, ... */) {
 		var subId = subPromise.inspect().value;
 		this.unsubscribe(subId);
 	}
+	// If the promise is pending, return it
+	if (subPromise && subPromise.isPending()) {
+		return subPromise;
+	}
 	// Init the promise that will be returned
 	var deferred = Q.defer();
 	// Keep a reference to the subscription
@@ -190,7 +194,10 @@ Asteroid.prototype.call = function (method /* , param1, param2, ... */) {
 Asteroid.prototype.apply = function (method, params) {
 	// Assert arguments type
 	must.beString(method);
-	must.beArray(params);
+	// If no parameters are given, use an empty array
+	if (!Array.isArray(params)) {
+		params = [];
+	}
 	// Create the result and updated promises
 	var resultDeferred = Q.defer();
 	var updatedDeferred = Q.defer();

@@ -111,6 +111,7 @@ describe("The Asteroid.subscribe method", function () {
 				ddp.resolveOrReject = f;
 				ddp.params = p;
 			};
+			ddp.unsub = sinon.spy();
 			return ddp;
 		};
 	});
@@ -133,13 +134,6 @@ describe("The Asteroid.subscribe method", function () {
 		Q.isPromise(promise).should.equal(true);
 	});
 
-	it("which will be returned again if multiple calls to subscribe are made", function () {
-		var ceres = new Asteroid("example.com");	
-		var promise1 = ceres.subscribe("sub");
-		var promise2 = ceres.subscribe("sub");
-		promise1.should.equal(promise2);
-	});
-
 	it("which will be resolved if the subscription is successful", function () {
 		var ceres = new Asteroid("example.com");	
 		var promise = ceres.subscribe("sub");
@@ -152,6 +146,21 @@ describe("The Asteroid.subscribe method", function () {
 		var promise = ceres.subscribe("sub");
 		ceres.ddp.resolveOrReject({});
 		promise.isRejected().should.equal(true);	
+	});
+
+	it("if we're not waiting for a response to the subscription, should unsubscribe before re-subscribing", function () {
+		var ceres = new Asteroid("example.com");	
+		var promise1 = ceres.subscribe("sub");
+		ceres.ddp.resolveOrReject(false, "subId");
+		var promise2 = ceres.subscribe("sub");
+		ceres.ddp.unsub.calledWith("subId").should.equal(true);
+	});
+
+	it("if we're waiting for a response to the subscription, should return the pending promise", function () {
+		var ceres = new Asteroid("example.com");	
+		var promise1 = ceres.subscribe("sub");
+		var promise2 = ceres.subscribe("sub");
+		promise1.should.equal(promise2);
 	});
 
 	it("should pass the correct parameters to the publish function (on the server)", function () {
@@ -168,7 +177,41 @@ describe("The Asteroid.subscribe method", function () {
 
 });
 
-describe("The Asteroid.apply function", function () {
+describe("The Asteroid.unsubscribe method", function () {
+
+	beforeEach(function () {
+		window.DDP = function () {
+			ddp = {};
+			ddp.on = function (e, f) {
+				if (e === "connected") ddp.emitConnected = f;
+				if (e === "added") ddp.emitAdded = f;
+				if (e === "changed") ddp.emitChanged = f;
+				if (e === "removed") ddp.emitRemoved = f;
+			};
+			ddp.sub = function (n, p, f) {
+				ddp.resolveOrReject = f;
+				ddp.params = p;
+			};
+			ddp.unsub = sinon.spy();
+			return ddp;
+		};
+	});
+
+	afterEach(function () {
+		delete window.DDP;
+	});
+
+	it("should throw if the first argument is not a string", function () {
+		var ceres = new Asteroid("example.com");	
+		var troublemaker = function () {
+			ceres.unsubscribe({});
+		};
+		troublemaker.should.throw("Assertion failed: expected String, instead got Object");
+	});
+
+});
+
+describe("The Asteroid.apply method", function () {
 
 	beforeEach(function () {
 		window.DDP = function () {
@@ -194,6 +237,13 @@ describe("The Asteroid.apply function", function () {
 			ceres.apply({});
 		};
 		troublemaker.should.throw("Assertion failed: expected String, instead got Object");
+	});
+
+	it("should use an empty array as parameters if no array of parameters is supplied", function () {
+		var ceres = new Asteroid("example.com");	
+		ceres.apply("hello");
+		var call = ceres.ddp.method.getCall(0);
+		call.args[1].should.eql([]);
 	});
 
 	it("should return an object containing two promises", function () {
