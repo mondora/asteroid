@@ -15,11 +15,19 @@ platform without having to compromise on the front-end.
 
 ##Install
 
+First, dowload the library:
+
     bower install asteroid
+
+Then, add the necessary libraries to your index.html:
+
+    <script src="bower_components/ddp.js/dpp.js"></script>
+    <script src="bower_components/q/q.js"></script>
+    <script src="bower_components/asteroid/dist/asteroid.js"></script>
 
 ##Test
 
-	npm test
+    npm test
 
 ##Example
 
