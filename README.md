@@ -25,7 +25,7 @@ Then, add the necessary libraries to your index.html:
     <script src="bower_components/q/q.js"></script>
     <script src="bower_components/asteroid/dist/asteroid.js"></script>
 
-##Features
+##Advantages over the canonical Meteor front-end
 
 * Small footprint. The library is about ~10Kb minified. It depends on ddp.js (~5Kb minified), and q (~23Kb minified). Replacing q by another, more lightweight, promise library is on the short-term todo list.
 
