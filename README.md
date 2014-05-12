@@ -13,6 +13,8 @@ By conneting to any Meteor backend via the Distributed Data Protocol, Asteroid
 allows the developer to take advantage of the greatest features of Meteor's back-end
 platform without having to compromise on the front-end.
 
+[Blog post on the library](http://mondora.com/asteroid-a-better-way-to-build-meteor-apps/)
+
 ##Install
 
 First, dowload the library:
