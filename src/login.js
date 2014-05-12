@@ -6,11 +6,11 @@ Asteroid.prototype._getOauthClientId = function (serviceName) {
 };
 
 Asteroid.prototype._initOauthLogin = function (service, credentialToken, loginUrl) {
+	var popup = window.open(loginUrl, "Login");
 	var self = this;
 	return Q()
 		.then(function () {
 			var deferred = Q.defer();
-			var popup = window.open(loginUrl, "Login");
 			if (popup.focus) popup.focus();
 			var intervalId = setInterval(function () {
 				if (popup.closed || popup.closed === undefined) {
