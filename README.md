@@ -68,6 +68,25 @@ ceres.loginWithTwitter();
 
 The [Asteroid client](http://s27.postimg.org/hc1qjnjsz/Asteroid.png), which includes AngularJS (not required, but included for the demo), is almost half the size of the [Meteor client](http://s29.postimg.org/3mxaifziv/Meteor.png).
 
+##Todo
+
+Here follows a list of things which need to be done before the library
+can be considered "production ready":
+
+* allow using selectors and modifiers to update an item (currently you can
+  only replace top-level fields in the document with the Collection.update
+  method). Difficulty 8/10
+
+* allow using selectors with the reactiveQuery method. Difficulty 8/10
+
+* add EJSON support (by porting Meteor's EJSON package). Difficulty 3/10
+
+* solve [this Oauth login issue](https://github.com/meteor/meteor/issues/2096). Difficulty 5/10
+
+* add SRP login support (by porting Meteor's SRP package). Difficulty 3/10
+
+* designing a pretty logo. Difficulty 6/10
+
 
 
 ##API
