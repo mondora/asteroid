@@ -140,6 +140,10 @@ Nothing
 
 ###Asteroid.loginWith ... ()
 
+WARNING: Meteor 0.8.1 introduced a security policy that broke
+this functionality.
+[Work is undergoing to fix it](https://github.com/meteor/meteor/issues/2096).
+
 Logs the user in via the specified third party (oauth)
 service.
 
@@ -163,7 +167,7 @@ the error.
 
 ###Asteroid.login(username, password)
 
-<span style="color:red;">Not yet implemented</span>
+WARNING: Not yet implemented
 
 Logs the user in using the SRP protocol.
 
