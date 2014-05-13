@@ -47,6 +47,15 @@ Asteroid.prototype._init = function () {
 		// Emit the connected event
 		self._emit("connected");
 	});
+	self.ddp.on("reconnected", function () {
+		// Upon reconnection, try resuming the login
+		// Save the pormise it returns
+		self.resumeLoginPromise = self._tryResumeLogin();
+		// Re-establish all previously established (and still active) subscriptions
+		self._reEstablishSubscriptions();
+		// Emit the reconnected event
+		self._emit("reconnected");
+	});
 	self.ddp.on("added", function (data) {
 		self._onAdded(data);
 	});
@@ -129,52 +138,7 @@ Asteroid.prototype._onChanged = function (data) {
 
 
 
-///////////////////////////////////////
-// Subscribe and unsubscribe methods //
-///////////////////////////////////////
 
-Asteroid.prototype.subscribe = function (name /* , param1, param2, ... */) {
-	// Assert arguments type
-	must.beString(name);
-	// If we're already subscribed, unsubscribe before re-subscribing
-	var subPromise = this.subscriptions[name];
-	if (subPromise && subPromise.isFulfilled()) {
-		var subId = subPromise.inspect().value;
-		this.unsubscribe(subId);
-	}
-	// If the promise is pending, return it
-	if (subPromise && subPromise.isPending()) {
-		return subPromise;
-	}
-	// Init the promise that will be returned
-	var deferred = Q.defer();
-	// Keep a reference to the subscription
-	this.subscriptions[name] = deferred.promise;
-	// Get the paramteres for the subscription
-	var params = Array.prototype.slice.call(arguments, 1);
-	// Subscribe via DDP
-	this.ddp.sub(name, params, function (err, id) {
-		// This is the onReady/onNoSub callback
-		if (err) {
-			// Reject the promise if the server answered nosub
-			deferred.reject(err);
-		} else {
-			// Resolve the promise if the server answered ready
-			deferred.resolve(id);
-		}
-	});
-	// Return the promise
-	return this.subscriptions[name];
-};
-
-Asteroid.prototype.unsubscribe = function (id) {
-	// Assert arguments type
-	must.beString(id);
-	// Just send a ddp unsub message. We don't care about
-	// the response because the server doesn't give any
-	// meaningful response
-	this.ddp.unsub(id);
-};
 
 
 
