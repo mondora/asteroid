@@ -83,8 +83,6 @@ can be considered "production ready":
 
 * add EJSON support (by porting Meteor's EJSON package). Difficulty 3/10
 
-* solve [this Oauth login issue](https://github.com/meteor/meteor/issues/2096). Difficulty 5/10
-
 * add SRP login support (by porting Meteor's SRP package). Difficulty 3/10
 
 * designing a pretty logo. Difficulty 6/10
@@ -161,9 +159,9 @@ Nothing
 
 ###Asteroid.loginWith ... ()
 
-WARNING: Meteor 0.8.1 introduced a security policy that broke
-this functionality.
-[Work is undergoing to fix it](https://github.com/meteor/meteor/issues/2096).
+WARNING: Meteor 0.8.1 introduced a security policy that breaks
+this functionality. [However, work is undergoing to resolve the issue](https://groups.google.com/forum/#!topic/meteor-core/Ma3XTZk4Kqg).
+For now, use Meteor < 0.8.1.
 
 Logs the user in via the specified third party (oauth)
 service.
