@@ -83,8 +83,6 @@ can be considered "production ready":
 
 * add EJSON support (by porting Meteor's EJSON package). Difficulty 3/10
 
-* add SRP login support (by porting Meteor's SRP package). Difficulty 3/10
-
 * designing a pretty logo. Difficulty 6/10
 
 
@@ -184,25 +182,46 @@ the error.
 
 ------------------------------------------------------------
 
-###Asteroid.login(username, password)
+###Asteroid.createUser(usernameOrEmail, password, profile)
 
-WARNING: Not yet implemented
-
-Logs the user in using the SRP protocol.
+Creates a user and logs him in. *Does not* use the SRP protocol,
+so passwords are sent to the server in plaintext. If you're
+using SSL however (and you should), this is not a problem.
 
 #####Arguments
 
-* `username` **string** _required_: the username
+* `usernameOrEmail` **string** _required_: the username or email.
 
-* `password` **string** _required_: the password. Note: since
-  Meteor uses the SRP protocol, the password is never
-  actually sent to the server.
+* `password` **string** _required_: the password.
+
+* `profile` **object** _optional_: a blackbox, you can throw anything
+  in here and it'll end up into `user.profile`.
+
+#####Returns
+
+A promise which will be resolved with the logged user id if
+the creation and login are successful. Otherwise it'll be rejected
+with an error.
+
+------------------------------------------------------------
+
+###Asteroid.loginWithPassword(usernameOrEmail, password)
+
+Logs the user in username/email and password. *Does not* use the SRP
+protocol, so passwords are sent to the server in plaintext. If you're
+using SSL however (and you should), this is not a problem.
+
+#####Arguments
+
+* `usernameOrEmail` **string** _required_: the username or email.
+
+* `password` **string** _required_: the password.
 
 #####Returns
 
 A promise which will be resolved with the logged user id if
 the login is successful. Otherwise it'll be rejected with
-the error.
+an error.
 
 ------------------------------------------------------------
 
