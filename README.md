@@ -159,7 +159,7 @@ Nothing
 
 WARNING: Meteor 0.8.1 introduced a security policy that breaks
 this functionality. [However, work is undergoing to resolve the issue](https://groups.google.com/forum/#!topic/meteor-core/Ma3XTZk4Kqg).
-For now, use Meteor < 0.8.1.
+For now, use Meteor <= 0.8.1.
 
 Logs the user in via the specified third party (oauth)
 service.
@@ -184,7 +184,7 @@ the error.
 
 ###Asteroid.createUser(usernameOrEmail, password, profile)
 
-Creates a user and logs him in. *Does not* use the SRP protocol,
+Creates a user and logs him in. **Does not** use the SRP protocol,
 so passwords are sent to the server in plaintext. If you're
 using SSL however (and you should), this is not a problem.
 
@@ -207,7 +207,7 @@ with an error.
 
 ###Asteroid.loginWithPassword(usernameOrEmail, password)
 
-Logs the user in username/email and password. *Does not* use the SRP
+Logs the user in username/email and password. **Does not** use the SRP
 protocol, so passwords are sent to the server in plaintext. If you're
 using SSL however (and you should), this is not a problem.
 
