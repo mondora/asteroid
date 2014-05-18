@@ -80,6 +80,10 @@ function guid () {
 	return ret;
 }
 
+function isEmail (string) {
+	return string.indexOf("@") !== -1;
+}
+
 function isEqual (obj1, obj2) {
 	var str1 = JSON.stringify(obj1);
 	var str2 = JSON.stringify(obj2);
@@ -733,6 +737,59 @@ Asteroid.prototype.loginWithTwitter = function (scope) {
 	};
 	var loginUrl = this._host + "/_oauth/twitter/?" + formQs(query);
 	return this._initOauthLogin("twitter", credentialToken, loginUrl);
+};
+
+Asteroid.prototype.createUser = function (usernameOrEmail, password, profile) {
+	var self = this;
+	var deferred = Q.defer();
+	var options = {
+		username: isEmail(usernameOrEmail) ? undefined : usernameOrEmail,
+		email: isEmail(usernameOrEmail) ? usernameOrEmail : undefined,
+		password: password,
+		profile: profile
+	};
+	self.ddp.method("createUser", [options], function (err, res) {
+		if (err) {
+			self._emit("createUserError", err);
+			deferred.reject(err);
+		} else {
+			self.userId = res.id;
+			self.loggedIn = true;
+			localStorage[self._host + "__login_token__"] = res.token;
+			self._emit("createUser", res.id);
+			self._emit("login", res.id);
+			deferred.resolve(res.id);
+		}
+	});
+	return deferred.promise;
+};
+
+Asteroid.prototype.loginWithPassword = function (usernameOrEmail, password) {
+	var self = this;
+	var deferred = Q.defer();
+	var loginParameters = {
+		password: password,
+		user: {
+			username: isEmail(usernameOrEmail) ? undefined : usernameOrEmail,
+			email: isEmail(usernameOrEmail) ? usernameOrEmail : undefined
+		}
+	};
+	self.ddp.method("login", [loginParameters], function (err, res) {
+		if (err) {
+			delete self.userId;
+			delete self.loggedIn;
+			delete localStorage[self._host + "__login_token__"];
+			deferred.reject(err);
+			self._emit("loginError", err);
+		} else {
+			self.userId = res.id;
+			self.loggedIn = true;
+			localStorage[self._host + "__login_token__"] = res.token;
+			self._emit("login", res.id);
+			deferred.resolve(res.id);
+		}
+	});
+	return deferred.promise;
 };
 
 Asteroid.prototype.logout = function () {
