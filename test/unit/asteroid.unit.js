@@ -52,7 +52,7 @@ describe("The Asteroid constructor", function () {
 		window.SockJS = {};
 		ceres = new Asteroid("example.com");
 		ceres._host.should.equal("http://example.com");
-		ceres._ddpOptions.endpoint.should.equal("ws://example.com/sockjs");
+		ceres._ddpOptions.endpoint.should.equal("http://example.com/sockjs");
 		ceres._ddpOptions.SocketConstructor.should.equal(SockJS);
 
 		delete window.SockJS;

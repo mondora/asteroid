@@ -128,11 +128,20 @@ var Asteroid = function (host, ssl, debug) {
 	this._host = (ssl ? "https://" : "http://") + host;
 	// If SockJS is available, use it, otherwise, use WebSocket
 	// Note: SockJS is required for IE9 support
-	this._ddpOptions = {
-		endpoint: (ssl ? "wss://" : "ws://") + host + (window.SockJS ? "/sockjs" : "/websocket"),
-		SocketConstructor: window.SockJS || window.WebSocket,
-		debug: debug
-	};
+	if (window.SockJS) {
+		this._ddpOptions = {
+			endpoint: (ssl ? "https://" : "http://") + host + "/sockjs",
+			SocketConstructor: window.SockJS,
+			debug: debug
+		};
+	} else {
+		this._ddpOptions = {
+			endpoint: (ssl ? "wss://" : "ws://") + host + "/websocket",
+			SocketConstructor: window.WebSocket,
+			debug: debug
+		};
+	}
+
 	// Reference containers
 	this.collections = {};
 	this.subscriptions = {};
