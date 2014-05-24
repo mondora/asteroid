@@ -29,6 +29,7 @@
     "gulp-load-plugins": "^0.4.0",
     "gulp-mocha": "^0.4.1",
     "gulp-open": "^0.2.8",
+    "gulp-preprocess": "^1.0.1",
     "gulp-rename": "^1.2.0",
     "gulp-uglify": "^0.2.1",
     "karma": "^0.12.14",
@@ -40,12 +41,14 @@
     "lodash": "^2.4.1",
     "mocha": "^1.18.2",
     "node-static": "^0.7.3",
+    "rewire": "^2.0.1",
     "should": "^3.2.0-beta1",
     "sinon": "^1.9.0",
     "tiny-lr": "0.0.5"
   },
   "dependencies": {
     "ddp.js": "^0.3.1",
+    "faye-websocket": "^0.7.2",
     "q": "^1.0.1"
   }
 }

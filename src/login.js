@@ -1,3 +1,4 @@
+// @if ENV=='browser'
 Asteroid.prototype._getOauthClientId = function (serviceName) {
 	var loginConfigCollectionName = "meteor_accounts_loginServiceConfiguration";
 	var loginConfigCollection = this.collections[loginConfigCollectionName];
@@ -122,6 +123,8 @@ Asteroid.prototype.loginWithTwitter = function (scope) {
 	var loginUrl = this._host + "/_oauth/twitter/?" + formQs(query);
 	return this._initOauthLogin("twitter", credentialToken, loginUrl);
 };
+
+// @endif
 
 Asteroid.prototype.createUser = function (usernameOrEmail, password, profile) {
 	var self = this;

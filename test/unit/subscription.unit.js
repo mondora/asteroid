@@ -1,7 +1,8 @@
 describe("The Asteroid.subscribe method", function () {
 
+	var tmp;
 	beforeEach(function () {
-		window.DDP = function () {
+		var ddpStub = function () {
 			ddp = {};
 			ddp.on = function (e, f) {
 				if (e === "connected") ddp.emitConnected = f;
@@ -21,10 +22,20 @@ describe("The Asteroid.subscribe method", function () {
 			});
 			return ddp;
 		};
+		if (ENV === "node") {
+			tmp = glb.Asteroid.__get__("DDP");
+			glb.Asteroid.__set__("DDP", ddpStub);
+		} else {
+			glb.DDP = ddpStub;
+		}
 	});
 
 	afterEach(function () {
-		delete window.DDP;
+		if (ENV === "node") {
+			glb.Asteroid.__set__("DDP", tmp);
+		} else {
+			delete glb.DDP;
+		}
 	});
 
 	it("should throw if the first argument is not a string", function () {

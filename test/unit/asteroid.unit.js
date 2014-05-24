@@ -1,11 +1,22 @@
 describe("The Asteroid constructor", function () {
 
+	var tmp;
 	beforeEach(function () {
-		window.DDP = _.noop;
+		var ddpStub = _.noop;
+		if (ENV === "node") {
+			tmp = glb.Asteroid.__get__("DDP");
+			glb.Asteroid.__set__("DDP", ddpStub);
+		} else {
+			glb.DDP = ddpStub;
+		}
 	});
 
 	afterEach(function () {
-		delete window.DDP;
+		if (ENV === "node") {
+			glb.Asteroid.__set__("DDP", tmp);
+		} else {
+			delete glb.DDP;
+		}
 	});
 
 	it("should throw if the first argument is not a string", function () {
@@ -44,33 +55,36 @@ describe("The Asteroid constructor", function () {
 
 	});
 
-	it("should configure the instance depending on whether SockJS is used or not", function () {
+	if (ENV === "browser") {
+		it("should configure the instance depending on whether SockJS is used or not", function () {
 
-		sinon.stub(Asteroid.prototype, "_init");
-		var ceres;
+			sinon.stub(Asteroid.prototype, "_init");
+			var ceres;
 
-		window.SockJS = {};
-		ceres = new Asteroid("example.com");
-		ceres._host.should.equal("http://example.com");
-		ceres._ddpOptions.endpoint.should.equal("http://example.com/sockjs");
-		ceres._ddpOptions.SocketConstructor.should.equal(SockJS);
+			glb.SockJS = _.noop;
+			ceres = new Asteroid("example.com");
+			ceres._host.should.equal("http://example.com");
+			ceres._ddpOptions.endpoint.should.equal("http://example.com/sockjs");
+			ceres._ddpOptions.SocketConstructor.should.equal(SockJS);
 
-		delete window.SockJS;
-		ceres = new Asteroid("example.com");
-		ceres._host.should.equal("http://example.com");
-		ceres._ddpOptions.endpoint.should.equal("ws://example.com/websocket");
-		ceres._ddpOptions.SocketConstructor.should.equal(WebSocket);
+			delete glb.SockJS;
+			ceres = new Asteroid("example.com");
+			ceres._host.should.equal("http://example.com");
+			ceres._ddpOptions.endpoint.should.equal("ws://example.com/websocket");
+			ceres._ddpOptions.SocketConstructor.should.equal(WebSocket);
 
-		Asteroid.prototype._init.restore();
+			Asteroid.prototype._init.restore();
 
-	});
+		});
+	}
 
 });
 
 describe("An Asteroid instance", function () {
 
+	var tmp;
 	beforeEach(function () {
-		window.DDP = function () {
+		var ddpStub = function () {
 			ddp = {};
 			ddp.on = function (e, f) {
 				if (e === "connected") ddp.emitConnected = f;
@@ -81,10 +95,20 @@ describe("An Asteroid instance", function () {
 			ddp.sub = sinon.spy();
 			return ddp;
 		};
+		if (ENV === "node") {
+			tmp = glb.Asteroid.__get__("DDP");
+			glb.Asteroid.__set__("DDP", ddpStub);
+		} else {
+			glb.DDP = ddpStub;
+		}
 	});
 
 	afterEach(function () {
-		delete window.DDP;
+		if (ENV === "node") {
+			glb.Asteroid.__set__("DDP", tmp);
+		} else {
+			delete glb.DDP;
+		}
 	});
 
 	it("should emit a connected event upon connection", function () {
@@ -98,8 +122,9 @@ describe("An Asteroid instance", function () {
 
 describe("The Asteroid.apply method", function () {
 
+	var tmp;
 	beforeEach(function () {
-		window.DDP = function () {
+		var ddpStub = function () {
 			ddp = {};
 			ddp.on = _.noop;
 			ddp.sub = _.noop;
@@ -110,10 +135,20 @@ describe("The Asteroid.apply method", function () {
 			});
 			return ddp;
 		};
+		if (ENV === "node") {
+			tmp = glb.Asteroid.__get__("DDP");
+			glb.Asteroid.__set__("DDP", ddpStub);
+		} else {
+			glb.DDP = ddpStub;
+		}
 	});
 
 	afterEach(function () {
-		delete window.DDP;
+		if (ENV === "node") {
+			glb.Asteroid.__set__("DDP", tmp);
+		} else {
+			delete glb.DDP;
+		}
 	});
 
 	it("should throw if the first argument is not a string", function () {

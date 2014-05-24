@@ -1,3 +1,16 @@
+// @if ENV=='node'
+
+///////////////////////
+// Node dependencies //
+///////////////////////
+
+var DDP = require("ddp.js");
+var Q = require("q");
+var WebSocket = require("faye-websocket");
+
+// @endif
+
+
 //////////////////////////
 // Asteroid constructor //
 //////////////////////////
@@ -7,22 +20,30 @@ var Asteroid = function (host, ssl, debug) {
 	must.beString(host);
 	// Configure the instance
 	this._host = (ssl ? "https://" : "http://") + host;
+	// @if ENV=='browser'
 	// If SockJS is available, use it, otherwise, use WebSocket
 	// Note: SockJS is required for IE9 support
-	if (window.SockJS) {
+	if (typeof SockJS === "function") {
 		this._ddpOptions = {
 			endpoint: (ssl ? "https://" : "http://") + host + "/sockjs",
-			SocketConstructor: window.SockJS,
+			SocketConstructor: SockJS,
 			debug: debug
 		};
 	} else {
 		this._ddpOptions = {
 			endpoint: (ssl ? "wss://" : "ws://") + host + "/websocket",
-			SocketConstructor: window.WebSocket,
+			SocketConstructor: WebSocket,
 			debug: debug
 		};
 	}
-
+	// @endif
+	// @if ENV=='node'
+	this._ddpOptions = {
+		endpoint: (ssl ? "wss://" : "ws://") + host + "/websocket",
+		SocketConstructor: WebSocket.Client,
+		debug: debug
+	};
+	// @endif
 	// Reference containers
 	this.collections = {};
 	this.subscriptions = {};
@@ -46,9 +67,11 @@ Asteroid.prototype._init = function () {
 	self.ddp = new DDP(this._ddpOptions);
 	// Register handlers
 	self.ddp.on("connected", function () {
-		// Upon connection, try resuming the login
+		// @if ENV=='browser'
+		// Upon connection try resuming login
 		// Save the pormise it returns
 		self.resumeLoginPromise = self._tryResumeLogin();
+		// @endif
 		// Subscribe to the meteor.loginServiceConfiguration
 		// collection, which holds the configuration options
 		// to login via third party services (oauth).
@@ -57,9 +80,11 @@ Asteroid.prototype._init = function () {
 		self._emit("connected");
 	});
 	self.ddp.on("reconnected", function () {
-		// Upon reconnection, try resuming the login
+		// @if ENV=='browser'
+		// Upon reconnection try resuming login
 		// Save the pormise it returns
 		self.resumeLoginPromise = self._tryResumeLogin();
+		// @endif
 		// Re-establish all previously established (and still active) subscriptions
 		self._reEstablishSubscriptions();
 		// Emit the reconnected event
