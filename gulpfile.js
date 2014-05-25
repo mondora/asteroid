@@ -8,12 +8,12 @@ var lrServer = tinyLr();
 
 gulp.task("build", function () {
 	var sources = [
-		"src/wrapper/head.js",
-		"src/lib/ayepromise/ayepromise.js",
-		"src/lib/ddp.js/ddp.js",
-		"src/lib/*.js",
+		"wrapper/head.js",
+		"lib/ayepromise/ayepromise.js",
+		"lib/ddp.js/ddp.js",
+		"lib/*.js",
 		"src/*.js",
-		"src/wrapper/tail.js"
+		"wrapper/tail.js"
 	];
 	gulp.src(sources)
 		.pipe(plugins.concat("asteroid.js"))
