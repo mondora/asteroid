@@ -6,22 +6,22 @@ var plugins	= require("gulp-load-plugins")();
 
 var lrServer = tinyLr();
 
-gulp.task("buildBrowser", function () {
-	gulp.src(["src/wrapper/head.js", "src/lib/*.js", "src/*.js", "src/wrapper/tail.js"])
-		.pipe(plugins.preprocess({context: { ENV: "browser"}}))
+gulp.task("build", function () {
+	var sources = [
+		"src/wrapper/head.js",
+		"src/lib/ayepromise/ayepromise.js",
+		"src/lib/ddp.js/ddp.js",
+		"src/lib/*.js",
+		"src/*.js",
+		"src/wrapper/tail.js"
+	];
+	gulp.src(sources)
 		.pipe(plugins.concat("asteroid.js"))
 		.pipe(gulp.dest("dist/"))
 		.pipe(plugins.uglify())
 		.pipe(plugins.rename("asteroid.min.js"))
 		.pipe(gulp.dest("dist/"))
 		.pipe(plugins.livereload(lrServer));
-});
-
-gulp.task("buildNode", function () {
-	gulp.src(["src/wrapper/head.js", "src/lib/*.js", "src/*.js", "src/wrapper/tail.js"])
-		.pipe(plugins.preprocess({context: { ENV: "node"}}))
-		.pipe(plugins.concat("node.asteroid.js"))
-		.pipe(gulp.dest("dist/"));
 });
 
 gulp.task("buildTests", function () {
@@ -50,7 +50,7 @@ gulp.task("dev", function () {
 		req.resume();
 	}).listen(8080);
 	lrServer.listen(35729);
-	gulp.watch("src/**/*.js", ["buildBrowser"]);
+	gulp.watch("src/**/*.js", ["build"]);
 	gulp.watch("test/unit/**/*.unit.js", ["buildTests"]);
 });
 
@@ -68,8 +68,7 @@ gulp.task("default", function () {
 	console.log("Usage: gulp [TASK]");
 	console.log("");
 	console.log("Available tasks:");
-	console.log("  buildBrowser     build the sources into dist/asteroid.js and dist/asteroid.min.js");
-	console.log("  buildNode     build the sources into dist/node.asteroid.js and dist/node.asteroid.min.js");
+	console.log("  build            build the sources into dist/asteroid.js and dist/asteroid.min.js");
 	console.log("  demo	            sets up a demo server");
 	console.log("  dev              init dev environment with automatic test running");
 	console.log("  test-node        run tests with mocha");

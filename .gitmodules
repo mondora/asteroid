@@ -1,3 +1,6 @@
 [submodule "lib/ayepromise"]
 	path = lib/ayepromise
 	url = https://github.com/mondora/ayepromise.git
+[submodule "lib/ddp.js"]
+	path = lib/ddp.js
+	url = https://github.com/mondora/ddp.js

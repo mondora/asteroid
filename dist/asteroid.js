@@ -1,120 +1,20 @@
-(function (root, factory) {
-    if (typeof define === "function" && define.amd) {
-        define(factory);
-    } else if (typeof exports === "object") {
-        module.exports = factory();
-    } else {
-        root.Asteroid = factory();
-    }
-}(this, function () {
-"use strict";
+///////////////////////////
+// Environment detection //
+///////////////////////////
 
-function clone (obj) {
-	if (typeof EJSON !== "undefined") {
-		return EJSON.clone(obj);
-	}
-	var type = typeof obj;
-	switch (type) {
-		case "undefined":
-		case "function":
-			return undefined;
-		case "string":
-		case "number":
-		case "boolean":
-			return obj;
-		case "object":
-			if (obj === null) {
-				return null;
-			}
-			return JSON.parse(JSON.stringify(obj));
-		default:
-			return;
-	}
+var ENV = (typeof window === "undefined") ? "node" : "browser";
+
+
+
+///////////////////////
+// Node dependencies //
+///////////////////////
+
+if (ENV === "node") {
+	var FayeWebSocket = require("faye-websocket");
 }
 
-var EventEmitter = function () {};
 
-EventEmitter.prototype = {
-
-	constructor: EventEmitter,
-
-	on: function (name, handler) {
-		if (!this._events) this._events = {};
-		this._events[name] = this._events[name] || [];
-		this._events[name].push(handler);
-	},
-
-	off: function (name, handler) {
-		if (!this._events) this._events = {};
-		if (!this._events[name]) return;
-		this._events[name].splice(this._events[name].indexOf(handler), 1);
-	},
-
-	_emit: function (name /* , arguments */) {
-		if (!this._events) this._events = {};
-		if (!this._events[name]) return;
-		var args = arguments;
-		var self = this;
-		this._events[name].forEach(function (handler) {
-			handler.apply(self, Array.prototype.slice.call(args, 1));
-		});
-	}
-
-};
-
-function formQs (obj) {
-	var qs = "";
-	for (var key in obj) {
-		qs += key + "=" + obj[key] + "&";
-	}
-	qs = qs.slice(0, -1);
-	return qs;
-}
-
-function guid () {
-	var ret = "";
-	for (var i=0; i<8; i++) {
-		ret += Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
-	}
-	return ret;
-}
-
-function isEmail (string) {
-	return string.indexOf("@") !== -1;
-}
-
-function isEqual (obj1, obj2) {
-	var str1 = JSON.stringify(obj1);
-	var str2 = JSON.stringify(obj2);
-	return str1 === str2;
-}
-
-var must = {};
-
-must._toString = function (thing) {
-	return Object.prototype.toString.call(thing).slice(8, -1);
-};
-
-must.beString = function (s) {
-	var type = this._toString(s);
-	if (type !== "String") {
-		throw new Error("Assertion failed: expected String, instead got " + type);
-	}
-};
-
-must.beArray = function (o) {
-	var type = this._toString(o);
-	if (type !== "Array") {
-		throw new Error("Assertion failed: expected Array, instead got " + type);
-	}
-};
-
-must.beObject = function (o) {
-	var type = this._toString(o);
-	if (type !== "Object") {
-		throw new Error("Assertion failed: expected Object, instead got " + type);
-	}
-};
 
 //////////////////////////
 // Asteroid constructor //
@@ -125,18 +25,27 @@ var Asteroid = function (host, ssl, debug) {
 	must.beString(host);
 	// Configure the instance
 	this._host = (ssl ? "https://" : "http://") + host;
-	// If SockJS is available, use it, otherwise, use WebSocket
-	// Note: SockJS is required for IE9 support
-	if (typeof SockJS === "function") {
-		this._ddpOptions = {
-			endpoint: (ssl ? "https://" : "http://") + host + "/sockjs",
-			SocketConstructor: SockJS,
-			debug: debug
-		};
-	} else {
+	if (ENV === "browser") {
+		// If SockJS is available, use it, otherwise, use WebSocket
+		// Note: SockJS is required for IE9 support
+		if (typeof SockJS === "function") {
+			this._ddpOptions = {
+				endpoint: (ssl ? "https://" : "http://") + host + "/sockjs",
+				SocketConstructor: SockJS,
+				debug: debug
+			};
+		} else {
+			this._ddpOptions = {
+				endpoint: (ssl ? "wss://" : "ws://") + host + "/websocket",
+				SocketConstructor: WebSocket,
+				debug: debug
+			};
+		}
+	}
+	if (ENV === "node") {
 		this._ddpOptions = {
 			endpoint: (ssl ? "wss://" : "ws://") + host + "/websocket",
-			SocketConstructor: WebSocket,
+			SocketConstructor: FayeWebSocket.Client,
 			debug: debug
 		};
 	}
@@ -163,9 +72,11 @@ Asteroid.prototype._init = function () {
 	self.ddp = new DDP(this._ddpOptions);
 	// Register handlers
 	self.ddp.on("connected", function () {
-		// Upon connection try resuming login
-		// Save the pormise it returns
-		self.resumeLoginPromise = self._tryResumeLogin();
+		if (ENV === "browser") {
+			// Upon connection try resuming login
+			// Save the pormise it returns
+			self.resumeLoginPromise = self._tryResumeLogin();
+		}
 		// Subscribe to the meteor.loginServiceConfiguration
 		// collection, which holds the configuration options
 		// to login via third party services (oauth).
@@ -174,9 +85,11 @@ Asteroid.prototype._init = function () {
 		self._emit("connected");
 	});
 	self.ddp.on("reconnected", function () {
-		// Upon reconnection try resuming login
-		// Save the pormise it returns
-		self.resumeLoginPromise = self._tryResumeLogin();
+		if (ENV === "browser") {
+			// Upon reconnection try resuming login
+			// Save the pormise it returns
+			self.resumeLoginPromise = self._tryResumeLogin();
+		}
 		// Re-establish all previously established (and still active) subscriptions
 		self._reEstablishSubscriptions();
 		// Emit the reconnected event
@@ -621,130 +534,134 @@ Collection.prototype.reactiveQuery = function (selectorOrFilter) {
 
 Asteroid._Collection = Collection;
 
-Asteroid.prototype._getOauthClientId = function (serviceName) {
-	var loginConfigCollectionName = "meteor_accounts_loginServiceConfiguration";
-	var loginConfigCollection = this.collections[loginConfigCollectionName];
-	var service = loginConfigCollection.reactiveQuery({service: serviceName}).result[0];
-	return service.clientId;
-};
+if (ENV === "browser") {
 
-Asteroid.prototype._initOauthLogin = function (service, credentialToken, loginUrl) {
-	var popup = window.open(loginUrl, "Login");
-	var self = this;
-	return Q()
-		.then(function () {
-			var deferred = Q.defer();
-			if (popup.focus) popup.focus();
-			var intervalId = setInterval(function () {
-				if (popup.closed || popup.closed === undefined) {
-					clearInterval(intervalId);
-					deferred.resolve();
-				}
-			}, 100);
-			return deferred.promise;
-		})
-		.then(function () {
-			var deferred = Q.defer();
-			var loginParameters = {
-				oauth: {
-					credentialToken: credentialToken
-				}
-			};
-			self.ddp.method("login", [loginParameters], function (err, res) {
-				if (err) {
-					delete self.userId;
-					delete self.loggedIn;
-					delete localStorage[self._host + "__login_token__"];
-					deferred.reject(err);
-					self._emit("loginError", err);
-				} else {
-					self.userId = res.id;
-					self.loggedIn = true;
-					localStorage[self._host + "__login_token__"] = res.token;
-					self._emit("login", res.id);
-					deferred.resolve(res.id);
-				}
+	Asteroid.prototype._getOauthClientId = function (serviceName) {
+		var loginConfigCollectionName = "meteor_accounts_loginServiceConfiguration";
+		var loginConfigCollection = this.collections[loginConfigCollectionName];
+		var service = loginConfigCollection.reactiveQuery({service: serviceName}).result[0];
+		return service.clientId;
+	};
+
+	Asteroid.prototype._initOauthLogin = function (service, credentialToken, loginUrl) {
+		var popup = window.open(loginUrl, "Login");
+		var self = this;
+		return Q()
+			.then(function () {
+				var deferred = Q.defer();
+				if (popup.focus) popup.focus();
+				var intervalId = setInterval(function () {
+					if (popup.closed || popup.closed === undefined) {
+						clearInterval(intervalId);
+						deferred.resolve();
+					}
+				}, 100);
+				return deferred.promise;
+			})
+			.then(function () {
+				var deferred = Q.defer();
+				var loginParameters = {
+					oauth: {
+						credentialToken: credentialToken
+					}
+				};
+				self.ddp.method("login", [loginParameters], function (err, res) {
+					if (err) {
+						delete self.userId;
+						delete self.loggedIn;
+						delete localStorage[self._host + "__login_token__"];
+						deferred.reject(err);
+						self._emit("loginError", err);
+					} else {
+						self.userId = res.id;
+						self.loggedIn = true;
+						localStorage[self._host + "__login_token__"] = res.token;
+						self._emit("login", res.id);
+						deferred.resolve(res.id);
+					}
+				});
+				return deferred.promise;
 			});
+	};
+
+	Asteroid.prototype._tryResumeLogin = function () {
+		var self = this;
+		var deferred = Q.defer();
+		var token = localStorage[self._host + "__login_token__"];
+		if (!token) {
+			deferred.reject("No login token");
 			return deferred.promise;
-		});
-};
-
-Asteroid.prototype._tryResumeLogin = function () {
-	var self = this;
-	var deferred = Q.defer();
-	var token = localStorage[self._host + "__login_token__"];
-	if (!token) {
-		deferred.reject("No login token");
-		return deferred.promise;
-	}
-	var loginParameters = {
-		resume: token
-	};
-	self.ddp.method("login", [loginParameters], function (err, res) {
-		if (err) {
-			delete self.userId;
-			delete self.loggedIn;
-			delete localStorage[self._host + "__login_token__"];
-			self._emit("loginError", err);
-			deferred.reject(err);
-		} else {
-			self.userId = res.id;
-			self.loggedIn = true;
-			localStorage[self._host + "__login_token__"] = res.token;
-			self._emit("login", res.id);
-			deferred.resolve(res.id);
 		}
-	});
-	return deferred.promise;
-};
-
-Asteroid.prototype.loginWithFacebook = function (scope) {
-	var credentialToken = guid();
-	var query = {
-		client_id:		this._getOauthClientId("facebook"),
-		redirect_uri:	this._host + "/_oauth/facebook?close",
-		state:			credentialToken,
-		scope:			scope || "email"
+		var loginParameters = {
+			resume: token
+		};
+		self.ddp.method("login", [loginParameters], function (err, res) {
+			if (err) {
+				delete self.userId;
+				delete self.loggedIn;
+				delete localStorage[self._host + "__login_token__"];
+				self._emit("loginError", err);
+				deferred.reject(err);
+			} else {
+				self.userId = res.id;
+				self.loggedIn = true;
+				localStorage[self._host + "__login_token__"] = res.token;
+				self._emit("login", res.id);
+				deferred.resolve(res.id);
+			}
+		});
+		return deferred.promise;
 	};
-	var loginUrl = "https://www.facebook.com/dialog/oauth?" + formQs(query);
-	return this._initOauthLogin("facebook", credentialToken, loginUrl);
-};
 
-Asteroid.prototype.loginWithGoogle = function (scope) {
-	var credentialToken = guid();
-	var query = {
-		response_type:	"code",
-		client_id:		this._getOauthClientId("google"),
-		redirect_uri:	this._host + "/_oauth/google?close",
-		state:			credentialToken,
-		scope:			scope || "openid email"
+	Asteroid.prototype.loginWithFacebook = function (scope) {
+		var credentialToken = guid();
+		var query = {
+			client_id:		this._getOauthClientId("facebook"),
+			redirect_uri:	this._host + "/_oauth/facebook?close",
+			state:			credentialToken,
+			scope:			scope || "email"
+		};
+		var loginUrl = "https://www.facebook.com/dialog/oauth?" + formQs(query);
+		return this._initOauthLogin("facebook", credentialToken, loginUrl);
 	};
-	var loginUrl = "https://accounts.google.com/o/oauth2/auth?" + formQs(query);
-	return this._initOauthLogin("google", credentialToken, loginUrl);
-};
 
-Asteroid.prototype.loginWithGithub = function (scope) {
-	var credentialToken = guid();
-	var query = {
-		client_id:		this._getOauthClientId("github"),
-		redirect_uri:	this._host + "/_oauth/github?close",
-		state:			credentialToken,
-		scope:			scope || "email"
+	Asteroid.prototype.loginWithGoogle = function (scope) {
+		var credentialToken = guid();
+		var query = {
+			response_type:	"code",
+			client_id:		this._getOauthClientId("google"),
+			redirect_uri:	this._host + "/_oauth/google?close",
+			state:			credentialToken,
+			scope:			scope || "openid email"
+		};
+		var loginUrl = "https://accounts.google.com/o/oauth2/auth?" + formQs(query);
+		return this._initOauthLogin("google", credentialToken, loginUrl);
 	};
-	var loginUrl = "https://github.com/login/oauth/authorize?" + formQs(query);
-	return this._initOauthLogin("github", credentialToken, loginUrl);
-};
 
-Asteroid.prototype.loginWithTwitter = function (scope) {
-	var credentialToken = guid();
-	var callbackUrl = this._host + "/_oauth/twitter?close&state=" + credentialToken;
-	var query = {
-		requestTokenAndRedirect:	encodeURIComponent(callbackUrl),
-		state:						credentialToken
+	Asteroid.prototype.loginWithGithub = function (scope) {
+		var credentialToken = guid();
+		var query = {
+			client_id:		this._getOauthClientId("github"),
+			redirect_uri:	this._host + "/_oauth/github?close",
+			state:			credentialToken,
+			scope:			scope || "email"
+		};
+		var loginUrl = "https://github.com/login/oauth/authorize?" + formQs(query);
+		return this._initOauthLogin("github", credentialToken, loginUrl);
 	};
-	var loginUrl = this._host + "/_oauth/twitter/?" + formQs(query);
-	return this._initOauthLogin("twitter", credentialToken, loginUrl);
-};
+
+	Asteroid.prototype.loginWithTwitter = function (scope) {
+		var credentialToken = guid();
+		var callbackUrl = this._host + "/_oauth/twitter?close&state=" + credentialToken;
+		var query = {
+			requestTokenAndRedirect:	encodeURIComponent(callbackUrl),
+			state:						credentialToken
+		};
+		var loginUrl = this._host + "/_oauth/twitter/?" + formQs(query);
+		return this._initOauthLogin("twitter", credentialToken, loginUrl);
+	};
+
+}
 
 Asteroid.prototype.createUser = function (usernameOrEmail, password, profile) {
 	var self = this;
@@ -984,7 +901,3 @@ Asteroid.prototype._reEstablishSubscriptions = function () {
 		subs[id] = new Subscription(subs[id]._name, subs[id]._params, this);
 	}
 };
-
-return Asteroid;
-
-}));

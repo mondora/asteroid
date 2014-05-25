@@ -1,14 +1,19 @@
-// @if ENV=='node'
+///////////////////////////
+// Environment detection //
+///////////////////////////
+
+var ENV = (typeof window === "undefined") ? "node" : "browser";
+
+
 
 ///////////////////////
 // Node dependencies //
 ///////////////////////
 
-var DDP = require("ddp.js");
-var Q = require("q");
-var WebSocket = require("faye-websocket");
+if (ENV === "node") {
+	var FayeWebSocket = require("faye-websocket");
+}
 
-// @endif
 
 
 //////////////////////////
@@ -20,30 +25,30 @@ var Asteroid = function (host, ssl, debug) {
 	must.beString(host);
 	// Configure the instance
 	this._host = (ssl ? "https://" : "http://") + host;
-	// @if ENV=='browser'
-	// If SockJS is available, use it, otherwise, use WebSocket
-	// Note: SockJS is required for IE9 support
-	if (typeof SockJS === "function") {
-		this._ddpOptions = {
-			endpoint: (ssl ? "https://" : "http://") + host + "/sockjs",
-			SocketConstructor: SockJS,
-			debug: debug
-		};
-	} else {
+	if (ENV === "browser") {
+		// If SockJS is available, use it, otherwise, use WebSocket
+		// Note: SockJS is required for IE9 support
+		if (typeof SockJS === "function") {
+			this._ddpOptions = {
+				endpoint: (ssl ? "https://" : "http://") + host + "/sockjs",
+				SocketConstructor: SockJS,
+				debug: debug
+			};
+		} else {
+			this._ddpOptions = {
+				endpoint: (ssl ? "wss://" : "ws://") + host + "/websocket",
+				SocketConstructor: WebSocket,
+				debug: debug
+			};
+		}
+	}
+	if (ENV === "node") {
 		this._ddpOptions = {
 			endpoint: (ssl ? "wss://" : "ws://") + host + "/websocket",
-			SocketConstructor: WebSocket,
+			SocketConstructor: FayeWebSocket.Client,
 			debug: debug
 		};
 	}
-	// @endif
-	// @if ENV=='node'
-	this._ddpOptions = {
-		endpoint: (ssl ? "wss://" : "ws://") + host + "/websocket",
-		SocketConstructor: WebSocket.Client,
-		debug: debug
-	};
-	// @endif
 	// Reference containers
 	this.collections = {};
 	this.subscriptions = {};
@@ -67,11 +72,11 @@ Asteroid.prototype._init = function () {
 	self.ddp = new DDP(this._ddpOptions);
 	// Register handlers
 	self.ddp.on("connected", function () {
-		// @if ENV=='browser'
-		// Upon connection try resuming login
-		// Save the pormise it returns
-		self.resumeLoginPromise = self._tryResumeLogin();
-		// @endif
+		if (ENV === "browser") {
+			// Upon connection try resuming login
+			// Save the pormise it returns
+			self.resumeLoginPromise = self._tryResumeLogin();
+		}
 		// Subscribe to the meteor.loginServiceConfiguration
 		// collection, which holds the configuration options
 		// to login via third party services (oauth).
@@ -80,11 +85,11 @@ Asteroid.prototype._init = function () {
 		self._emit("connected");
 	});
 	self.ddp.on("reconnected", function () {
-		// @if ENV=='browser'
-		// Upon reconnection try resuming login
-		// Save the pormise it returns
-		self.resumeLoginPromise = self._tryResumeLogin();
-		// @endif
+		if (ENV === "browser") {
+			// Upon reconnection try resuming login
+			// Save the pormise it returns
+			self.resumeLoginPromise = self._tryResumeLogin();
+		}
 		// Re-establish all previously established (and still active) subscriptions
 		self._reEstablishSubscriptions();
 		// Emit the reconnected event
