@@ -1,0 +1,3 @@
+[submodule "lib/ayepromise"]
+	path = lib/ayepromise
+	url = https://github.com/mondora/ayepromise.git
