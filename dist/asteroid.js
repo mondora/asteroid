@@ -1,4 +1,3 @@
-// @if ENV='browser'
 (function (root, factory) {
     if (typeof define === "function" && define.amd) {
         define(factory);
@@ -8,7 +7,6 @@
         root.Asteroid = factory();
     }
 }(this, function () {
-// @endif
 
 "use strict";
 
@@ -1503,12 +1501,6 @@ Asteroid.prototype._reEstablishSubscriptions = function () {
 	}
 };
 
-// @if ENV=='browser'
 return Asteroid;
 
 }));
-// @endif
-
-// @if ENV=='node'
-module.exports = Asteroid;
-// @endif

@@ -1,4 +1,3 @@
-// @if ENV='browser'
 (function (root, factory) {
     if (typeof define === "function" && define.amd) {
         define(factory);
@@ -8,6 +7,5 @@
         root.Asteroid = factory();
     }
 }(this, function () {
-// @endif
 
 "use strict";
