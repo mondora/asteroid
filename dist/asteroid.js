@@ -625,7 +625,7 @@ Asteroid.prototype._getOauthClientId = function (serviceName) {
 	var loginConfigCollectionName = "meteor_accounts_loginServiceConfiguration";
 	var loginConfigCollection = this.collections[loginConfigCollectionName];
 	var service = loginConfigCollection.reactiveQuery({service: serviceName}).result[0];
-	return service.clientId;
+	return service.clientId || service.consumerKey || service.appId;
 };
 
 Asteroid.prototype._initOauthLogin = function (service, credentialToken, loginUrl) {
