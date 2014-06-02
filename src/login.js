@@ -13,13 +13,13 @@ Asteroid.prototype._initOauthLogin = function (service, credentialToken, loginUr
         var popupclosed = false;
 	
         if(isCordovaApp){
-		$(popup).on('loaderror', function(e) {
+		popup.addEventListener('loaderror', function(e) {
 		    setTimeout(function() {
                         popup.close();
                     }, 100);
                 });
 
-                $(popup).on('exit', function(e) { 
+                popup.addEventListener('exit', function(e) { 
                     popupclosed = true;
                 });
         }
