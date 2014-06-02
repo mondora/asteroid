@@ -7,14 +7,33 @@ Asteroid.prototype._getOauthClientId = function (serviceName) {
 };
 
 Asteroid.prototype._initOauthLogin = function (service, credentialToken, loginUrl) {
-	var popup = window.open(loginUrl, "Login");
-	var self = this;
+        var popup = window.open(loginUrl, '_blank', 'location=no,toolbar=no');	
+        var self = this;
+        var isCordovaApp = !!window.cordova;
+        var popupclosed = false;
+	
+        if(isCordovaApp){
+		$(popup).on('loaderror', function(e) {
+		    setTimeout(function() {
+                        popup.close();
+                    }, 100);
+                });
+
+                $(popup).on('exit', function(e) { 
+                    popupclosed = true;
+                });
+        }
+
 	return Q()
 		.then(function () {
 			var deferred = Q.defer();
 			if (popup.focus) popup.focus();
 			var intervalId = setInterval(function () {
-				if (popup.closed || popup.closed === undefined) {
+				if (
+					( !isCordovaApp && (popup.closed || popup.closed === undefined) ) ||
+					( isCordovaApp && popupclosed )
+				) 
+				{
 					clearInterval(intervalId);
 					deferred.resolve();
 				}
