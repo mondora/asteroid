@@ -22,7 +22,7 @@ Subscription.prototype.stop = function () {
 };
 
 Subscription.prototype._onReady = function () {
-	this._ready.resolve();
+	this._ready.resolve(this.id);
 };
 
 Subscription.prototype._onStop = function () {
