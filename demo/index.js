@@ -18,18 +18,27 @@ window.onload = function () {
 			});
 	}, false);
 	document.getElementById("tw").addEventListener("click", function () {
-		ceres.loginWithTwitter().then(function (id) {
-			console.log(id);
-		});
+		ceres.loginWithTwitter()
+			.then(function (id) {
+				console.log(id);
+			}).fail(function (e) {
+				console.log(e);
+			});
 	}, false);
 	document.getElementById("gl").addEventListener("click", function () {
-		ceres.loginWithGoogle().then(function (id) {
-			console.log(id);
-		});
+		ceres.loginWithGoogle()
+			.then(function (id) {
+				console.log(id);
+			}).fail(function (e) {
+				console.log(e);
+			});
 	}, false);
 	document.getElementById("gh").addEventListener("click", function () {
-		ceres.loginWithGithub().then(function (id) {
-			console.log(id);
-		});
+		ceres.loginWithGithub()
+			.then(function (id) {
+				console.log(id);
+			}).fail(function (e) {
+				console.log(e);
+			});
 	}, false);
 };
