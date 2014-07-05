@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.org/mondora/asteroid.svg?branch=master)](https://travis-ci.org/mondora/asteroid)
+[![Coverage Status](https://coveralls.io/repos/mondora/asteroid/badge.png)](https://coveralls.io/r/mondora/asteroid)
 [![Code Climate](https://codeclimate.com/github/mondora/asteroid.png)](https://codeclimate.com/github/mondora/asteroid)
 
 [Example todo app using AngularJS.](https://mondora.github.io/meteor-todo)
