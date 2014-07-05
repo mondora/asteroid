@@ -1,8 +1,7 @@
-[Example todo app using
-AngularJS](https://mondora.github.io/meteor-todo)
+[![Code Climate](https://codeclimate.com/github/mondora/asteroid.png)](https://codeclimate.com/github/mondora/asteroid)
 
-[Same app using Meteor's front-end
-client](https://mondora.meteor.com)
+[Example todo app using AngularJS.](https://mondora.github.io/meteor-todo)
+[Same app using Meteor's front-end.](https://meteor.todo.pscanf.com)
 
 #asteroid
 
