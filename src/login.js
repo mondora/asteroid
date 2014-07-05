@@ -7,23 +7,24 @@ Asteroid.prototype._getOauthClientId = function (serviceName) {
 };
 
 Asteroid.prototype._initOauthLogin = function (service, credentialToken, loginUrl) {
-        var popup = window.open(loginUrl, '_blank', 'location=no,toolbar=no');	
-        var self = this;
-        var isCordovaApp = !!window.cordova;
-        var popupclosed = false;
-	
-        if(isCordovaApp){
-		popup.addEventListener('loaderror', function(e) {
-		    setTimeout(function() {
-                        popup.close();
-                    }, 100);
-                });
-
-                popup.addEventListener('exit', function(e) { 
-                    popupclosed = true;
-                });
-        }
-
+	// Save credential token in localStorage, so that
+	// the popup window (from the same origin) can read it.
+	window.localStorage = credentialToken;
+	var popup = window.open(loginUrl, "_blank", "location=no,toolbar=no");	
+	var self = this;
+	// Cordova support
+	var isCordovaApp = !!window.cordova;
+	var popupClosed = false;
+	if (isCordovaApp) {
+		popup.addEventListener("loaderror", function(e) {
+			setTimeout(function() {
+				popup.close();
+			}, 100);
+		});
+		popup.addEventListener("exit", function(e) { 
+			popupClosed = true;
+		});
+	}
 	return Q()
 		.then(function () {
 			var deferred = Q.defer();
@@ -31,7 +32,7 @@ Asteroid.prototype._initOauthLogin = function (service, credentialToken, loginUr
 			var intervalId = setInterval(function () {
 				if (
 					( !isCordovaApp && (popup.closed || popup.closed === undefined) ) ||
-					( isCordovaApp && popupclosed )
+					( isCordovaApp && popupClosed )
 				) 
 				{
 					clearInterval(intervalId);
@@ -44,7 +45,10 @@ Asteroid.prototype._initOauthLogin = function (service, credentialToken, loginUr
 			var deferred = Q.defer();
 			var loginParameters = {
 				oauth: {
-					credentialToken: credentialToken
+					credentialToken: credentialToken,
+					// Read the credential secret from localStorage, where
+					// the popup has saved it.
+					credentialSecret: window.localStorage.credentialSecret
 				}
 			};
 			self.ddp.method("login", [loginParameters], function (err, res) {

@@ -15,7 +15,7 @@ var WebSocket = require("faye-websocket");
 // Asteroid constructor //
 //////////////////////////
 
-var Asteroid = function (host, ssl, debug) {
+var Asteroid = function (host, ssl, socketInterceptFunction) {
 	// Assert arguments type
 	must.beString(host);
 	// Configure the instance
@@ -27,13 +27,13 @@ var Asteroid = function (host, ssl, debug) {
 		this._ddpOptions = {
 			endpoint: (ssl ? "https://" : "http://") + host + "/sockjs",
 			SocketConstructor: SockJS,
-			debug: debug
+			socketInterceptFunction: socketInterceptFunction
 		};
 	} else {
 		this._ddpOptions = {
 			endpoint: (ssl ? "wss://" : "ws://") + host + "/websocket",
 			SocketConstructor: WebSocket,
-			debug: debug
+			socketInterceptFunction: socketInterceptFunction
 		};
 	}
 	// @endif
@@ -41,7 +41,7 @@ var Asteroid = function (host, ssl, debug) {
 	this._ddpOptions = {
 		endpoint: (ssl ? "wss://" : "ws://") + host + "/websocket",
 		SocketConstructor: WebSocket.Client,
-		debug: debug
+		socketInterceptFunction: socketInterceptFunction
 	};
 	// @endif
 	// Reference containers
@@ -229,7 +229,7 @@ Asteroid.prototype.apply = function (method, params) {
 // Syntactic sugar //
 /////////////////////
 
-Asteroid.prototype.createCollection = function (name) {
+Asteroid.prototype.getCollection = function (name) {
 	// Assert arguments type
 	must.beString(name);
 	// Only create the collection if it doesn't exist

@@ -2,3 +2,6 @@
 bower_components/
 node_modules/
 ddp.js
+sonar-project.properties
+.idea/
+.sonar/
