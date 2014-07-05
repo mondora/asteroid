@@ -15,7 +15,7 @@ var WebSocket = require("faye-websocket");
 // Asteroid constructor //
 //////////////////////////
 
-var Asteroid = function (host, ssl, socketInterceptFunction) {
+var Asteroid = function (host, ssl, socketInterceptFunction, debug) {
 	// Assert arguments type
 	must.beString(host);
 	// Configure the instance
@@ -27,13 +27,15 @@ var Asteroid = function (host, ssl, socketInterceptFunction) {
 		this._ddpOptions = {
 			endpoint: (ssl ? "https://" : "http://") + host + "/sockjs",
 			SocketConstructor: SockJS,
-			socketInterceptFunction: socketInterceptFunction
+			socketInterceptFunction: socketInterceptFunction,
+			debug: debug
 		};
 	} else {
 		this._ddpOptions = {
 			endpoint: (ssl ? "wss://" : "ws://") + host + "/websocket",
 			SocketConstructor: WebSocket,
-			socketInterceptFunction: socketInterceptFunction
+			socketInterceptFunction: socketInterceptFunction,
+			debug: debug
 		};
 	}
 	// @endif
