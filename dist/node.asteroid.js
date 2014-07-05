@@ -156,7 +156,7 @@ Asteroid.prototype._init = function () {
 		// Subscribe to the meteor.loginServiceConfiguration
 		// collection, which holds the configuration options
 		// to login via third party services (oauth).
-		self.ddp.sub("meteor.loginServiceConfiguration");
+		self.subscribe("meteor.loginServiceConfiguration");
 		// Emit the connected event
 		self._emit("connected");
 	});
