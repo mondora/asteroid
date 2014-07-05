@@ -39,6 +39,7 @@ gulp.task("demo", function () {
 		});
 		req.resume();
 	}).listen(8080);
+	gulp.watch("src/**/*.js", ["buildBrowser"]);
 });
 
 gulp.task("dev", function () {
