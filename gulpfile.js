@@ -69,7 +69,7 @@ gulp.task("default", function () {
 	console.log("");
 	console.log("Available tasks:");
 	console.log("  buildBrowser     build the sources into dist/asteroid.js and dist/asteroid.min.js");
-	console.log("  buildNode     build the sources into dist/node.asteroid.js and dist/node.asteroid.min.js");
+	console.log("  buildNode        build the sources into dist/node.asteroid.js and dist/node.asteroid.min.js");
 	console.log("  demo	            sets up a demo server");
 	console.log("  dev              init dev environment with automatic test running");
 	console.log("  test-node        run tests with mocha");

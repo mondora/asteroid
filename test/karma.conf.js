@@ -15,7 +15,7 @@ module.exports = function(config) {
 
 		// list of files / patterns to load in the browser
 		files: [
-			"node_modules/sinon/pkg/sinon-1.9.1.js",
+			"node_modules/sinon/pkg/sinon-1.10.2.js",
 			"node_modules/should/should.js",
 			"node_modules/lodash/dist/lodash.compat.js",
 			"node_modules/q/q.js",

@@ -34,22 +34,22 @@ describe("The Asteroid constructor", function () {
 		ceres = new Asteroid("example.com", true, true);
 		ceres._host.should.equal("https://example.com");
 		ceres._ddpOptions.endpoint.should.equal("wss://example.com/websocket");
-		ceres._ddpOptions.debug.should.equal(true);
+		ceres._ddpOptions.socketInterceptFunction.should.equal(true);
 
 		ceres = new Asteroid("example.com", false, true);
 		ceres._host.should.equal("http://example.com");
 		ceres._ddpOptions.endpoint.should.equal("ws://example.com/websocket");
-		ceres._ddpOptions.debug.should.equal(true);
+		ceres._ddpOptions.socketInterceptFunction.should.equal(true);
 
 		ceres = new Asteroid("example.com", true);
 		ceres._host.should.equal("https://example.com");
 		ceres._ddpOptions.endpoint.should.equal("wss://example.com/websocket");
-		_.isUndefined(ceres._ddpOptions.debug).should.equal(true);
+		_.isUndefined(ceres._ddpOptions.socketInterceptFunction).should.equal(true);
 
 		ceres = new Asteroid("example.com");
 		ceres._host.should.equal("http://example.com");
 		ceres._ddpOptions.endpoint.should.equal("ws://example.com/websocket");
-		_.isUndefined(ceres._ddpOptions.debug).should.equal(true);
+		_.isUndefined(ceres._ddpOptions.socketInterceptFunction).should.equal(true);
 
 		Asteroid.prototype._init.restore();
 

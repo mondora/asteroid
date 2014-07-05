@@ -47,22 +47,22 @@ describe("The Asteroid constructor", function () {
 		ceres = new Asteroid("example.com", true, true);
 		ceres._host.should.equal("https://example.com");
 		ceres._ddpOptions.endpoint.should.equal("wss://example.com/websocket");
-		ceres._ddpOptions.debug.should.equal(true);
+		ceres._ddpOptions.socketInterceptFunction.should.equal(true);
 
 		ceres = new Asteroid("example.com", false, true);
 		ceres._host.should.equal("http://example.com");
 		ceres._ddpOptions.endpoint.should.equal("ws://example.com/websocket");
-		ceres._ddpOptions.debug.should.equal(true);
+		ceres._ddpOptions.socketInterceptFunction.should.equal(true);
 
 		ceres = new Asteroid("example.com", true);
 		ceres._host.should.equal("https://example.com");
 		ceres._ddpOptions.endpoint.should.equal("wss://example.com/websocket");
-		_.isUndefined(ceres._ddpOptions.debug).should.equal(true);
+		_.isUndefined(ceres._ddpOptions.socketInterceptFunction).should.equal(true);
 
 		ceres = new Asteroid("example.com");
 		ceres._host.should.equal("http://example.com");
 		ceres._ddpOptions.endpoint.should.equal("ws://example.com/websocket");
-		_.isUndefined(ceres._ddpOptions.debug).should.equal(true);
+		_.isUndefined(ceres._ddpOptions.socketInterceptFunction).should.equal(true);
 
 		Asteroid.prototype._init.restore();
 
@@ -1170,10 +1170,32 @@ describe("The Asteroid.subscribe method", function () {
 		var p2 = {};
 		// ...
 		var ceres = new Asteroid("example.com");	
-		var promise = ceres.subscribe("sub", p0, p1, p2);
+		var sub = ceres.subscribe("sub", p0, p1, p2);
 		ceres.ddp.params[0].should.equal(p0);
 		ceres.ddp.params[1].should.equal(p1);
 		ceres.ddp.params[2].should.equal(p2);
+	});
+
+	it("should cache identical calls", function () {
+		var p0 = {};
+		var p1 = {};
+		var p2 = {};
+		// ...
+		var ceres = new Asteroid("example.com");	
+		var sub0 = ceres.subscribe("sub", p0, p1, p2);
+		var sub1 = ceres.subscribe("sub", p0, p1, p2);
+		sub0.should.equal(sub1);
+	});
+
+	it("should not cache non identical calls", function () {
+		var p = {};
+		var p0 = {a: 0};
+		var p1 = {a: 1};
+		// ...
+		var ceres = new Asteroid("example.com");	
+		var sub0 = ceres.subscribe("sub", p, p0);
+		var sub1 = ceres.subscribe("sub", p, p1);
+		sub0.should.not.equal(sub1);
 	});
 
 });

@@ -47,6 +47,7 @@ var Asteroid = function (host, ssl, socketInterceptFunction) {
 	// Reference containers
 	this.collections = {};
 	this.subscriptions = {};
+	this._subscriptionsCache = {};
 	// Init the instance
 	this._init();
 };

@@ -132,6 +132,7 @@ var Asteroid = function (host, ssl, socketInterceptFunction) {
 	// Reference containers
 	this.collections = {};
 	this.subscriptions = {};
+	this._subscriptionsCache = {};
 	// Init the instance
 	this._init();
 };
@@ -826,27 +827,21 @@ Subscription.prototype._onError = function (err) {
 // Subscribe method //
 //////////////////////
 
-Asteroid.prototype.subscribe = (function () {
-	// Memoize calls to the method, since subscribing to
-	// a resource twice with the same arguments yields the
-	// same results.
-	var calls = {};
-	// Actual subscribe function
-	return function (name /* , param1, param2, ... */) {
+Asteroid.prototype.subscribe = function (name /* , param1, param2, ... */) {
 		// Assert arguments type
 		must.beString(name);
-		// Hash the arguments (using JSON.stringify as hash function)
+		// Hash the arguments to get a key for _subscriptionsCache
 		var hash = JSON.stringify(arguments);
 		// Only subscribe if there is no cached subscription
-		if (!calls[hash]) {
+		if (!this._subscriptionsCache[hash]) {
 			// Collect arguments into array
 			var params = Array.prototype.slice.call(arguments, 1);
-			calls[hash] = new Subscription(name, params, this);
-			this.subscriptions[sub.id] = calls[hash];	
+			var sub = new Subscription(name, params, this);
+			this._subscriptionsCache[hash] = sub;
+			this.subscriptions[sub.id] = sub;
 		}
-		return calls[hash];
-	};
-})();
+		return this._subscriptionsCache[hash];
+};
 
 Asteroid.prototype._reEstablishSubscriptions = function () {
 	var subs = this.subscriptions;
