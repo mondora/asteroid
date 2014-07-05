@@ -1,21 +1,33 @@
+[Example todo app using
+AngularJS](https://mondora.github.io/meteor-todo)
+
+[Same app using Meteor's front-end
+client](https://mondora.meteor.com)
+
 #asteroid
 
-An alternative browser client for a Meteor backend.
+A javascript client (browser and node) for a Meteor backend.
 
 ##Why
 
-I consider Meteor to be an awesome platform, but I find its templating system
-not sufficient for building truly amazing web apps. While it is possible
-to use it alongside front-end frameworks like AngularJS, the integration is
-not painless, and the developer needs to jump through hoops to get what he wants.
+Meteor to be an awesome platform, but its canonical
+front-end is not very flexible. Asteroid gives the
+possibility to connect to a Meteor backend with any JS app.
 
-By conneting to any Meteor backend via the Distributed Data Protocol, Asteroid
-allows the developer to take advantage of the greatest features of Meteor's back-end
-platform without having to compromise on the front-end.
+Some of the things Asteroid allows you to do are:
+
+*	make any existing application reactive
+
+*	use any front-end framework you want with Meteor
+
+*	develop browser extensions backed by Meteor
 
 [Blog post on the library](http://mondora.com/asteroid-a-better-way-to-build-meteor-apps/)
 
+
 ##Install
+
+###In the browser
 
 First, dowload the library:
 
@@ -23,27 +35,24 @@ First, dowload the library:
 
 Then, add the necessary libraries to your index.html:
 
-    <script src="bower_components/ddp.js/dpp.js"></script>
+    <script src="bower_components/ddp.js/src/dpp.js"></script>
     <script src="bower_components/q/q.js"></script>
     <script src="bower_components/asteroid/dist/asteroid.js"></script>
 
-##Advantages over the canonical Meteor front-end
+###In node
 
-* Small footprint. The library is about ~10Kb minified. It depends on ddp.js (~4Kb minified), and a q-compatible promise library (q is ~17Kb minified, for a lightweight alternative, check out my fork of [ayepromise](https://github.com/mondora/ayepromise), which is ~2Kb minified).
+Download the package:
 
-* Framework agnostic. Use the tools you already know and love to build your app.
+   npm install git+https://github.com/mondora/asteroid
 
-* Allows to use Meteor as a full-blown backend or just as a real-time platform pluggable into any existing project.
+Require it in your project:
 
-* Easily connect to multiple Meteor servers at the same time, perfect for building admin interfaces.
+	var Asteroid = require("asteroid");
 
-##Test
 
-    npm test
+##Example usage
 
-##Example
-
-<span style="color:red;">Warning: the API is in still a bit in flux.</span>
+**Warning: the API is in still a bit in flux.**
 
 ```javascript
 // Connect to a Meteor backend
@@ -51,7 +60,7 @@ var ceres = new Asteroid("localhost:3000");
 
 // Use real-time collections
 ceres.subscribe("tasks");
-var tasks = ceres.createCollection("tasks");
+var tasks = ceres.getCollection("tasks");
 tasks.insert({
   description: "Do the laundry"
 });
@@ -62,29 +71,54 @@ console.log(laundryTaskQuery.result); // Logs the array of results
 ceres.loginWithTwitter();
 ```
 
-##Demo
 
-[Example todo app using AngularJS](https://mondora.github.io/meteor-todo)
+##Advantages over the canonical Meteor front-end
 
-[Same app using Meteor's front-end client](https://mondora.meteor.com)
+* Small footprint. The library is about ~10Kb minified. It
+  depends on ddp.js (~4Kb minified), and a q-compatible
+  promise library (q is ~17Kb minified, for a lightweight
+  alternative, check out my fork of
+  [ayepromise](https://github.com/mondora/ayepromise), which
+  is ~2Kb minified). In the demo app, the [Asteroid
+  client](http://s27.postimg.org/hc1qjnjsz/Asteroid.png),
+  which includes AngularJS (not required, but included for
+  the demo), is almost half the size of the [Meteor
+  client](http://s29.postimg.org/3mxaifziv/Meteor.png).
 
-The [Asteroid client](http://s27.postimg.org/hc1qjnjsz/Asteroid.png), which includes AngularJS (not required, but included for the demo), is almost half the size of the [Meteor client](http://s29.postimg.org/3mxaifziv/Meteor.png).
+* Framework agnostic. Use the tools you already know and
+  love to build your app.
+
+* Allows to use Meteor as a full-blown backend or just as a
+  real-time platform pluggable into any existing project.
+
+* Easily connect to multiple Meteor servers at the same
+  time, perfect for building admin interfaces.
+
+
+
+##Test
+
+    npm test
+
 
 ##Todo
 
-Here follows a list of things which need to be done before the library
-can be considered "production ready":
+Here follows a list of things which need to be done before
+the library can be considered "production ready":
 
-* allow using selectors and modifiers to update an item (currently you can
-  only replace top-level fields in the document with the Collection.update
-  method). Difficulty 8/10
+* allow using selectors and modifiers to update an item
+  (currently you can only replace top-level fields in the
+  document with the Collection.update method). Difficulty
+  8/10
 
-* allow using selectors with the reactiveQuery method. Difficulty 8/10
+* allow using selectors with the reactiveQuery method.
+  Difficulty 8/10
 
-* add EJSON support (by porting Meteor's EJSON package). Difficulty 3/10
+* add EJSON support (by porting Meteor's EJSON package).
+  Difficulty 3/10
 
-* designing a pretty logo. Difficulty 6/10
-
+* just an idea, but I'd fancy trying to integrate it with
+  [nedb](https://github.com/louischatriot/nedb)
 
 
 ##API
@@ -95,14 +129,14 @@ can be considered "production ready":
 
 
 
-###new Asteroid(host, ssl, debug)
+###new Asteroid(host, ssl, interceptor)
 
 Creates a new Asteroid instance, that is, a connection to a
 Meteor server (via DDP).
 
-After being constructed, the instance will connect itself
-to the Meteor backend. It will also try, upon connection,
-to resume a previous login session (with a token saved in
+After being constructed, the instance will connect itself to
+the Meteor backend. It will also try, upon connection, to
+resume a previous login session (with a token saved in
 localstorage). The `Asteroid.resumeLoginPromise` property
 stores a promise which will be resolved if the resume was
 successful, rejected otherwise.
@@ -119,8 +153,12 @@ transport. Otherwise `WebSocket` will be used. Note that
 * `ssl` **boolean** _optional_: whether to use SSL. Defaults
   to `false`.
 
-* `debug`**boolean** _optional_: if set to `true`, DDP messages
-  will be logged in the console. Defaults to `false`.
+* `interceptor` **function** _optional_: a function which
+  will intercept any socket event. It will be called with an
+  event object containing the name of the event, the
+  timestamp of the event, and details about the event (for
+  instance, in case of a "socket_message_received" event,
+  it'll contain the peyload of the message).
 
 #####Returns
 
@@ -157,10 +195,6 @@ Nothing
 
 ###Asteroid.loginWith ... ()
 
-WARNING: Meteor 0.8.1 introduced a security policy that breaks
-this functionality. [However, work is undergoing to resolve the issue](https://groups.google.com/forum/#!topic/meteor-core/Ma3XTZk4Kqg).
-For now, use Meteor <= 0.8.1.
-
 Logs the user in via the specified third party (oauth)
 service.
 
@@ -184,36 +218,38 @@ the error.
 
 ###Asteroid.createUser(usernameOrEmail, password, profile)
 
-Creates a user and logs him in. **Does not** use the SRP protocol,
-so passwords are sent to the server in plaintext. If you're
-using SSL however (and you should), this is not a problem.
+Creates a user and logs him in. **Does not** hash the
+password before sending it to the server. This is not a
+problem, since you'll probably be using SSL anyway.
 
 #####Arguments
 
-* `usernameOrEmail` **string** _required_: the username or email.
+* `usernameOrEmail` **string** _required_: the username or
+  email.
 
 * `password` **string** _required_: the password.
 
-* `profile` **object** _optional_: a blackbox, you can throw anything
-  in here and it'll end up into `user.profile`.
+* `profile` **object** _optional_: a blackbox, you can throw
+  anything in here and it'll end up into `user.profile`.
 
 #####Returns
 
 A promise which will be resolved with the logged user id if
-the creation and login are successful. Otherwise it'll be rejected
-with an error.
+the creation and login are successful. Otherwise it'll be
+rejected with an error.
 
 ------------------------------------------------------------
 
 ###Asteroid.loginWithPassword(usernameOrEmail, password)
 
-Logs the user in username/email and password. **Does not** use the SRP
-protocol, so passwords are sent to the server in plaintext. If you're
-using SSL however (and you should), this is not a problem.
+Logs the user in username/email and password. **Does not**
+hash the password before sending it to the server. This is
+not a problem, since you'll probably be using SSL anyway.
 
 #####Arguments
 
-* `usernameOrEmail` **string** _required_: the username or email.
+* `usernameOrEmail` **string** _required_: the username or
+  email.
 
 * `password` **string** _required_: the password.
 
@@ -241,9 +277,9 @@ successful. Otherwise it'll be rejected with the error.
 ------------------------------------------------------------
 ###Asteroid.subscribe(name, [param1, param2, ...])
 
-Subscribes to the specified subscription. If a subscription
-by that name is already present (and successful), first
-Asteroid unsubscribes from it.
+Subscribes to the specified subscription. If an identical
+subscription (same name and parameters) has already been
+made, Asteroid will return that subscription.
 
 #####Arguments
 
@@ -254,24 +290,28 @@ Asteroid unsubscribes from it.
 
 #####Returns
 
-A promise, this will be resolved with the `id` of the
-subscription if the subscription is successful. It will be
-rejected otherwise.
+A subscription instance.
 
 ------------------------------------------------------------
 
-###Asteroid.unsubscribe(id)
+###Asteroid.Subscription
 
-Unsubscribes from the specified subscription.
+Subscription instances have the following properties:
 
-#####Arguments
+* `id` **string**: the `id` of the subscription, as
+  returned by the `ddp.sub` method
 
-* `id` **string** _required_: the `id` of the subscription, as
-  returned by the `subscribe` method
+* `ready` **promise**: a promise which will be resolved with
+  the `id` of the subscription if the subscription succeeds
+  (we receive the ddp `ready` message), or will be rejected
+  if it fails (we receive, upon subscribing, the `nosub`
+  message).
 
-#####Returns
+And the following method:
 
-Nothing
+* `stop`: it takes no argument, sends the ddp `unsub`
+  message and deletes the subscription so it can be garbage
+  collected.
 
 ------------------------------------------------------------
 
@@ -326,7 +366,7 @@ Same as Asteroid.call, see above.
 
 ------------------------------------------------------------
 
-###Asteroid.createCollection(name)
+###Asteroid.getCollection(name)
 
 Creates and returns a collection. If the collection already
 exists, nothing changes and the existing one is returned.
@@ -351,9 +391,10 @@ front-end we would normally need to define the
 
 With Asteroid, when the first `added` message is received,
 if the `posts` collection doesn't exist yet, it will get
-automatically created. We can then get a reference to that
-collection by calling `createCollection` (or by accessing
-the semi-private Asteroid.collections dictionary).
+automatically created. We can then get a reference to
+that collection by calling `createCollection` (or by
+accessing the semi-private Asteroid.collections
+dictionary).
 
 
 
@@ -366,7 +407,7 @@ All the following methods use latency compensation.
 ###Collection.insert(item)
 
 Inserts an item into a collection. If the item does not
-have an _id property, one will be automatically generated
+have an `_id` property, one will be automatically generated
 for it.
 
 #####Arguments
@@ -380,14 +421,14 @@ for it.
 An object with two properties: `local` and `remote`. Both
 properties are promises.
 
-The local promise is immediately resolved with the _id of
+The local promise is immediately resolved with the `_id` of
 the inserted item. That is, unless an error occurred. In
 that case, an exception will be raised. (TODO: this is a bit
-of an API inconsistency which should be fixed).
+of an API inconsistency which maybe should be fixed).
 
-The remote promise is resolved with the _id of the inserted
-item if the remote insert is successful. Otherwise it's
-rejected with the reason of the failure.
+The remote promise is resolved with the `_id` of the
+inserted item if the remote insert is successful. Otherwise
+it's rejected with the reason of the failure.
 
 ------------------------------------------------------------
 
@@ -407,12 +448,12 @@ Updates the specified item.
 An object with two properties: `local` and `remote`. Both
 properties are promises.
 
-The local promise is immediately resolved with the _id of
+The local promise is immediately resolved with the `_id` of
 the updated item. That is, unless an error occurred. In
 that case, an exception will be raised. (TODO: this is a bit
 of an API inconsistency which should be fixed).
 
-The remote promise is resolved with the _id of the updated
+The remote promise is resolved with the `_id` of the updated
 item if the remote update is successful. Otherwise it's
 rejected with the reason of the failure.
 
@@ -436,12 +477,12 @@ Removes the specified item.
 An object with two properties: `local` and `remote`. Both
 properties are promises.
 
-The local promise is immediately resolved with the _id of
+The local promise is immediately resolved with the `_id` of
 the removed item. That is, unless an error occurred. In
 that case, an exception will be raised. (TODO: this is a bit
 of an API inconsistency which should be fixed).
 
-The remote promise is resolved with the _id of the removed
+The remote promise is resolved with the `_id` of the removed
 item if the remote remove is successful. Otherwise it's
 rejected with the reason of the failure.
 
