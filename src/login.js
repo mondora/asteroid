@@ -7,48 +7,41 @@ Asteroid.prototype._getOauthClientId = function (serviceName) {
 };
 
 Asteroid.prototype._initOauthLogin = function (service, credentialToken, loginUrl) {
-	// Save credential token in localStorage, so that
-	// the popup window (from the same origin) can read it.
-	window.localStorage = credentialToken;
 	var popup = window.open(loginUrl, "_blank", "location=no,toolbar=no");	
 	var self = this;
-	// Cordova support
-	var isCordovaApp = !!window.cordova;
-	var popupClosed = false;
-	if (isCordovaApp) {
-		popup.addEventListener("loaderror", function(e) {
-			setTimeout(function() {
-				popup.close();
-			}, 100);
-		});
-		popup.addEventListener("exit", function(e) { 
-			popupClosed = true;
-		});
-	}
 	return Q()
 		.then(function () {
 			var deferred = Q.defer();
 			if (popup.focus) popup.focus();
+			var request = JSON.stringify({
+				credentialToken: credentialToken
+			});
 			var intervalId = setInterval(function () {
-				if (
-					( !isCordovaApp && (popup.closed || popup.closed === undefined) ) ||
-					( isCordovaApp && popupClosed )
-				) 
-				{
-					clearInterval(intervalId);
-					deferred.resolve();
-				}
+				popup.postMessage(request, self._host);
 			}, 100);
+			window.addEventListener("message", function (e) {
+				var message;
+				try {
+					message = JSON.parse(e.data);
+				} catch (err) {
+					return;
+				}
+				if (
+					e.origin === self._host &&
+					message.credentialToken === credentialToken
+				) {
+					clearInterval(intervalId);
+					deferred.resolve(message.credentialSecret);
+				}
+			});
 			return deferred.promise;
 		})
-		.then(function () {
+		.then(function (credentialSecret) {
 			var deferred = Q.defer();
 			var loginParameters = {
 				oauth: {
 					credentialToken: credentialToken,
-					// Read the credential secret from localStorage, where
-					// the popup has saved it.
-					credentialSecret: window.localStorage.credentialSecret
+					credentialSecret: credentialSecret
 				}
 			};
 			self.ddp.method("login", [loginParameters], function (err, res) {
