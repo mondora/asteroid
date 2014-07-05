@@ -26,12 +26,15 @@ Asteroid.prototype._initOauthLogin = function (service, credentialToken, loginUr
 				} catch (err) {
 					return;
 				}
-				if (
-					e.origin === self._host &&
-					message.credentialToken === credentialToken
-				) {
-					clearInterval(intervalId);
-					deferred.resolve(message.credentialSecret);
+				if (e.origin === self._host) {
+					if (message.credentialToken === credentialToken) {
+						clearInterval(intervalId);
+						deferred.resolve(message.credentialSecret);
+					}
+					if (message.error) {
+						clearInterval(intervalId);
+						deferred.reject(message.error);
+					}
 				}
 			});
 			return deferred.promise;

@@ -119,7 +119,7 @@ var WebSocket = require("faye-websocket");
 // Asteroid constructor //
 //////////////////////////
 
-var Asteroid = function (host, ssl, debug) {
+var Asteroid = function (host, ssl, socketInterceptFunction) {
 	// Assert arguments type
 	must.beString(host);
 	// Configure the instance
@@ -127,7 +127,7 @@ var Asteroid = function (host, ssl, debug) {
 	this._ddpOptions = {
 		endpoint: (ssl ? "wss://" : "ws://") + host + "/websocket",
 		SocketConstructor: WebSocket.Client,
-		debug: debug
+		socketInterceptFunction: socketInterceptFunction
 	};
 	// Reference containers
 	this.collections = {};
@@ -304,7 +304,7 @@ Asteroid.prototype.apply = function (method, params) {
 // Syntactic sugar //
 /////////////////////
 
-Asteroid.prototype.createCollection = function (name) {
+Asteroid.prototype.getCollection = function (name) {
 	// Assert arguments type
 	must.beString(name);
 	// Only create the collection if it doesn't exist
@@ -826,20 +826,34 @@ Subscription.prototype._onError = function (err) {
 // Subscribe method //
 //////////////////////
 
-Asteroid.prototype.subscribe = function (name /* , param1, param2, ... */) {
-	// Assert arguments type
-	must.beString(name);
-	// Collect arguments into array
-	var params = Array.prototype.slice.call(arguments, 1);
-	var sub = new Subscription(name, params, this);
-	this.subscriptions[sub.id] = sub;
-	return sub;
-};
+Asteroid.prototype.subscribe = (function () {
+	// Memoize calls to the method, since subscribing to
+	// a resource twice with the same arguments yields the
+	// same results.
+	var calls = {};
+	// Actual subscribe function
+	return function (name /* , param1, param2, ... */) {
+		// Assert arguments type
+		must.beString(name);
+		// Hash the arguments (using JSON.stringify as hash function)
+		var hash = JSON.stringify(arguments);
+		// Only subscribe if there is no cached subscription
+		if (!calls[hash]) {
+			// Collect arguments into array
+			var params = Array.prototype.slice.call(arguments, 1);
+			calls[hash] = new Subscription(name, params, this);
+			this.subscriptions[sub.id] = calls[hash];	
+		}
+		return calls[hash];
+	};
+})();
 
 Asteroid.prototype._reEstablishSubscriptions = function () {
 	var subs = this.subscriptions;
 	for (var id in subs) {
-		subs[id] = new Subscription(subs[id]._name, subs[id]._params, this);
+		if (subs.hasOwnProperty(id)) {
+			subs[id] = new Subscription(subs[id]._name, subs[id]._params, this);
+		}
 	}
 };
 

@@ -120,7 +120,7 @@ must.beObject = function (o) {
 // Asteroid constructor //
 //////////////////////////
 
-var Asteroid = function (host, ssl, debug) {
+var Asteroid = function (host, ssl, socketInterceptFunction) {
 	// Assert arguments type
 	must.beString(host);
 	// Configure the instance
@@ -131,13 +131,13 @@ var Asteroid = function (host, ssl, debug) {
 		this._ddpOptions = {
 			endpoint: (ssl ? "https://" : "http://") + host + "/sockjs",
 			SocketConstructor: SockJS,
-			debug: debug
+			socketInterceptFunction: socketInterceptFunction
 		};
 	} else {
 		this._ddpOptions = {
 			endpoint: (ssl ? "wss://" : "ws://") + host + "/websocket",
 			SocketConstructor: WebSocket,
-			debug: debug
+			socketInterceptFunction: socketInterceptFunction
 		};
 	}
 	// Reference containers
@@ -321,7 +321,7 @@ Asteroid.prototype.apply = function (method, params) {
 // Syntactic sugar //
 /////////////////////
 
-Asteroid.prototype.createCollection = function (name) {
+Asteroid.prototype.getCollection = function (name) {
 	// Assert arguments type
 	must.beString(name);
 	// Only create the collection if it doesn't exist
@@ -629,44 +629,44 @@ Asteroid.prototype._getOauthClientId = function (serviceName) {
 };
 
 Asteroid.prototype._initOauthLogin = function (service, credentialToken, loginUrl) {
-        var popup = window.open(loginUrl, '_blank', 'location=no,toolbar=no');	
-        var self = this;
-        var isCordovaApp = !!window.cordova;
-        var popupclosed = false;
-	
-        if(isCordovaApp){
-		popup.addEventListener('loaderror', function(e) {
-		    setTimeout(function() {
-                        popup.close();
-                    }, 100);
-                });
-
-                popup.addEventListener('exit', function(e) { 
-                    popupclosed = true;
-                });
-        }
-
+	var popup = window.open(loginUrl, "_blank", "location=no,toolbar=no");	
+	var self = this;
 	return Q()
 		.then(function () {
 			var deferred = Q.defer();
 			if (popup.focus) popup.focus();
+			var request = JSON.stringify({
+				credentialToken: credentialToken
+			});
 			var intervalId = setInterval(function () {
-				if (
-					( !isCordovaApp && (popup.closed || popup.closed === undefined) ) ||
-					( isCordovaApp && popupclosed )
-				) 
-				{
-					clearInterval(intervalId);
-					deferred.resolve();
-				}
+				popup.postMessage(request, self._host);
 			}, 100);
+			window.addEventListener("message", function (e) {
+				var message;
+				try {
+					message = JSON.parse(e.data);
+				} catch (err) {
+					return;
+				}
+				if (e.origin === self._host) {
+					if (message.credentialToken === credentialToken) {
+						clearInterval(intervalId);
+						deferred.resolve(message.credentialSecret);
+					}
+					if (message.error) {
+						clearInterval(intervalId);
+						deferred.reject(message.error);
+					}
+				}
+			});
 			return deferred.promise;
 		})
-		.then(function () {
+		.then(function (credentialSecret) {
 			var deferred = Q.defer();
 			var loginParameters = {
 				oauth: {
-					credentialToken: credentialToken
+					credentialToken: credentialToken,
+					credentialSecret: credentialSecret
 				}
 			};
 			self.ddp.method("login", [loginParameters], function (err, res) {
@@ -987,20 +987,34 @@ Subscription.prototype._onError = function (err) {
 // Subscribe method //
 //////////////////////
 
-Asteroid.prototype.subscribe = function (name /* , param1, param2, ... */) {
-	// Assert arguments type
-	must.beString(name);
-	// Collect arguments into array
-	var params = Array.prototype.slice.call(arguments, 1);
-	var sub = new Subscription(name, params, this);
-	this.subscriptions[sub.id] = sub;
-	return sub;
-};
+Asteroid.prototype.subscribe = (function () {
+	// Memoize calls to the method, since subscribing to
+	// a resource twice with the same arguments yields the
+	// same results.
+	var calls = {};
+	// Actual subscribe function
+	return function (name /* , param1, param2, ... */) {
+		// Assert arguments type
+		must.beString(name);
+		// Hash the arguments (using JSON.stringify as hash function)
+		var hash = JSON.stringify(arguments);
+		// Only subscribe if there is no cached subscription
+		if (!calls[hash]) {
+			// Collect arguments into array
+			var params = Array.prototype.slice.call(arguments, 1);
+			calls[hash] = new Subscription(name, params, this);
+			this.subscriptions[sub.id] = calls[hash];	
+		}
+		return calls[hash];
+	};
+})();
 
 Asteroid.prototype._reEstablishSubscriptions = function () {
 	var subs = this.subscriptions;
 	for (var id in subs) {
-		subs[id] = new Subscription(subs[id]._name, subs[id]._params, this);
+		if (subs.hasOwnProperty(id)) {
+			subs[id] = new Subscription(subs[id]._name, subs[id]._params, this);
+		}
 	}
 };
 

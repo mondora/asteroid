@@ -3,6 +3,10 @@ ceres.on("connected", function () {
 	console.log("Connected!");
 });
 
+window.addEventListener("message", function (e) {
+	console.log(e.data);
+});
+
 window.onload = function () {
 	document.getElementById("fb").addEventListener("click", function () {
 		ceres.loginWithFacebook()
