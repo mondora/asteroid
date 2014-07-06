@@ -9,6 +9,8 @@ Asteroid.prototype._getOauthClientId = function (serviceName) {
 Asteroid.prototype._initOauthLogin = function (service, credentialToken, loginUrl) {
 	var popup = window.open(loginUrl, "_blank", "location=no,toolbar=no");	
 	var self = this;
+	var isCordovaApp = !!window.cordova;
+	var credentialSecret;
 	return Q()
 		.then(function () {
 			var deferred = Q.defer();
@@ -19,6 +21,20 @@ Asteroid.prototype._initOauthLogin = function (service, credentialToken, loginUr
 			var intervalId = setInterval(function () {
 				popup.postMessage(request, self._host);
 			}, 100);
+			if(isCordovaApp){
+				popup.addEventListener('loadstart', function(e) { 
+					e.url.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(m,key,value) {
+						if(key == "credentialSecret" && value)
+				        		credentialSecret = value;
+					});
+					if(credentialSecret){
+						deferred.resolve(credentialSecret);
+						setTimeout(function() {
+							popup.close();
+						}, 100);
+					}
+				});
+			}
 			window.addEventListener("message", function (e) {
 				var message;
 				try {
