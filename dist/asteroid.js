@@ -630,36 +630,79 @@ Asteroid.prototype._getOauthClientId = function (serviceName) {
 };
 
 Asteroid.prototype._initOauthLogin = function (service, credentialToken, loginUrl) {
+	// Open the oauth oauth
 	var popup = window.open(loginUrl, "_blank", "location=no,toolbar=no");	
+	if (popup.focus) popup.focus();
 	var self = this;
 	return Q()
 		.then(function () {
 			var deferred = Q.defer();
-			if (popup.focus) popup.focus();
-			var request = JSON.stringify({
-				credentialToken: credentialToken
-			});
-			var intervalId = setInterval(function () {
-				popup.postMessage(request, self._host);
-			}, 100);
-			window.addEventListener("message", function (e) {
-				var message;
-				try {
-					message = JSON.parse(e.data);
-				} catch (err) {
-					return;
-				}
-				if (e.origin === self._host) {
-					if (message.credentialToken === credentialToken) {
-						clearInterval(intervalId);
-						deferred.resolve(message.credentialSecret);
+			if (window.cordova) {
+				// We're using Cordova's InAppBrowser plugin.
+				// Each time the popup fires the loadstop event,
+				// check if the hash fragment contains the
+				// credentialSecret we need to complete the
+				// authentication flow
+				popup.addEventListener("loadstop", function (e) { 
+					// If the url does not contain the # character
+					// it means the loadstop event refers to an
+					// intermediate page, therefore we ignore it
+					if (e.url.indexOf("#") === -1) {
+						return;
 					}
-					if (message.error) {
-						clearInterval(intervalId);
-						deferred.reject(message.error);
+					// Find the position of the # character
+					var hashPosition = e.url.indexOf("#");
+					var hashes = e.url.slice(hashPosition).split("&");
+					// Once again, check that the fragment belongs to the
+					// final oauth page (the one we're looking for)
+					if (
+						!hashes[0] ||
+						hashes[0].split("=")[0] !== "credentialToken" ||
+						!hashes[1] ||
+						hashes[1].split("=")[0] !== "credentialSecret"
+					) {
+						return;
 					}
-				}
-			});
+					// Retrieve the two tokens
+					var hashCredentialToken = hashes[0].split("=")[1];
+					var hashCredentialSecret = hashes[1].split("=")[1];
+					// Check if the credentialToken corresponds. We could
+					// use this as a way to communicate possible errors by
+					// purposefully mismatching the credentialToken with
+					// the error message. Too much of a hack?
+					if (hashCredentialToken === credentialToken) {
+						// Resolve the promise with the secret
+						deferred.resolve(hashCredentialSecret);
+						// Close the popup
+						popup.close();
+					}
+				});
+			} else {
+				var request = JSON.stringify({
+					credentialToken: credentialToken
+				});
+				var intervalId = setInterval(function () {
+					popup.postMessage(request, self._host);
+				}, 100);
+				window.addEventListener("message", function (e) {
+					var message;
+					try {
+						message = JSON.parse(e.data);
+					} catch (err) {
+						return;
+					}
+					if (e.origin === self._host) {
+						if (message.credentialToken === credentialToken) {
+							clearInterval(intervalId);
+							deferred.resolve(message.credentialSecret);
+						}
+						if (message.error) {
+							clearInterval(intervalId);
+							deferred.reject(message.error);
+						}
+					}
+				});
+			}
 			return deferred.promise;
 		})
 		.then(function (credentialSecret) {
