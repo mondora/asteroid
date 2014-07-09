@@ -2,9 +2,10 @@
 // Subscription class //
 ////////////////////////
 
-var Subscription = function (name, params, asteroid) {
+var Subscription = function (name, params, hash, asteroid) {
 	this._name = name;
 	this._params = params;
+	this._hash = hash;
 	this._asteroid = asteroid;
 	// Subscription promises
 	this._ready = Q.defer();
@@ -27,6 +28,7 @@ Subscription.prototype._onReady = function () {
 
 Subscription.prototype._onStop = function () {
 	delete this._asteroid.subscriptions[this.id];
+	delete this._asteroid._subscriptionsCache[this._hash];
 };
 
 Subscription.prototype._onError = function (err) {
@@ -51,7 +53,7 @@ Asteroid.prototype.subscribe = function (name /* , param1, param2, ... */) {
 	if (!this._subscriptionsCache[hash]) {
 		// Collect arguments into array
 		var params = Array.prototype.slice.call(arguments, 1);
-		var sub = new Subscription(name, params, this);
+		var sub = new Subscription(name, params, hash, this);
 		this._subscriptionsCache[hash] = sub;
 		this.subscriptions[sub.id] = sub;
 	}
