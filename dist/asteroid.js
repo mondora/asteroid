@@ -32,6 +32,47 @@ function clone (obj) {
 	}
 }
 
+var is_chrome_extension = chrome.extension ? true : false;
+var localStorageMulti = {
+	get: function(key) {
+		var deferred = Q.defer();
+		if (is_chrome_extension) {
+			chrome.storage.local.get(key, function(data) { 
+				deferred.resolve(data[key]);
+			});
+		} else {
+			deferred.resolve(localStorage[key]);
+		}
+		return deferred.promise;
+	}
+  , set: function(key, value) {
+		var deferred = Q.defer();
+		if (is_chrome_extension) {
+			var data = {};
+			data[key] = value;
+			chrome.storage.local.set(data, function() {
+				deferred.resolve({});
+			});
+		} else {
+			localStorage[key] = value;
+			deferred.resolve({});
+		}
+		return deferred.promise;
+	}
+  , del: function(key) {
+		var deferred = Q.defer();
+		if (is_chrome_extension) {
+			chrome.storage.local.remove(key, function() {
+				deferred.resolve({});
+			});
+		} else {
+			delete localStorage[key];
+			deferred.resolve({});
+		}
+		return deferred.promise;
+	}
+}
+
 var EventEmitter = function () {};
 
 EventEmitter.prototype = {
@@ -674,13 +715,13 @@ Asteroid.prototype._initOauthLogin = function (service, credentialToken, loginUr
 				if (err) {
 					delete self.userId;
 					delete self.loggedIn;
-					delete localStorage[self._host + "__login_token__"];
+					localStorageMulti.del(self._host + "__login_token__");
 					deferred.reject(err);
 					self._emit("loginError", err);
 				} else {
 					self.userId = res.id;
 					self.loggedIn = true;
-					localStorage[self._host + "__login_token__"] = res.token;
+					localStorageMulti.set(self._host + "__login_token__", res.token);
 					self._emit("login", res.id);
 					deferred.resolve(res.id);
 				}
@@ -692,28 +733,29 @@ Asteroid.prototype._initOauthLogin = function (service, credentialToken, loginUr
 Asteroid.prototype._tryResumeLogin = function () {
 	var self = this;
 	var deferred = Q.defer();
-	var token = localStorage[self._host + "__login_token__"];
-	if (!token) {
-		deferred.reject("No login token");
-		return deferred.promise;
-	}
-	var loginParameters = {
-		resume: token
-	};
-	self.ddp.method("login", [loginParameters], function (err, res) {
-		if (err) {
-			delete self.userId;
-			delete self.loggedIn;
-			delete localStorage[self._host + "__login_token__"];
-			self._emit("loginError", err);
-			deferred.reject(err);
-		} else {
-			self.userId = res.id;
-			self.loggedIn = true;
-			localStorage[self._host + "__login_token__"] = res.token;
-			self._emit("login", res.id);
-			deferred.resolve(res.id);
+	localStorageMulti.get(self._host + "__login_token__").then(function(token) {
+		if (!token) {
+			deferred.reject("No login token");
+			return deferred.promise;
 		}
+		var loginParameters = {
+			resume: token
+		};
+		self.ddp.method("login", [loginParameters], function (err, res) {
+			if (err) {
+				delete self.userId;
+				delete self.loggedIn;
+				localStorageMulti.del(self._host + "__login_token__");			
+				self._emit("loginError", err);
+				deferred.reject(err);
+			} else {
+				self.userId = res.id;
+				self.loggedIn = true;
+				localStorageMulti.set(self._host + "__login_token__", res.token);
+				self._emit("login", res.id);
+				deferred.resolve(res.id);
+			}
+		});		
 	});
 	return deferred.promise;
 };
@@ -782,7 +824,7 @@ Asteroid.prototype.createUser = function (usernameOrEmail, password, profile) {
 		} else {
 			self.userId = res.id;
 			self.loggedIn = true;
-			localStorage[self._host + "__login_token__"] = res.token;
+			localStorageMulti.set(self._host + "__login_token__", res.token);			
 			self._emit("createUser", res.id);
 			self._emit("login", res.id);
 			deferred.resolve(res.id);
@@ -805,13 +847,13 @@ Asteroid.prototype.loginWithPassword = function (usernameOrEmail, password) {
 		if (err) {
 			delete self.userId;
 			delete self.loggedIn;
-			delete localStorage[self._host + "__login_token__"];
+			localStorageMulti.del(self._host + "__login_token__");
 			deferred.reject(err);
 			self._emit("loginError", err);
 		} else {
 			self.userId = res.id;
 			self.loggedIn = true;
-			localStorage[self._host + "__login_token__"] = res.token;
+			localStorageMulti.set(self._host + "__login_token__", res.token);
 			self._emit("login", res.id);
 			deferred.resolve(res.id);
 		}
@@ -829,7 +871,7 @@ Asteroid.prototype.logout = function () {
 		} else {
 			delete self.userId;
 			delete self.loggedIn;
-			delete localStorage[self._host + "__login_token__"];
+			localStorageMulti.del(self._host + "__login_token__");
 			self._emit("logout");
 			deferred.resolve();
 		}
