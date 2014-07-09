@@ -20,6 +20,7 @@ Subscription.constructor = Subscription;
 
 Subscription.prototype.stop = function () {
 	this._asteroid.ddp.unsub(this.id);
+	delete this._asteroid._subscriptionsCache[this._hash];
 };
 
 Subscription.prototype._onReady = function () {
@@ -28,7 +29,6 @@ Subscription.prototype._onReady = function () {
 
 Subscription.prototype._onStop = function () {
 	delete this._asteroid.subscriptions[this.id];
-	delete this._asteroid._subscriptionsCache[this._hash];
 };
 
 Subscription.prototype._onError = function (err) {
