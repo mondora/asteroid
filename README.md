@@ -9,6 +9,17 @@
 
 A javascript client (browser and node) for a Meteor backend.
 
+##Table of contents
+
+[###Why](#why)
+[###Install](#install)
+[###Example usage](#example-usage)
+[###Advantages over the canonical Meteor front-end](#advantages-over-the-canonical-meteor-front-end)
+[###Build asteroid locally](#build-asteroid-locally)
+[###Contribute](#contribute)
+[###Todo](#todo)
+[###API](#api)
+
 ##Why
 
 Meteor is an awesome platform, but its canonical
@@ -43,11 +54,11 @@ Then, add the necessary libraries to your index.html:
 
 Download the package:
 
-   npm install git+https://github.com/mondora/asteroid
+    npm install git+https://github.com/mondora/asteroid
 
 Require it in your project:
 
-	var Asteroid = require("asteroid");
+    var Asteroid = require("asteroid");
 
 ##Example usage
 
@@ -140,6 +151,14 @@ re-builds of source files and tests by running:
     
 This will set up a webserver listening on `localhost:8080`, where
 you'll find a report for browser unit tests being run.
+
+##Contribute
+
+Contributions are as always very very welcome. If you
+want to help but don't know how to get started,
+[feel free to schedule a pair programming session with me!](http://mondora.com/#!/post/4ddde81d13b2152ab068b54e85bd4a2a)
+
+*Contributing guidelines coming soon.*
 
 ##Todo
 
