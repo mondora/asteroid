@@ -11,14 +11,21 @@ A javascript client (browser and node) for a Meteor backend.
 
 ##Table of contents
 
-###[Why](#why)
-###[Install](#install)
-###[Example usage](#example-usage)
-###[Advantages over the canonical Meteor front-end](#advantages-over-the-canonical-meteor-front-end)
-###[Build asteroid locally](#build-asteroid-locally)
-###[Contribute](#contribute)
-###[Todo](#todo)
-###[API](#api)
+[Why](#why)
+
+[Install](#install)
+
+[Example usage](#example-usage)
+
+[Advantages over the canonical Meteor front-end](#advantages-over-the-canonical-meteor-front-end)
+
+[Build asteroid locally](#build-asteroid-locally)
+
+[Contribute](#contribute)
+
+[Todo](#todo)
+
+[API](#api)
 
 ##Why
 
