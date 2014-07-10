@@ -590,11 +590,12 @@ Collection.prototype.update = function (id, fields) {
 // Reactive queries methods //
 //////////////////////////////
 
-var ReactiveQuery = function (set) {
+var ReactiveQuery = function (set, options) {
 	var self = this;
 	self.result = [];
 
 	self._set = set;
+	self._options = options;
 	self._getResult();
 
 	self._set.on("put", function (id) {
@@ -611,7 +612,7 @@ ReactiveQuery.prototype = Object.create(EventEmitter.prototype);
 ReactiveQuery.constructor = ReactiveQuery;
 
 ReactiveQuery.prototype._getResult = function () {
-	this.result = this._set.toArray();
+	this.result = this._set.toArrayWithOptions(this._options);
 };
 
 var getFilterFromSelector = function (selector) {
@@ -648,7 +649,7 @@ var getFilterFromSelector = function (selector) {
 	};
 };
 
-Collection.prototype.reactiveQuery = function (selectorOrFilter) {
+Collection.prototype.reactiveQuery = function (selectorOrFilter, options) {
 	var filter;
 	if (typeof selectorOrFilter === "function") {
 		filter = selectorOrFilter;
@@ -656,7 +657,7 @@ Collection.prototype.reactiveQuery = function (selectorOrFilter) {
 		filter = getFilterFromSelector(selectorOrFilter);
 	}
 	var subset = this._set.filter(filter);
-	return new ReactiveQuery(subset);
+	return new ReactiveQuery(subset, options);
 };
 
 
@@ -733,8 +734,10 @@ Asteroid.prototype._initOauthLogin = function (service, credentialToken, loginUr
 Asteroid.prototype._tryResumeLogin = function () {
 	var self = this;
 	var deferred = Q.defer();
+	self._emit("loginAttempt");
 	localStorageMulti.get(self._host + "__login_token__").then(function(token) {
 		if (!token) {
+			self._emit("loginNull");
 			deferred.reject("No login token");
 			return deferred.promise;
 		}
@@ -835,6 +838,7 @@ Asteroid.prototype.createUser = function (usernameOrEmail, password, profile) {
 
 Asteroid.prototype.loginWithPassword = function (usernameOrEmail, password) {
 	var self = this;
+	self._emit("loginAttempt");
 	var deferred = Q.defer();
 	var loginParameters = {
 		password: password,
@@ -929,7 +933,65 @@ Set.prototype.contains = function (id) {
 	return !!this._items[id];
 };
 
-Set.prototype.filter = function (belongFn) {
+var sortArray = function (prop, order, arr) {
+	order = order == -1 ? -1 : 1;
+	prop = prop.split('.');
+	var len = prop.length;
+	
+	arr.sort(function (a, b) {
+		var i = 0;
+		while (i < len) {
+			a = a[prop[i]];
+			b = b[prop[i]];
+			i++;
+		}
+		if (a < b) {
+			return -1 * order;
+		} else if (a > b) {
+			return 1 * order;
+		} else {
+			return 0;
+		}
+	});
+	return arr;
+};
+
+Set.prototype.toArrayWithOptions = function(options) {
+
+	// 1. Turn set into an array
+	var array = this.toArray();
+	
+	// 2. Apply options to array
+	
+	// 2.a. Sort option
+	if (options && options.sort) {
+		for (var prop in options.sort) {
+			array = sortArray(prop, options.sort[prop], array);		
+		}
+	}
+
+	// 2.b. Skip option
+	if (options && options.skip) {
+		var skip = Number(options.skip);
+		if (!isNaN(skip)) {
+			array = array.slice(skip, array.length - 1);			
+		}
+	}
+
+	// 2.c. Limit option
+	if (options && options.limit) {
+		var limit = Number(options.limit);
+		if (!isNaN(limit)) {
+			array = array.slice(0, limit);			
+		}
+	}
+		
+	// 3. Returns the sorted array
+	return array;
+
+}
+
+Set.prototype.filter = function (belongFn, options) {
 
 	// Creates the subset
 	var sub = new Set(true);
@@ -960,10 +1022,11 @@ Set.prototype.filter = function (belongFn) {
 			sub._put(id, items[id]);
 		}
 	});
+
 	this.on("del", function (id) {
 		sub._del(id);
 	});
-
+	
 	// Returns the subset
 	return sub;
 };
