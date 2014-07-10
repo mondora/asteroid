@@ -41,7 +41,7 @@ Some of the things Asteroid allows you to do are:
 
 *	develop browser extensions backed by Meteor
 
-[Blog post on the library](http://mondora.com/asteroid-a-better-way-to-build-meteor-apps/)
+[Blog post on the library](http://mondora.com/#!/post/e2da7bd7ccb774de13324488b4e24abd)
 
 ##Install
 
