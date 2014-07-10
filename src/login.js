@@ -29,7 +29,8 @@ Asteroid.prototype._initOauthLogin = function (service, credentialToken, loginUr
 					}
 					// Find the position of the # character
 					var hashPosition = e.url.indexOf("#");
-					var hashes = e.url.slice(hashPosition).split("&");
+					// Get the key=value fragments in the hash
+					var hashes = e.url.slice(hashPosition + 1).split("&");
 					// Once again, check that the fragment belongs to the
 					// final oauth page (the one we're looking for)
 					if (
