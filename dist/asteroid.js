@@ -991,7 +991,7 @@ Set.prototype.toArrayWithOptions = function(options) {
 
 }
 
-Set.prototype.filter = function (belongFn, options) {
+Set.prototype.filter = function (belongFn) {
 
 	// Creates the subset
 	var sub = new Set(true);
