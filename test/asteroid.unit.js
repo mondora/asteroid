@@ -601,7 +601,6 @@ describe("Asteroid._Collection", function () {
 
 });
 
-/*
 describe("A reactive query", function () {
 
 	it("should return a subset of the collection containing only the filtered values", function () {
@@ -798,7 +797,6 @@ describe("A reactive query", function () {
 	});
 
 });
-*/
 
 if (ENV === "node") {
 
@@ -919,6 +917,116 @@ if (ENV === "node") {
 			filter(item0).should.equal(false);
 			filter(item1).should.equal(true);
 			filter(item2).should.equal(false);
+		});
+
+		it("with nested $and selectors", function () {
+			var basicSelector = {
+				$and: [
+					{
+						$and: [
+							{
+								title: "TitleOne"
+							},
+							{
+								subtitle: "SubtitleOne"
+							}
+						]
+					},
+					{
+						"permissions.published": true
+					}
+				]
+			};
+			var filter = getFilterFromSelector(basicSelector);
+			filter(item0).should.equal(true);
+			filter(item1).should.equal(false);
+			filter(item2).should.equal(false);
+		});
+
+		it("with nested $and and $or selectors", function () {
+			var basicSelector = {
+				$and: [
+					{
+						$or: [
+							{
+								title: "TitleOne"
+							},
+							{
+								subtitle: "SubtitleThree"
+							}
+						]
+					},
+					{
+						"permissions.published": true
+					}
+				]
+			};
+			var filter = getFilterFromSelector(basicSelector);
+			filter(item0).should.equal(true);
+			filter(item1).should.equal(false);
+			filter(item2).should.equal(true);
+		});
+
+		it("with supernested $or selectors", function () {
+			var basicSelector = {
+				$or: [
+					{
+						$or: [
+							{
+								$or: [
+									{
+										title: "TitleOne"
+									},
+									{
+										subtitle: "SubtitleTwo"
+									}
+								]
+							},
+							{
+								subtitle: "SubtitleThree"
+							}
+						]
+					},
+					{
+						"permissions.published": "hello"
+					}
+				]
+			};
+			var filter = getFilterFromSelector(basicSelector);
+			filter(item0).should.equal(true);
+			filter(item1).should.equal(true);
+			filter(item2).should.equal(true);
+		});
+
+		it("with supernested $or and $and selectors", function () {
+			var basicSelector = {
+				$or: [
+					{
+						$or: [
+							{
+								$and: [
+									{
+										title: "TitleOne"
+									},
+									{
+										subtitle: "SubtitleTwo"
+									}
+								]
+							},
+							{
+								subtitle: "SubtitleThree"
+							}
+						]
+					},
+					{
+						"permissions.published": false
+					}
+				]
+			};
+			var filter = getFilterFromSelector(basicSelector);
+			filter(item0).should.equal(false);
+			filter(item1).should.equal(true);
+			filter(item2).should.equal(true);
 		});
 
 	});

@@ -990,7 +990,7 @@ Set.prototype.filter = function (belongFn) {
 		// Clone the element to avoid
 		// collateral damage
 		var itemClone = clone(items[id]);
-		var belongs = belongFn(id, itemClone);
+		var belongs = belongFn(itemClone);
 		if (belongs) {
 			sub._items[id] = items[id];
 		}
@@ -1002,7 +1002,7 @@ Set.prototype.filter = function (belongFn) {
 		// Clone the element to avoid
 		// collateral damage
 		var itemClone = clone(items[id]);
-		var belongs = belongFn(id, itemClone);
+		var belongs = belongFn(itemClone);
 		if (belongs) {
 			sub._put(id, items[id]);
 		}

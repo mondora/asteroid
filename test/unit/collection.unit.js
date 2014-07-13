@@ -357,7 +357,6 @@ describe("Asteroid._Collection", function () {
 
 });
 
-/*
 describe("A reactive query", function () {
 
 	it("should return a subset of the collection containing only the filtered values", function () {
@@ -554,4 +553,3 @@ describe("A reactive query", function () {
 	});
 
 });
-*/
