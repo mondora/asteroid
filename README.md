@@ -53,7 +53,7 @@ First, dowload the library:
 
 Then, add the necessary libraries to your index.html:
 
-    <script src="bower_components/ddp.js/src/dpp.js"></script>
+    <script src="bower_components/ddp.js/src/ddp.js"></script>
     <script src="bower_components/q/q.js"></script>
     <script src="bower_components/asteroid/dist/asteroid.js"></script>
 
@@ -227,7 +227,7 @@ transport. Otherwise `WebSocket` will be used. Note that
   event object containing the name of the event, the
   timestamp of the event, and details about the event (for
   instance, in case of a "socket_message_received" event,
-  it'll contain the peyload of the message).
+  it'll contain the payload of the message).
 
 #####Returns
 
