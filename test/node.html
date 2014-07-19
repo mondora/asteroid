@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<title>Mocha node tests for asteroid</title>
+		<style>
+			body {
+				font-family: monospace;
+			}
+			.red {
+				color: #990000;
+			}
+			.green {
+				color: #009900;
+			}
+			.width-100 {
+				display: inline-block;
+				width: 100px;
+			}
+			.width-30 {
+				display: inline-block;
+				width: 30px;
+			}
+			.text-right {
+				text-align: right;
+			}
+		</style>
+		<!-- Reload script -->
+		<script>
+			(function () {
+				var ws = new WebSocket("ws://localhost:8000");
+				ws.onmessage = function (e) {
+					location.reload(true);
+				};
+			})();
+		</script>
+	</head>
+	<body><br /><h2>Stats</h2><p><span class="width-100">Suites:</span><span class="text-right width-30">24</span></p><p><span class="width-100">Tests:</span><span class="text-right width-30">86</span></p><p><span class="width-100 green">Passes:</span><span class="text-right width-30 green">86</span></p><p><span class="width-100 red">Failures:</span><span class="text-right width-30 red">0</span></p><p><span class="width-100">Duration:</span><span class="text-right width-30">52</span></p><br /></body>
+</html>
