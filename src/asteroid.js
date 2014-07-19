@@ -15,9 +15,12 @@ var WebSocket = require("faye-websocket");
 // Asteroid constructor //
 //////////////////////////
 
-var Asteroid = function (host, ssl, socketInterceptFunction) {
+var Asteroid = function (host, ssl, socketInterceptFunction, instanceId) {
 	// Assert arguments type
 	must.beString(host);
+	// An id may be assigned to the instance. This is to support
+	// resuming login of multiple connections to the same host.
+	this._instanceId = instanceId || "0";
 	// Configure the instance
 	this._host = (ssl ? "https://" : "http://") + host;
 	// @if ENV=='browser'

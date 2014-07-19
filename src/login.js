@@ -95,48 +95,19 @@ Asteroid.prototype._initOauthLogin = function (service, credentialToken, loginUr
 				if (err) {
 					delete self.userId;
 					delete self.loggedIn;
-					delete localStorage[self._host + "__login_token__"];
+					localStorageMulti.del(self._host + "__" + self._instanceId + "__login_token__");
 					deferred.reject(err);
 					self._emit("loginError", err);
 				} else {
 					self.userId = res.id;
 					self.loggedIn = true;
-					localStorage[self._host + "__login_token__"] = res.token;
+					localStorageMulti.set(self._host + "__" + self._instanceId + "__login_token__", res.token);
 					self._emit("login", res.id);
 					deferred.resolve(res.id);
 				}
 			});
 			return deferred.promise;
 		});
-};
-
-Asteroid.prototype._tryResumeLogin = function () {
-	var self = this;
-	var deferred = Q.defer();
-	var token = localStorage[self._host + "__login_token__"];
-	if (!token) {
-		deferred.reject("No login token");
-		return deferred.promise;
-	}
-	var loginParameters = {
-		resume: token
-	};
-	self.ddp.method("login", [loginParameters], function (err, res) {
-		if (err) {
-			delete self.userId;
-			delete self.loggedIn;
-			delete localStorage[self._host + "__login_token__"];
-			self._emit("loginError", err);
-			deferred.reject(err);
-		} else {
-			self.userId = res.id;
-			self.loggedIn = true;
-			localStorage[self._host + "__login_token__"] = res.token;
-			self._emit("login", res.id);
-			deferred.resolve(res.id);
-		}
-	});
-	return deferred.promise;
 };
 
 Asteroid.prototype.loginWithFacebook = function (scope) {
@@ -189,6 +160,42 @@ Asteroid.prototype.loginWithTwitter = function (scope) {
 
 // @endif
 
+Asteroid.prototype._tryResumeLogin = function () {
+	var self = this;
+	return Q()
+		.then(function () {
+			return localStorageMulti.get(self._host + "__" + self._instanceId + "__login_token__");
+		})
+		.then(function (token) {
+			if (!token) {
+				throw new Error("No login token");
+			}
+			return token;
+		})
+		.then(function (token) {
+			var deferred = Q.defer();
+			var loginParameters = {
+				resume: token
+			};
+			self.ddp.method("login", [loginParameters], function (err, res) {
+				if (err) {
+					delete self.userId;
+					delete self.loggedIn;
+					localStorageMulti.del(self._host + "__" + self._instanceId + "__login_token__");
+					self._emit("loginError", err);
+					deferred.reject(err);
+				} else {
+					self.userId = res.id;
+					self.loggedIn = true;
+					localStorageMulti.set(self._host + "__" + self._instanceId + "__login_token__", res.token);
+					self._emit("login", res.id);
+					deferred.resolve(res.id);
+				}
+			});
+			return deferred.promise;
+		});
+};
+
 Asteroid.prototype.createUser = function (usernameOrEmail, password, profile) {
 	var self = this;
 	var deferred = Q.defer();
@@ -205,7 +212,7 @@ Asteroid.prototype.createUser = function (usernameOrEmail, password, profile) {
 		} else {
 			self.userId = res.id;
 			self.loggedIn = true;
-			localStorage[self._host + "__login_token__"] = res.token;
+			localStorageMulti.set(self._host + "__" + self._instanceId + "__login_token__", res.token);
 			self._emit("createUser", res.id);
 			self._emit("login", res.id);
 			deferred.resolve(res.id);
@@ -228,13 +235,13 @@ Asteroid.prototype.loginWithPassword = function (usernameOrEmail, password) {
 		if (err) {
 			delete self.userId;
 			delete self.loggedIn;
-			delete localStorage[self._host + "__login_token__"];
+			localStorageMulti.del(self._host + "__" + self._instanceId + "__login_token__");
 			deferred.reject(err);
 			self._emit("loginError", err);
 		} else {
 			self.userId = res.id;
 			self.loggedIn = true;
-			localStorage[self._host + "__login_token__"] = res.token;
+			localStorageMulti.set(self._host + "__" + self._instanceId + "__login_token__", res.token);
 			self._emit("login", res.id);
 			deferred.resolve(res.id);
 		}
@@ -252,7 +259,7 @@ Asteroid.prototype.logout = function () {
 		} else {
 			delete self.userId;
 			delete self.loggedIn;
-			delete localStorage[self._host + "__login_token__"];
+			localStorageMulti.del(self._host + "__" + self._instanceId + "__login_token__");
 			self._emit("logout");
 			deferred.resolve();
 		}
