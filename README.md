@@ -9,9 +9,27 @@
 
 A javascript client (browser and node) for a Meteor backend.
 
+##Table of contents
+
+[Why](#why)
+
+[Install](#install)
+
+[Example usage](#example-usage)
+
+[Advantages over the canonical Meteor front-end](#advantages-over-the-canonical-meteor-front-end)
+
+[Build asteroid locally](#build-asteroid-locally)
+
+[Contribute](#contribute)
+
+[Todo](#todo)
+
+[API](#api)
+
 ##Why
 
-Meteor to be an awesome platform, but its canonical
+Meteor is an awesome platform, but its canonical
 front-end is not very flexible. Asteroid gives the
 possibility to connect to a Meteor backend with any JS app.
 
@@ -23,8 +41,7 @@ Some of the things Asteroid allows you to do are:
 
 *	develop browser extensions backed by Meteor
 
-[Blog post on the library](http://mondora.com/asteroid-a-better-way-to-build-meteor-apps/)
-
+[Blog post on the library](http://mondora.com/#!/post/e2da7bd7ccb774de13324488b4e24abd)
 
 ##Install
 
@@ -36,7 +53,7 @@ First, dowload the library:
 
 Then, add the necessary libraries to your index.html:
 
-    <script src="bower_components/ddp.js/src/dpp.js"></script>
+    <script src="bower_components/ddp.js/src/ddp.js"></script>
     <script src="bower_components/q/q.js"></script>
     <script src="bower_components/asteroid/dist/asteroid.js"></script>
 
@@ -44,12 +61,11 @@ Then, add the necessary libraries to your index.html:
 
 Download the package:
 
-   npm install git+https://github.com/mondora/asteroid
+    npm install git+https://github.com/mondora/asteroid
 
 Require it in your project:
 
-	var Asteroid = require("asteroid");
-
+    var Asteroid = require("asteroid");
 
 ##Example usage
 
@@ -71,7 +87,6 @@ console.log(laundryTaskQuery.result); // Logs the array of results
 // Login your user
 ceres.loginWithTwitter();
 ```
-
 
 ##Advantages over the canonical Meteor front-end
 
@@ -95,12 +110,62 @@ ceres.loginWithTwitter();
 * Easily connect to multiple Meteor servers at the same
   time, perfect for building admin interfaces.
 
+ 
+##Build asteroid locally
 
+Clone the repository (or your fork) on your computer.
 
-##Test
+    git clone https://github.com/mondora/asteroid
 
-    npm test
+Enter the project's directory and install the required
+dependencies:
 
+    cd asteroid/
+    npm install
+    bower install
+
+For conveninece, I suggest installing a few `npm` modules
+globally:
+
+    npm install -g gulp karma mocha
+
+Modfy the source files under `src/` as needed, then rebuild
+the distribution files, which will get placed in the `dist/`
+directory:
+
+    gulp buildBrowser
+    gulp buildNode
+
+You can add your unit tests in one of the files under `test/unit/`
+(or you can add another file in that folder if needed).
+Once you've added unit tests, you need also to rebuild the
+tests:
+
+    gulp buildTests
+
+Now you can run tests. For **nodejs** run:
+
+    mocha test/asteroid.unit.js
+
+For the browser run:
+
+    karma start test/karma.conf.js
+
+You can set up an automated dev environment with automatic
+re-builds of source files and tests by running:
+
+    gulp dev
+    
+This will set up a webserver listening on `localhost:8080`, where
+you'll find a report for browser unit tests being run.
+
+##Contribute
+
+Contributions are as always very very welcome. If you
+want to help but don't know how to get started,
+[feel free to schedule a pair programming session with me!](http://mondora.com/#!/post/4ddde81d13b2152ab068b54e85bd4a2a)
+
+*Contributing guidelines coming soon.*
 
 ##Todo
 
@@ -120,6 +185,9 @@ the library can be considered "production ready":
 
 * just an idea, but I'd fancy trying to integrate it with
   [nedb](https://github.com/louischatriot/nedb)
+
+
+
 
 
 ##API
@@ -159,7 +227,7 @@ transport. Otherwise `WebSocket` will be used. Note that
   event object containing the name of the event, the
   timestamp of the event, and details about the event (for
   instance, in case of a "socket_message_received" event,
-  it'll contain the peyload of the message).
+  it'll contain the payload of the message).
 
 #####Returns
 

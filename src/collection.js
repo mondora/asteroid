@@ -239,40 +239,6 @@ ReactiveQuery.prototype._getResult = function () {
 	this.result = this._set.toArray();
 };
 
-var getFilterFromSelector = function (selector) {
-	// Return the filter function
-	return function (id, item) {
-
-		// Filter out backups
-		if (is_backup(id)) {
-			return false;
-		}
-
-		// Get the value of the object from a compund key
-		// (e.g. "profile.name.first")
-		var getItemVal = function (item, key) {
-			return key.split(".").reduce(function (prev, curr) {
-				if (!prev) return prev;
-				prev = prev[curr];
-				return prev;
-			}, item);
-		};
-
-		// Iterate all the keys in the selector. The first that
-		// doesn't match causes the item to be filtered out.
-		for (var key in selector) {
-			var itemVal = getItemVal(item, key);
-			if (itemVal !== selector[key]) {
-				return false;
-			}
-		}
-
-		// At this point the item matches the selector
-		return true;
-
-	};
-};
-
 Collection.prototype.reactiveQuery = function (selectorOrFilter) {
 	var filter;
 	if (typeof selectorOrFilter === "function") {

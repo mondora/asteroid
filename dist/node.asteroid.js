@@ -556,40 +556,6 @@ ReactiveQuery.prototype._getResult = function () {
 	this.result = this._set.toArray();
 };
 
-var getFilterFromSelector = function (selector) {
-	// Return the filter function
-	return function (id, item) {
-
-		// Filter out backups
-		if (is_backup(id)) {
-			return false;
-		}
-
-		// Get the value of the object from a compund key
-		// (e.g. "profile.name.first")
-		var getItemVal = function (item, key) {
-			return key.split(".").reduce(function (prev, curr) {
-				if (!prev) return prev;
-				prev = prev[curr];
-				return prev;
-			}, item);
-		};
-
-		// Iterate all the keys in the selector. The first that
-		// doesn't match causes the item to be filtered out.
-		for (var key in selector) {
-			var itemVal = getItemVal(item, key);
-			if (itemVal !== selector[key]) {
-				return false;
-			}
-		}
-
-		// At this point the item matches the selector
-		return true;
-
-	};
-};
-
 Collection.prototype.reactiveQuery = function (selectorOrFilter) {
 	var filter;
 	if (typeof selectorOrFilter === "function") {
@@ -604,6 +570,85 @@ Collection.prototype.reactiveQuery = function (selectorOrFilter) {
 
 
 Asteroid._Collection = Collection;
+
+var getFilterFromSelector = function (selector) {
+
+	// Get the value of the object from a compund key
+	// (e.g. "profile.name.first")
+	var getItemVal = function (item, key) {
+		return key.split(".").reduce(function (prev, curr) {
+			if (!prev) return prev;
+			prev = prev[curr];
+			return prev;
+		}, item);
+	};
+
+	var keys = Object.keys(selector);
+
+	var filters = keys.map(function (key) {
+
+		var subFilters;
+		if (key === "$and") {
+			subFilters = selector[key].map(getFilterFromSelector);
+			return function (item) {
+				return subFilters.reduce(function (acc, subFilter) {
+					if (!acc) {
+						return acc;
+					}
+					return subFilter(item);
+				}, true);
+			};
+		}
+
+		if (key === "$or") {
+			subFilters = selector[key].map(getFilterFromSelector);
+			return function (item) {
+				return subFilters.reduce(function (acc, subFilter) {
+					if (acc) {
+						return acc;
+					}
+					return subFilter(item);
+				}, false);
+			};
+		}
+
+		if (key === "$nor") {
+			subFilters = selector[key].map(getFilterFromSelector);
+			return function (item) {
+				return subFilters.reduce(function (acc, subFilter) {
+					if (!acc) {
+						return acc;
+					}
+					return !subFilter(item);
+				}, true);
+			};
+		}
+
+		return function (item) {
+			var itemVal = getItemVal(item, key);
+			return itemVal === selector[key];
+		};
+
+
+	});
+
+	// Return the filter function
+	return function (item) {
+
+		// Filter out backups
+		if (item._id && is_backup(item._id)) {
+			return false;
+		}
+
+		return filters.reduce(function (acc, filter) {
+			if (!acc) {
+				return acc;
+			}
+			return filter(item);
+		}, true);
+
+	};
+};
 
 Asteroid.prototype.createUser = function (usernameOrEmail, password, profile) {
 	var self = this;
@@ -740,7 +785,7 @@ Set.prototype.filter = function (belongFn) {
 		// Clone the element to avoid
 		// collateral damage
 		var itemClone = clone(items[id]);
-		var belongs = belongFn(id, itemClone);
+		var belongs = belongFn(itemClone);
 		if (belongs) {
 			sub._items[id] = items[id];
 		}
@@ -752,7 +797,7 @@ Set.prototype.filter = function (belongFn) {
 		// Clone the element to avoid
 		// collateral damage
 		var itemClone = clone(items[id]);
-		var belongs = belongFn(id, itemClone);
+		var belongs = belongFn(itemClone);
 		if (belongs) {
 			sub._put(id, items[id]);
 		}
@@ -787,9 +832,10 @@ Asteroid.Set = Set;
 // Subscription class //
 ////////////////////////
 
-var Subscription = function (name, params, asteroid) {
+var Subscription = function (name, params, hash, asteroid) {
 	this._name = name;
 	this._params = params;
+	this._hash = hash;
 	this._asteroid = asteroid;
 	// Subscription promises
 	this._ready = Q.defer();
@@ -804,6 +850,7 @@ Subscription.constructor = Subscription;
 
 Subscription.prototype.stop = function () {
 	this._asteroid.ddp.unsub(this.id);
+	delete this._asteroid._subscriptionsCache[this._hash];
 };
 
 Subscription.prototype._onReady = function () {
@@ -830,13 +877,15 @@ Subscription.prototype._onError = function (err) {
 Asteroid.prototype.subscribe = function (name /* , param1, param2, ... */) {
 	// Assert arguments type
 	must.beString(name);
+	// Collect arguments into array
+	var args = Array.prototype.slice.call(arguments);
 	// Hash the arguments to get a key for _subscriptionsCache
-	var hash = JSON.stringify(arguments);
+	var hash = JSON.stringify(args);
 	// Only subscribe if there is no cached subscription
 	if (!this._subscriptionsCache[hash]) {
-		// Collect arguments into array
-		var params = Array.prototype.slice.call(arguments, 1);
-		var sub = new Subscription(name, params, this);
+		// Get the parameters of the subscription
+		var params = args.slice(1);
+		var sub = new Subscription(name, params, hash, this);
 		this._subscriptionsCache[hash] = sub;
 		this.subscriptions[sub.id] = sub;
 	}

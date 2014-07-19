@@ -615,41 +615,7 @@ ReactiveQuery.prototype._getResult = function () {
 	this.result = this._set.toArrayWithOptions(this._options);
 };
 
-var getFilterFromSelector = function (selector) {
-	// Return the filter function
-	return function (id, item) {
-
-		// Filter out backups
-		if (is_backup(id)) {
-			return false;
-		}
-
-		// Get the value of the object from a compund key
-		// (e.g. "profile.name.first")
-		var getItemVal = function (item, key) {
-			return key.split(".").reduce(function (prev, curr) {
-				if (!prev) return prev;
-				prev = prev[curr];
-				return prev;
-			}, item);
-		};
-
-		// Iterate all the keys in the selector. The first that
-		// doesn't match causes the item to be filtered out.
-		for (var key in selector) {
-			var itemVal = getItemVal(item, key);
-			if (itemVal !== selector[key]) {
-				return false;
-			}
-		}
-
-		// At this point the item matches the selector
-		return true;
-
-	};
-};
-
-Collection.prototype.reactiveQuery = function (selectorOrFilter, options) {
+Collection.prototype.reactiveQuery = function (selectorOrFilter) {
 	var filter;
 	if (typeof selectorOrFilter === "function") {
 		filter = selectorOrFilter;
@@ -664,6 +630,85 @@ Collection.prototype.reactiveQuery = function (selectorOrFilter, options) {
 
 Asteroid._Collection = Collection;
 
+var getFilterFromSelector = function (selector) {
+
+	// Get the value of the object from a compund key
+	// (e.g. "profile.name.first")
+	var getItemVal = function (item, key) {
+		return key.split(".").reduce(function (prev, curr) {
+			if (!prev) return prev;
+			prev = prev[curr];
+			return prev;
+		}, item);
+	};
+
+	var keys = Object.keys(selector);
+
+	var filters = keys.map(function (key) {
+
+		var subFilters;
+		if (key === "$and") {
+			subFilters = selector[key].map(getFilterFromSelector);
+			return function (item) {
+				return subFilters.reduce(function (acc, subFilter) {
+					if (!acc) {
+						return acc;
+					}
+					return subFilter(item);
+				}, true);
+			};
+		}
+
+		if (key === "$or") {
+			subFilters = selector[key].map(getFilterFromSelector);
+			return function (item) {
+				return subFilters.reduce(function (acc, subFilter) {
+					if (acc) {
+						return acc;
+					}
+					return subFilter(item);
+				}, false);
+			};
+		}
+
+		if (key === "$nor") {
+			subFilters = selector[key].map(getFilterFromSelector);
+			return function (item) {
+				return subFilters.reduce(function (acc, subFilter) {
+					if (!acc) {
+						return acc;
+					}
+					return !subFilter(item);
+				}, true);
+			};
+		}
+
+		return function (item) {
+			var itemVal = getItemVal(item, key);
+			return itemVal === selector[key];
+		};
+
+
+	});
+
+	// Return the filter function
+	return function (item) {
+
+		// Filter out backups
+		if (item._id && is_backup(item._id)) {
+			return false;
+		}
+
+		return filters.reduce(function (acc, filter) {
+			if (!acc) {
+				return acc;
+			}
+			return filter(item);
+		}, true);
+
+	};
+};
+
 Asteroid.prototype._getOauthClientId = function (serviceName) {
 	var loginConfigCollectionName = "meteor_accounts_loginServiceConfiguration";
 	var loginConfigCollection = this.collections[loginConfigCollectionName];
@@ -672,36 +717,80 @@ Asteroid.prototype._getOauthClientId = function (serviceName) {
 };
 
 Asteroid.prototype._initOauthLogin = function (service, credentialToken, loginUrl) {
+	// Open the oauth oauth
 	var popup = window.open(loginUrl, "_blank", "location=no,toolbar=no");	
+	if (popup.focus) popup.focus();
 	var self = this;
 	return Q()
 		.then(function () {
 			var deferred = Q.defer();
-			if (popup.focus) popup.focus();
-			var request = JSON.stringify({
-				credentialToken: credentialToken
-			});
-			var intervalId = setInterval(function () {
-				popup.postMessage(request, self._host);
-			}, 100);
-			window.addEventListener("message", function (e) {
-				var message;
-				try {
-					message = JSON.parse(e.data);
-				} catch (err) {
-					return;
-				}
-				if (e.origin === self._host) {
-					if (message.credentialToken === credentialToken) {
-						clearInterval(intervalId);
-						deferred.resolve(message.credentialSecret);
+			if (window.cordova) {
+				// We're using Cordova's InAppBrowser plugin.
+				// Each time the popup fires the loadstop event,
+				// check if the hash fragment contains the
+				// credentialSecret we need to complete the
+				// authentication flow
+				popup.addEventListener("loadstop", function (e) { 
+					// If the url does not contain the # character
+					// it means the loadstop event refers to an
+					// intermediate page, therefore we ignore it
+					if (e.url.indexOf("#") === -1) {
+						return;
 					}
-					if (message.error) {
-						clearInterval(intervalId);
-						deferred.reject(message.error);
+					// Find the position of the # character
+					var hashPosition = e.url.indexOf("#");
+					// Get the key=value fragments in the hash
+					var hashes = e.url.slice(hashPosition + 1).split("&");
+					// Once again, check that the fragment belongs to the
+					// final oauth page (the one we're looking for)
+					if (
+						!hashes[0] ||
+						hashes[0].split("=")[0] !== "credentialToken" ||
+						!hashes[1] ||
+						hashes[1].split("=")[0] !== "credentialSecret"
+					) {
+						return;
 					}
-				}
-			});
+					// Retrieve the two tokens
+					var hashCredentialToken = hashes[0].split("=")[1];
+					var hashCredentialSecret = hashes[1].split("=")[1];
+					// Check if the credentialToken corresponds. We could
+					// use this as a way to communicate possible errors by
+					// purposefully mismatching the credentialToken with
+					// the error message. Too much of a hack?
+					if (hashCredentialToken === credentialToken) {
+						// Resolve the promise with the secret
+						deferred.resolve(hashCredentialSecret);
+						// Close the popup
+						popup.close();
+					}
+				});
+			} else {
+				var request = JSON.stringify({
+					credentialToken: credentialToken
+				});
+				var intervalId = setInterval(function () {
+					popup.postMessage(request, self._host);
+				}, 100);
+				window.addEventListener("message", function (e) {
+					var message;
+					try {
+						message = JSON.parse(e.data);
+					} catch (err) {
+						return;
+					}
+					if (e.origin === self._host) {
+						if (message.credentialToken === credentialToken) {
+							clearInterval(intervalId);
+							deferred.resolve(message.credentialSecret);
+						}
+						if (message.error) {
+							clearInterval(intervalId);
+							deferred.reject(message.error);
+						}
+					}
+				});
+			}
 			return deferred.promise;
 		})
 		.then(function (credentialSecret) {
@@ -1005,7 +1094,7 @@ Set.prototype.filter = function (belongFn) {
 		// Clone the element to avoid
 		// collateral damage
 		var itemClone = clone(items[id]);
-		var belongs = belongFn(id, itemClone);
+		var belongs = belongFn(itemClone);
 		if (belongs) {
 			sub._items[id] = items[id];
 		}
@@ -1017,7 +1106,7 @@ Set.prototype.filter = function (belongFn) {
 		// Clone the element to avoid
 		// collateral damage
 		var itemClone = clone(items[id]);
-		var belongs = belongFn(id, itemClone);
+		var belongs = belongFn(itemClone);
 		if (belongs) {
 			sub._put(id, items[id]);
 		}
@@ -1053,9 +1142,10 @@ Asteroid.Set = Set;
 // Subscription class //
 ////////////////////////
 
-var Subscription = function (name, params, asteroid) {
+var Subscription = function (name, params, hash, asteroid) {
 	this._name = name;
 	this._params = params;
+	this._hash = hash;
 	this._asteroid = asteroid;
 	// Subscription promises
 	this._ready = Q.defer();
@@ -1070,6 +1160,7 @@ Subscription.constructor = Subscription;
 
 Subscription.prototype.stop = function () {
 	this._asteroid.ddp.unsub(this.id);
+	delete this._asteroid._subscriptionsCache[this._hash];
 };
 
 Subscription.prototype._onReady = function () {
@@ -1096,13 +1187,15 @@ Subscription.prototype._onError = function (err) {
 Asteroid.prototype.subscribe = function (name /* , param1, param2, ... */) {
 	// Assert arguments type
 	must.beString(name);
+	// Collect arguments into array
+	var args = Array.prototype.slice.call(arguments);
 	// Hash the arguments to get a key for _subscriptionsCache
-	var hash = JSON.stringify(arguments);
+	var hash = JSON.stringify(args);
 	// Only subscribe if there is no cached subscription
 	if (!this._subscriptionsCache[hash]) {
-		// Collect arguments into array
-		var params = Array.prototype.slice.call(arguments, 1);
-		var sub = new Subscription(name, params, this);
+		// Get the parameters of the subscription
+		var params = args.slice(1);
+		var sub = new Subscription(name, params, hash, this);
 		this._subscriptionsCache[hash] = sub;
 		this.subscriptions[sub.id] = sub;
 	}
