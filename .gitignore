@@ -5,3 +5,4 @@ ddp.js
 sonar-project.properties
 .idea/
 .sonar/
+test/coverage/
