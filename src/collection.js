@@ -148,7 +148,9 @@ Collection.prototype._localToLocalUpdate = function (id, fields) {
 	this._set.put(id + mf_update_suffix, existing);
 	// Perform the update
 	for (var field in fields) {
-		existing[field] = fields[field];
+		if (fields.hasOwnProperty(field)) {
+			existing[field] = fields[field];
+		}
 	}
 	this._set.put(id, existing);
 	// Return a promise, just for api consistency

@@ -4,7 +4,9 @@ var getFilterFromSelector = function (selector) {
 	// (e.g. "profile.name.first")
 	var getItemVal = function (item, key) {
 		return key.split(".").reduce(function (prev, curr) {
-			if (!prev) return prev;
+			if (!prev) {
+				return prev;
+			}
 			prev = prev[curr];
 			return prev;
 		}, item);

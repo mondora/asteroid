@@ -68,7 +68,9 @@ var getFilterFromSelector = function (selector) {
 	// (e.g. "profile.name.first")
 	var getItemVal = function (item, key) {
 		return key.split(".").reduce(function (prev, curr) {
-			if (!prev) return prev;
+			if (!prev) {
+				return prev;
+			}
 			prev = prev[curr];
 			return prev;
 		}, item);
@@ -144,7 +146,9 @@ var getFilterFromSelector = function (selector) {
 function formQs (obj) {
 	var qs = "";
 	for (var key in obj) {
-		qs += key + "=" + obj[key] + "&";
+		if (obj.hasOwnProperty(key)) {
+			qs += key + "=" + obj[key] + "&";
+		}
 	}
 	qs = qs.slice(0, -1);
 	return qs;
@@ -615,7 +619,9 @@ Collection.prototype._localToLocalUpdate = function (id, fields) {
 	this._set.put(id + mf_update_suffix, existing);
 	// Perform the update
 	for (var field in fields) {
-		existing[field] = fields[field];
+		if (fields.hasOwnProperty(field)) {
+			existing[field] = fields[field];
+		}
 	}
 	this._set.put(id, existing);
 	// Return a promise, just for api consistency
@@ -730,8 +736,10 @@ Asteroid.prototype._getOauthClientId = function (serviceName) {
 
 Asteroid.prototype._initOauthLogin = function (service, credentialToken, loginUrl) {
 	// Open the oauth oauth
-	var popup = window.open(loginUrl, "_blank", "location=no,toolbar=no");	
-	if (popup.focus) popup.focus();
+	var popup = window.open(loginUrl, "_blank", "location=no,toolbar=no");
+	if (popup.focus) {
+		popup.focus();
+	}
 	var self = this;
 	return Q()
 		.then(function () {
@@ -742,7 +750,7 @@ Asteroid.prototype._initOauthLogin = function (service, credentialToken, loginUr
 				// check if the hash fragment contains the
 				// credentialSecret we need to complete the
 				// authentication flow
-				popup.addEventListener("loadstop", function (e) { 
+				popup.addEventListener("loadstop", function (e) {
 					// If the url does not contain the # character
 					// it means the loadstop event refers to an
 					// intermediate page, therefore we ignore it
@@ -869,7 +877,7 @@ Asteroid.prototype.loginWithGithub = function (scope) {
 	return this._initOauthLogin("github", credentialToken, loginUrl);
 };
 
-Asteroid.prototype.loginWithTwitter = function (scope) {
+Asteroid.prototype.loginWithTwitter = function () {
 	var credentialToken = guid();
 	var callbackUrl = this._host + "/_oauth/twitter?close&state=" + credentialToken;
 	var query = {
@@ -972,7 +980,7 @@ Asteroid.prototype.loginWithPassword = function (usernameOrEmail, password) {
 Asteroid.prototype.logout = function () {
 	var self = this;
 	var deferred = Q.defer();
-	self.ddp.method("logout", [], function (err, res) {
+	self.ddp.method("logout", [], function (err) {
 		if (err) {
 			self._emit("logoutError", err);
 			deferred.reject(err);

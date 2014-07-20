@@ -59,7 +59,9 @@ var getFilterFromSelector = function (selector) {
 	// (e.g. "profile.name.first")
 	var getItemVal = function (item, key) {
 		return key.split(".").reduce(function (prev, curr) {
-			if (!prev) return prev;
+			if (!prev) {
+				return prev;
+			}
 			prev = prev[curr];
 			return prev;
 		}, item);
@@ -135,7 +137,9 @@ var getFilterFromSelector = function (selector) {
 function formQs (obj) {
 	var qs = "";
 	for (var key in obj) {
-		qs += key + "=" + obj[key] + "&";
+		if (obj.hasOwnProperty(key)) {
+			qs += key + "=" + obj[key] + "&";
+		}
 	}
 	qs = qs.slice(0, -1);
 	return qs;
@@ -580,7 +584,9 @@ Collection.prototype._localToLocalUpdate = function (id, fields) {
 	this._set.put(id + mf_update_suffix, existing);
 	// Perform the update
 	for (var field in fields) {
-		existing[field] = fields[field];
+		if (fields.hasOwnProperty(field)) {
+			existing[field] = fields[field];
+		}
 	}
 	this._set.put(id, existing);
 	// Return a promise, just for api consistency
@@ -778,7 +784,7 @@ Asteroid.prototype.loginWithPassword = function (usernameOrEmail, password) {
 Asteroid.prototype.logout = function () {
 	var self = this;
 	var deferred = Q.defer();
-	self.ddp.method("logout", [], function (err, res) {
+	self.ddp.method("logout", [], function (err) {
 		if (err) {
 			self._emit("logoutError", err);
 			deferred.reject(err);
