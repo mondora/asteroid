@@ -18,6 +18,7 @@ var WebSocket	= require("faye-websocket");
 
 
 var buildBrowser = function () {
+	console.log("Building for browser");
 	var deferred = Q.defer();
 	gulp.src(["src/wrapper/head.js", "src/lib/*.js", "src/*.js", "src/wrapper/tail.js"])
 		.pipe(plugins.preprocess({context: {ENV: "browser"}}))
@@ -33,6 +34,7 @@ var buildBrowser = function () {
 };
 
 var buildNode = function () {
+	console.log("Building for node");
 	var deferred = Q.defer();
 	gulp.src(["src/wrapper/head.js", "src/lib/*.js", "src/*.js", "src/wrapper/tail.js"])
 		.pipe(plugins.preprocess({context: {ENV: "node"}}))
@@ -45,6 +47,7 @@ var buildNode = function () {
 };
 
 var buildTests = function () {
+	console.log("Building tests");
 	var deferred = Q.defer();
 	gulp.src("test/unit/**/*.unit.js")
 		.pipe(plugins.concat("asteroid.unit.js"))
@@ -56,10 +59,17 @@ var buildTests = function () {
 };
 
 var runTests = function () {
+	console.log("Running tests");
 	var deferred = Q.defer();
 	exec("mocha test/asteroid.unit.js -R json", function (err, stdout) {
 		// Construct the html
-		var res = JSON.parse(stdout);
+		var res;
+		try {
+			res = JSON.parse(stdout);
+		} catch (e) {
+			deferred.resolve();
+			return;
+		}
 		var report = "";
 		report += "<br />";
 		report += "<h2>Stats</h2>";

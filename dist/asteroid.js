@@ -32,47 +32,6 @@ function clone (obj) {
 	}
 }
 
-var is_chrome_extension = chrome.extension ? true : false;
-var localStorageMulti = {
-	get: function(key) {
-		var deferred = Q.defer();
-		if (is_chrome_extension) {
-			chrome.storage.local.get(key, function(data) { 
-				deferred.resolve(data[key]);
-			});
-		} else {
-			deferred.resolve(localStorage[key]);
-		}
-		return deferred.promise;
-	}
-  , set: function(key, value) {
-		var deferred = Q.defer();
-		if (is_chrome_extension) {
-			var data = {};
-			data[key] = value;
-			chrome.storage.local.set(data, function() {
-				deferred.resolve({});
-			});
-		} else {
-			localStorage[key] = value;
-			deferred.resolve({});
-		}
-		return deferred.promise;
-	}
-  , del: function(key) {
-		var deferred = Q.defer();
-		if (is_chrome_extension) {
-			chrome.storage.local.remove(key, function() {
-				deferred.resolve({});
-			});
-		} else {
-			delete localStorage[key];
-			deferred.resolve({});
-		}
-		return deferred.promise;
-	}
-}
-
 var EventEmitter = function () {};
 
 EventEmitter.prototype = {
@@ -103,6 +62,85 @@ EventEmitter.prototype = {
 
 };
 
+var getFilterFromSelector = function (selector) {
+
+	// Get the value of the object from a compund key
+	// (e.g. "profile.name.first")
+	var getItemVal = function (item, key) {
+		return key.split(".").reduce(function (prev, curr) {
+			if (!prev) return prev;
+			prev = prev[curr];
+			return prev;
+		}, item);
+	};
+
+	var keys = Object.keys(selector);
+
+	var filters = keys.map(function (key) {
+
+		var subFilters;
+		if (key === "$and") {
+			subFilters = selector[key].map(getFilterFromSelector);
+			return function (item) {
+				return subFilters.reduce(function (acc, subFilter) {
+					if (!acc) {
+						return acc;
+					}
+					return subFilter(item);
+				}, true);
+			};
+		}
+
+		if (key === "$or") {
+			subFilters = selector[key].map(getFilterFromSelector);
+			return function (item) {
+				return subFilters.reduce(function (acc, subFilter) {
+					if (acc) {
+						return acc;
+					}
+					return subFilter(item);
+				}, false);
+			};
+		}
+
+		if (key === "$nor") {
+			subFilters = selector[key].map(getFilterFromSelector);
+			return function (item) {
+				return subFilters.reduce(function (acc, subFilter) {
+					if (!acc) {
+						return acc;
+					}
+					return !subFilter(item);
+				}, true);
+			};
+		}
+
+		return function (item) {
+			var itemVal = getItemVal(item, key);
+			return itemVal === selector[key];
+		};
+
+
+	});
+
+	// Return the filter function
+	return function (item) {
+
+		// Filter out backups
+		if (item._id && is_backup(item._id)) {
+			return false;
+		}
+
+		return filters.reduce(function (acc, filter) {
+			if (!acc) {
+				return acc;
+			}
+			return filter(item);
+		}, true);
+
+	};
+};
+
 function formQs (obj) {
 	var qs = "";
 	for (var key in obj) {
@@ -129,6 +167,57 @@ function isEqual (obj1, obj2) {
 	var str2 = JSON.stringify(obj2);
 	return str1 === str2;
 }
+
+// Check if we're in a chrome extension
+var isChromeExtension = !!(window.chrome && window.chrome.extension);
+// Supoort multiple ways of persisting login tokens.
+// Since chrome extension storage is asynchronous, our
+// API is also aynchronous
+// For details on the chrome extensions storage API, see
+// https://developer.chrome.com/apps/storage
+var localStorageMulti = {
+
+	get: function (key) {
+		var deferred = Q.defer();
+		if (isChromeExtension) {
+			chrome.storage.local.get(key, function (data) { 
+				deferred.resolve(data[key]);
+			});
+		} else {
+			deferred.resolve(localStorage[key]);
+		}
+		return deferred.promise;
+	},
+
+	set: function (key, value) {
+		var deferred = Q.defer();
+		if (isChromeExtension) {
+			var data = {};
+			data[key] = value;
+			chrome.storage.local.set(data, function () {
+				deferred.resolve();
+			});
+		} else {
+			localStorage[key] = value;
+			deferred.resolve();
+		}
+		return deferred.promise;
+	},
+
+	del: function (key) {
+		var deferred = Q.defer();
+		if (isChromeExtension) {
+			chrome.storage.local.remove(key, function () {
+				deferred.resolve();
+			});
+		} else {
+			delete localStorage[key];
+			deferred.resolve();
+		}
+		return deferred.promise;
+	}
+
+};
 
 var must = {};
 
@@ -161,9 +250,12 @@ must.beObject = function (o) {
 // Asteroid constructor //
 //////////////////////////
 
-var Asteroid = function (host, ssl, socketInterceptFunction) {
+var Asteroid = function (host, ssl, socketInterceptFunction, instanceId) {
 	// Assert arguments type
 	must.beString(host);
+	// An id may be assigned to the instance. This is to support
+	// resuming login of multiple connections to the same host.
+	this._instanceId = instanceId || "0";
 	// Configure the instance
 	this._host = (ssl ? "https://" : "http://") + host;
 	// If SockJS is available, use it, otherwise, use WebSocket
@@ -590,12 +682,11 @@ Collection.prototype.update = function (id, fields) {
 // Reactive queries methods //
 //////////////////////////////
 
-var ReactiveQuery = function (set, options) {
+var ReactiveQuery = function (set) {
 	var self = this;
 	self.result = [];
 
 	self._set = set;
-	self._options = options;
 	self._getResult();
 
 	self._set.on("put", function (id) {
@@ -612,7 +703,7 @@ ReactiveQuery.prototype = Object.create(EventEmitter.prototype);
 ReactiveQuery.constructor = ReactiveQuery;
 
 ReactiveQuery.prototype._getResult = function () {
-	this.result = this._set.toArrayWithOptions(this._options);
+	this.result = this._set.toArray();
 };
 
 Collection.prototype.reactiveQuery = function (selectorOrFilter) {
@@ -623,91 +714,12 @@ Collection.prototype.reactiveQuery = function (selectorOrFilter) {
 		filter = getFilterFromSelector(selectorOrFilter);
 	}
 	var subset = this._set.filter(filter);
-	return new ReactiveQuery(subset, options);
+	return new ReactiveQuery(subset);
 };
 
 
 
 Asteroid._Collection = Collection;
-
-var getFilterFromSelector = function (selector) {
-
-	// Get the value of the object from a compund key
-	// (e.g. "profile.name.first")
-	var getItemVal = function (item, key) {
-		return key.split(".").reduce(function (prev, curr) {
-			if (!prev) return prev;
-			prev = prev[curr];
-			return prev;
-		}, item);
-	};
-
-	var keys = Object.keys(selector);
-
-	var filters = keys.map(function (key) {
-
-		var subFilters;
-		if (key === "$and") {
-			subFilters = selector[key].map(getFilterFromSelector);
-			return function (item) {
-				return subFilters.reduce(function (acc, subFilter) {
-					if (!acc) {
-						return acc;
-					}
-					return subFilter(item);
-				}, true);
-			};
-		}
-
-		if (key === "$or") {
-			subFilters = selector[key].map(getFilterFromSelector);
-			return function (item) {
-				return subFilters.reduce(function (acc, subFilter) {
-					if (acc) {
-						return acc;
-					}
-					return subFilter(item);
-				}, false);
-			};
-		}
-
-		if (key === "$nor") {
-			subFilters = selector[key].map(getFilterFromSelector);
-			return function (item) {
-				return subFilters.reduce(function (acc, subFilter) {
-					if (!acc) {
-						return acc;
-					}
-					return !subFilter(item);
-				}, true);
-			};
-		}
-
-		return function (item) {
-			var itemVal = getItemVal(item, key);
-			return itemVal === selector[key];
-		};
-
-
-	});
-
-	// Return the filter function
-	return function (item) {
-
-		// Filter out backups
-		if (item._id && is_backup(item._id)) {
-			return false;
-		}
-
-		return filters.reduce(function (acc, filter) {
-			if (!acc) {
-				return acc;
-			}
-			return filter(item);
-		}, true);
-
-	};
-};
 
 Asteroid.prototype._getOauthClientId = function (serviceName) {
 	var loginConfigCollectionName = "meteor_accounts_loginServiceConfiguration";
@@ -805,51 +817,19 @@ Asteroid.prototype._initOauthLogin = function (service, credentialToken, loginUr
 				if (err) {
 					delete self.userId;
 					delete self.loggedIn;
-					localStorageMulti.del(self._host + "__login_token__");
+					localStorageMulti.del(self._host + "__" + self._instanceId + "__login_token__");
 					deferred.reject(err);
 					self._emit("loginError", err);
 				} else {
 					self.userId = res.id;
 					self.loggedIn = true;
-					localStorageMulti.set(self._host + "__login_token__", res.token);
+					localStorageMulti.set(self._host + "__" + self._instanceId + "__login_token__", res.token);
 					self._emit("login", res.id);
 					deferred.resolve(res.id);
 				}
 			});
 			return deferred.promise;
 		});
-};
-
-Asteroid.prototype._tryResumeLogin = function () {
-	var self = this;
-	var deferred = Q.defer();
-	self._emit("loginAttempt");
-	localStorageMulti.get(self._host + "__login_token__").then(function(token) {
-		if (!token) {
-			self._emit("loginNull");
-			deferred.reject("No login token");
-			return deferred.promise;
-		}
-		var loginParameters = {
-			resume: token
-		};
-		self.ddp.method("login", [loginParameters], function (err, res) {
-			if (err) {
-				delete self.userId;
-				delete self.loggedIn;
-				localStorageMulti.del(self._host + "__login_token__");			
-				self._emit("loginError", err);
-				deferred.reject(err);
-			} else {
-				self.userId = res.id;
-				self.loggedIn = true;
-				localStorageMulti.set(self._host + "__login_token__", res.token);
-				self._emit("login", res.id);
-				deferred.resolve(res.id);
-			}
-		});		
-	});
-	return deferred.promise;
 };
 
 Asteroid.prototype.loginWithFacebook = function (scope) {
@@ -900,6 +880,42 @@ Asteroid.prototype.loginWithTwitter = function (scope) {
 	return this._initOauthLogin("twitter", credentialToken, loginUrl);
 };
 
+Asteroid.prototype._tryResumeLogin = function () {
+	var self = this;
+	return Q()
+		.then(function () {
+			return localStorageMulti.get(self._host + "__" + self._instanceId + "__login_token__");
+		})
+		.then(function (token) {
+			if (!token) {
+				throw new Error("No login token");
+			}
+			return token;
+		})
+		.then(function (token) {
+			var deferred = Q.defer();
+			var loginParameters = {
+				resume: token
+			};
+			self.ddp.method("login", [loginParameters], function (err, res) {
+				if (err) {
+					delete self.userId;
+					delete self.loggedIn;
+					localStorageMulti.del(self._host + "__" + self._instanceId + "__login_token__");
+					self._emit("loginError", err);
+					deferred.reject(err);
+				} else {
+					self.userId = res.id;
+					self.loggedIn = true;
+					localStorageMulti.set(self._host + "__" + self._instanceId + "__login_token__", res.token);
+					self._emit("login", res.id);
+					deferred.resolve(res.id);
+				}
+			});
+			return deferred.promise;
+		});
+};
+
 Asteroid.prototype.createUser = function (usernameOrEmail, password, profile) {
 	var self = this;
 	var deferred = Q.defer();
@@ -916,7 +932,7 @@ Asteroid.prototype.createUser = function (usernameOrEmail, password, profile) {
 		} else {
 			self.userId = res.id;
 			self.loggedIn = true;
-			localStorageMulti.set(self._host + "__login_token__", res.token);			
+			localStorageMulti.set(self._host + "__" + self._instanceId + "__login_token__", res.token);
 			self._emit("createUser", res.id);
 			self._emit("login", res.id);
 			deferred.resolve(res.id);
@@ -927,7 +943,6 @@ Asteroid.prototype.createUser = function (usernameOrEmail, password, profile) {
 
 Asteroid.prototype.loginWithPassword = function (usernameOrEmail, password) {
 	var self = this;
-	self._emit("loginAttempt");
 	var deferred = Q.defer();
 	var loginParameters = {
 		password: password,
@@ -940,13 +955,13 @@ Asteroid.prototype.loginWithPassword = function (usernameOrEmail, password) {
 		if (err) {
 			delete self.userId;
 			delete self.loggedIn;
-			localStorageMulti.del(self._host + "__login_token__");
+			localStorageMulti.del(self._host + "__" + self._instanceId + "__login_token__");
 			deferred.reject(err);
 			self._emit("loginError", err);
 		} else {
 			self.userId = res.id;
 			self.loggedIn = true;
-			localStorageMulti.set(self._host + "__login_token__", res.token);
+			localStorageMulti.set(self._host + "__" + self._instanceId + "__login_token__", res.token);
 			self._emit("login", res.id);
 			deferred.resolve(res.id);
 		}
@@ -964,7 +979,7 @@ Asteroid.prototype.logout = function () {
 		} else {
 			delete self.userId;
 			delete self.loggedIn;
-			localStorageMulti.del(self._host + "__login_token__");
+			localStorageMulti.del(self._host + "__" + self._instanceId + "__login_token__");
 			self._emit("logout");
 			deferred.resolve();
 		}
@@ -1022,64 +1037,6 @@ Set.prototype.contains = function (id) {
 	return !!this._items[id];
 };
 
-var sortArray = function (prop, order, arr) {
-	order = order == -1 ? -1 : 1;
-	prop = prop.split('.');
-	var len = prop.length;
-	
-	arr.sort(function (a, b) {
-		var i = 0;
-		while (i < len) {
-			a = a[prop[i]];
-			b = b[prop[i]];
-			i++;
-		}
-		if (a < b) {
-			return -1 * order;
-		} else if (a > b) {
-			return 1 * order;
-		} else {
-			return 0;
-		}
-	});
-	return arr;
-};
-
-Set.prototype.toArrayWithOptions = function(options) {
-
-	// 1. Turn set into an array
-	var array = this.toArray();
-	
-	// 2. Apply options to array
-	
-	// 2.a. Sort option
-	if (options && options.sort) {
-		for (var prop in options.sort) {
-			array = sortArray(prop, options.sort[prop], array);		
-		}
-	}
-
-	// 2.b. Skip option
-	if (options && options.skip) {
-		var skip = Number(options.skip);
-		if (!isNaN(skip)) {
-			array = array.slice(skip, array.length - 1);			
-		}
-	}
-
-	// 2.c. Limit option
-	if (options && options.limit) {
-		var limit = Number(options.limit);
-		if (!isNaN(limit)) {
-			array = array.slice(0, limit);			
-		}
-	}
-		
-	// 3. Returns the sorted array
-	return array;
-
-}
-
 Set.prototype.filter = function (belongFn) {
 
 	// Creates the subset
@@ -1111,11 +1068,10 @@ Set.prototype.filter = function (belongFn) {
 			sub._put(id, items[id]);
 		}
 	});
-
 	this.on("del", function (id) {
 		sub._del(id);
 	});
-	
+
 	// Returns the subset
 	return sub;
 };

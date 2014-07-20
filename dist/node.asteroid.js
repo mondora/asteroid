@@ -53,6 +53,85 @@ EventEmitter.prototype = {
 
 };
 
+var getFilterFromSelector = function (selector) {
+
+	// Get the value of the object from a compund key
+	// (e.g. "profile.name.first")
+	var getItemVal = function (item, key) {
+		return key.split(".").reduce(function (prev, curr) {
+			if (!prev) return prev;
+			prev = prev[curr];
+			return prev;
+		}, item);
+	};
+
+	var keys = Object.keys(selector);
+
+	var filters = keys.map(function (key) {
+
+		var subFilters;
+		if (key === "$and") {
+			subFilters = selector[key].map(getFilterFromSelector);
+			return function (item) {
+				return subFilters.reduce(function (acc, subFilter) {
+					if (!acc) {
+						return acc;
+					}
+					return subFilter(item);
+				}, true);
+			};
+		}
+
+		if (key === "$or") {
+			subFilters = selector[key].map(getFilterFromSelector);
+			return function (item) {
+				return subFilters.reduce(function (acc, subFilter) {
+					if (acc) {
+						return acc;
+					}
+					return subFilter(item);
+				}, false);
+			};
+		}
+
+		if (key === "$nor") {
+			subFilters = selector[key].map(getFilterFromSelector);
+			return function (item) {
+				return subFilters.reduce(function (acc, subFilter) {
+					if (!acc) {
+						return acc;
+					}
+					return !subFilter(item);
+				}, true);
+			};
+		}
+
+		return function (item) {
+			var itemVal = getItemVal(item, key);
+			return itemVal === selector[key];
+		};
+
+
+	});
+
+	// Return the filter function
+	return function (item) {
+
+		// Filter out backups
+		if (item._id && is_backup(item._id)) {
+			return false;
+		}
+
+		return filters.reduce(function (acc, filter) {
+			if (!acc) {
+				return acc;
+			}
+			return filter(item);
+		}, true);
+
+	};
+};
+
 function formQs (obj) {
 	var qs = "";
 	for (var key in obj) {
@@ -79,6 +158,36 @@ function isEqual (obj1, obj2) {
 	var str2 = JSON.stringify(obj2);
 	return str1 === str2;
 }
+
+var nodeTemporaryStorage = {};
+// Supoort multiple ways of persisting login tokens.
+// Since chrome extension storage is asynchronous, our
+// API is also aynchronous
+// For details on the chrome extensions storage API, see
+// https://developer.chrome.com/apps/storage
+var localStorageMulti = {
+
+	get: function (key) {
+		var deferred = Q.defer();
+		deferred.resolve(nodeTemporaryStorage[key]);
+		return deferred.promise;
+	},
+
+	set: function (key, value) {
+		var deferred = Q.defer();
+		nodeTemporaryStorage[key] = value;
+		deferred.resolve();
+		return deferred.promise;
+	},
+
+	del: function (key) {
+		var deferred = Q.defer();
+		delete nodeTemporaryStorage[key];
+		deferred.resolve();
+		return deferred.promise;
+	}
+
+};
 
 var must = {};
 
@@ -119,9 +228,12 @@ var WebSocket = require("faye-websocket");
 // Asteroid constructor //
 //////////////////////////
 
-var Asteroid = function (host, ssl, socketInterceptFunction) {
+var Asteroid = function (host, ssl, socketInterceptFunction, instanceId) {
 	// Assert arguments type
 	must.beString(host);
+	// An id may be assigned to the instance. This is to support
+	// resuming login of multiple connections to the same host.
+	this._instanceId = instanceId || "0";
 	// Configure the instance
 	this._host = (ssl ? "https://" : "http://") + host;
 	this._ddpOptions = {
@@ -153,6 +265,9 @@ Asteroid.prototype._init = function () {
 	self.ddp = new DDP(this._ddpOptions);
 	// Register handlers
 	self.ddp.on("connected", function () {
+		// Upon connection try resuming login
+		// Save the pormise it returns
+		self.resumeLoginPromise = self._tryResumeLogin();
 		// Subscribe to the meteor.loginServiceConfiguration
 		// collection, which holds the configuration options
 		// to login via third party services (oauth).
@@ -571,83 +686,40 @@ Collection.prototype.reactiveQuery = function (selectorOrFilter) {
 
 Asteroid._Collection = Collection;
 
-var getFilterFromSelector = function (selector) {
-
-	// Get the value of the object from a compund key
-	// (e.g. "profile.name.first")
-	var getItemVal = function (item, key) {
-		return key.split(".").reduce(function (prev, curr) {
-			if (!prev) return prev;
-			prev = prev[curr];
-			return prev;
-		}, item);
-	};
-
-	var keys = Object.keys(selector);
-
-	var filters = keys.map(function (key) {
-
-		var subFilters;
-		if (key === "$and") {
-			subFilters = selector[key].map(getFilterFromSelector);
-			return function (item) {
-				return subFilters.reduce(function (acc, subFilter) {
-					if (!acc) {
-						return acc;
-					}
-					return subFilter(item);
-				}, true);
-			};
-		}
-
-		if (key === "$or") {
-			subFilters = selector[key].map(getFilterFromSelector);
-			return function (item) {
-				return subFilters.reduce(function (acc, subFilter) {
-					if (acc) {
-						return acc;
-					}
-					return subFilter(item);
-				}, false);
-			};
-		}
-
-		if (key === "$nor") {
-			subFilters = selector[key].map(getFilterFromSelector);
-			return function (item) {
-				return subFilters.reduce(function (acc, subFilter) {
-					if (!acc) {
-						return acc;
-					}
-					return !subFilter(item);
-				}, true);
-			};
-		}
-
-		return function (item) {
-			var itemVal = getItemVal(item, key);
-			return itemVal === selector[key];
-		};
-
-
-	});
-
-	// Return the filter function
-	return function (item) {
-
-		// Filter out backups
-		if (item._id && is_backup(item._id)) {
-			return false;
-		}
-
-		return filters.reduce(function (acc, filter) {
-			if (!acc) {
-				return acc;
+Asteroid.prototype._tryResumeLogin = function () {
+	var self = this;
+	return Q()
+		.then(function () {
+			return localStorageMulti.get(self._host + "__" + self._instanceId + "__login_token__");
+		})
+		.then(function (token) {
+			if (!token) {
+				throw new Error("No login token");
 			}
-			return filter(item);
-		}, true);
-
-	};
+			return token;
+		})
+		.then(function (token) {
+			var deferred = Q.defer();
+			var loginParameters = {
+				resume: token
+			};
+			self.ddp.method("login", [loginParameters], function (err, res) {
+				if (err) {
+					delete self.userId;
+					delete self.loggedIn;
+					localStorageMulti.del(self._host + "__" + self._instanceId + "__login_token__");
+					self._emit("loginError", err);
+					deferred.reject(err);
+				} else {
+					self.userId = res.id;
+					self.loggedIn = true;
+					localStorageMulti.set(self._host + "__" + self._instanceId + "__login_token__", res.token);
+					self._emit("login", res.id);
+					deferred.resolve(res.id);
+				}
+			});
+			return deferred.promise;
+		});
 };
 
 Asteroid.prototype.createUser = function (usernameOrEmail, password, profile) {
@@ -666,7 +738,7 @@ Asteroid.prototype.createUser = function (usernameOrEmail, password, profile) {
 		} else {
 			self.userId = res.id;
 			self.loggedIn = true;
-			localStorage[self._host + "__login_token__"] = res.token;
+			localStorageMulti.set(self._host + "__" + self._instanceId + "__login_token__", res.token);
 			self._emit("createUser", res.id);
 			self._emit("login", res.id);
 			deferred.resolve(res.id);
@@ -689,13 +761,13 @@ Asteroid.prototype.loginWithPassword = function (usernameOrEmail, password) {
 		if (err) {
 			delete self.userId;
 			delete self.loggedIn;
-			delete localStorage[self._host + "__login_token__"];
+			localStorageMulti.del(self._host + "__" + self._instanceId + "__login_token__");
 			deferred.reject(err);
 			self._emit("loginError", err);
 		} else {
 			self.userId = res.id;
 			self.loggedIn = true;
-			localStorage[self._host + "__login_token__"] = res.token;
+			localStorageMulti.set(self._host + "__" + self._instanceId + "__login_token__", res.token);
 			self._emit("login", res.id);
 			deferred.resolve(res.id);
 		}
@@ -713,7 +785,7 @@ Asteroid.prototype.logout = function () {
 		} else {
 			delete self.userId;
 			delete self.loggedIn;
-			delete localStorage[self._host + "__login_token__"];
+			localStorageMulti.del(self._host + "__" + self._instanceId + "__login_token__");
 			self._emit("logout");
 			deferred.resolve();
 		}
