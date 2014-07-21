@@ -1,8 +1,8 @@
 [![Build Status](https://travis-ci.org/mondora/asteroid.svg?branch=master)](https://travis-ci.org/mondora/asteroid)
 [![Coverage Status](https://coveralls.io/repos/mondora/asteroid/badge.png)](https://coveralls.io/r/mondora/asteroid)
 
-[Example todo app using AngularJS.](https://mondora.github.io/meteor-todo)
-[Same app using Meteor's front-end.](https://meteor.todo.pscanf.com)
+[Example todo app using AngularJS.](http://mondora.github.io/meteor-todo)
+[Same app using Meteor's front-end.](http://meteor.todo.pscanf.com)
 
 #asteroid
 
