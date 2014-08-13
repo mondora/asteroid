@@ -184,7 +184,7 @@ var localStorageMulti = {
 	get: function (key) {
 		var deferred = Q.defer();
 		if (isChromeExtension) {
-			chrome.storage.local.get(key, function (data) { 
+			chrome.storage.local.get(key, function (data) {
 				deferred.resolve(data[key]);
 			});
 		} else {
