@@ -17,12 +17,26 @@ Asteroid.prototype._initOauthLogin = function (service, credentialToken, loginUr
 		.then(function () {
 			var deferred = Q.defer();
 			if (window.cordova) {
+				// Plugin messages are not processed on Android until the next
+				// message this prevents the oauthWin event listeners from firing.
+				// Call exec on an interval to force process messages.
+				// http://stackoverflow.com/q/23352940/230462 and
+				// http://stackoverflow.com/a/24319063/230462
+				var checkMessageInterval;
+				if (device.platform === "Android") {
+					checkMessageInterval = setInterval(function () {
+						cordova.exec(null, null, "", "", []);
+					}, 200);
+				}
 				// We're using Cordova's InAppBrowser plugin.
 				// Each time the popup fires the loadstop event,
 				// check if the hash fragment contains the
 				// credentialSecret we need to complete the
 				// authentication flow
 				popup.addEventListener("loadstop", function (e) {
+					if (device.platform === "Android") {
+						clearInterval(checkMessageInterval);
+					}
 					// If the url does not contain the # character
 					// it means the loadstop event refers to an
 					// intermediate page, therefore we ignore it
