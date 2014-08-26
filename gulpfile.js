@@ -17,10 +17,20 @@ var WebSocket	= require("faye-websocket");
 
 
 
+////////////////
+// Build task //
+////////////////
+
 var buildBrowser = function () {
 	console.log("Building for browser");
 	var deferred = Q.defer();
-	gulp.src(["src/platforms/browser/wrapper/head.js", "src/core/lib/*.js", "src/core/*.js", "src/platforms/browser/*.js", "src/platforms/browser/wrapper/tail.js"])
+	gulp.src([
+		"src/platforms/browser/wrapper/head.js",
+		"src/core/lib/*.js",
+		"src/core/*.js",
+		"src/platforms/browser/*.js",
+		"src/platforms/browser/wrapper/tail.js"
+	])
 		.pipe(plugins.concat("asteroid.browser.js"))
 		.pipe(gulp.dest("dist/"))
 		.on("end", function () {
@@ -28,14 +38,17 @@ var buildBrowser = function () {
 		});
 	return deferred.promise;
 };
-gulp.task("buildBrowser", function () {
-	buildBrowser();
-});
 
 var buildNode = function () {
 	console.log("Building for node");
 	var deferred = Q.defer();
-	gulp.src(["src/platforms/node/wrapper/head.js", "src/core/lib/*.js", "src/core/*.js", "src/platforms/node/*.js", "src/platforms/node/wrapper/tail.js"])
+	gulp.src([
+		"src/platforms/node/wrapper/head.js",
+		"src/core/lib/*.js",
+		"src/core/*.js",
+		"src/platforms/node/*.js",
+		"src/platforms/node/wrapper/tail.js"
+	])
 		.pipe(plugins.concat("asteroid.node.js"))
 		.pipe(gulp.dest("dist/"))
 		.on("end", function () {
@@ -43,14 +56,17 @@ var buildNode = function () {
 		});
 	return deferred.promise;
 };
-gulp.task("buildNode", function () {
-	buildNode();
-});
 
 var buildCordova = function () {
 	console.log("Building for cordova");
 	var deferred = Q.defer();
-	gulp.src(["src/platforms/cordova/wrapper/head.js", "src/core/lib/*.js", "src/core/*.js", "src/platforms/cordova/*.js", "src/platforms/cordova/wrapper/tail.js"])
+	gulp.src([
+		"src/platforms/cordova/wrapper/head.js",
+		"src/core/lib/*.js",
+		"src/core/*.js",
+		"src/platforms/cordova/*.js",
+		"src/platforms/cordova/wrapper/tail.js"
+	])
 		.pipe(plugins.concat("asteroid.cordova.js"))
 		.pipe(gulp.dest("dist/"))
 		.on("end", function () {
@@ -58,14 +74,17 @@ var buildCordova = function () {
 		});
 	return deferred.promise;
 };
-gulp.task("buildCordova", function () {
-	buildCordova();
-});
 
 var buildChrome = function () {
 	console.log("Building for chrome");
 	var deferred = Q.defer();
-	gulp.src(["src/platforms/chrome/wrapper/head.js", "src/core/lib/*.js", "src/core/*.js", "src/platforms/chrome/*.js", "src/platforms/chrome/wrapper/tail.js"])
+	gulp.src([
+		"src/platforms/chrome/wrapper/head.js",
+		"src/core/lib/*.js",
+		"src/core/*.js",
+		"src/platforms/chrome/*.js",
+		"src/platforms/chrome/wrapper/tail.js"
+	])
 		.pipe(plugins.concat("asteroid.chrome.js"))
 		.pipe(gulp.dest("dist/"))
 		.on("end", function () {
@@ -73,9 +92,19 @@ var buildChrome = function () {
 		});
 	return deferred.promise;
 };
-gulp.task("buildChrome", function () {
+
+gulp.task("build", function () {
+	buildBrowser();
+	buildCordova();
 	buildChrome();
+	buildNode();
 });
+
+
+
+///////////
+// Tests //
+///////////
 
 var buildTests = function () {
 	console.log("Building tests");
