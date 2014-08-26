@@ -7,6 +7,7 @@
         root.Asteroid = factory();
     }
 }(this, function () {
+
 "use strict";
 
 function clone (obj) {
@@ -172,56 +173,7 @@ function isEqual (obj1, obj2) {
 	return str1 === str2;
 }
 
-// Check if we're in a chrome extension
-var isChromeExtension = !!(window.chrome && window.chrome.extension);
-// Supoort multiple ways of persisting login tokens.
-// Since chrome extension storage is asynchronous, our
-// API is also aynchronous
-// For details on the chrome extensions storage API, see
-// https://developer.chrome.com/apps/storage
-var localStorageMulti = {
-
-	get: function (key) {
-		var deferred = Q.defer();
-		if (isChromeExtension) {
-			chrome.storage.local.get(key, function (data) {
-				deferred.resolve(data[key]);
-			});
-		} else {
-			deferred.resolve(localStorage[key]);
-		}
-		return deferred.promise;
-	},
-
-	set: function (key, value) {
-		var deferred = Q.defer();
-		if (isChromeExtension) {
-			var data = {};
-			data[key] = value;
-			chrome.storage.local.set(data, function () {
-				deferred.resolve();
-			});
-		} else {
-			localStorage[key] = value;
-			deferred.resolve();
-		}
-		return deferred.promise;
-	},
-
-	del: function (key) {
-		var deferred = Q.defer();
-		if (isChromeExtension) {
-			chrome.storage.local.remove(key, function () {
-				deferred.resolve();
-			});
-		} else {
-			delete localStorage[key];
-			deferred.resolve();
-		}
-		return deferred.promise;
-	}
-
-};
+var multiStorage = {};
 
 var must = {};
 
@@ -262,25 +214,12 @@ var Asteroid = function (host, ssl, socketInterceptFunction, instanceId) {
 	this._instanceId = instanceId || "0";
 	// Configure the instance
 	this._host = (ssl ? "https://" : "http://") + host;
-	// If SockJS is available, use it, otherwise, use WebSocket
-	// Note: SockJS is required for IE9 support
-	if (typeof SockJS === "function") {
-		this._ddpOptions = {
-			endpoint: (ssl ? "https://" : "http://") + host + "/sockjs",
-			SocketConstructor: SockJS,
-			socketInterceptFunction: socketInterceptFunction
-		};
-	} else {
-		this._ddpOptions = {
-			endpoint: (ssl ? "wss://" : "ws://") + host + "/websocket",
-			SocketConstructor: WebSocket,
-			socketInterceptFunction: socketInterceptFunction
-		};
-	}
 	// Reference containers
 	this.collections = {};
 	this.subscriptions = {};
 	this._subscriptionsCache = {};
+	// Set __ddpOptions
+	this._setDdpOptions(host, ssl, socketInterceptFunction);
 	// Init the instance
 	this._init();
 };
@@ -333,9 +272,9 @@ Asteroid.prototype._init = function () {
 
 
 
-///////////////////////////////////////
-// Handler for the ddp "added" event //
-///////////////////////////////////////
+//////////////////////////////////////////////////////////////////
+// Handlers for the ddp "added", "removed" and "changed" events //
+//////////////////////////////////////////////////////////////////
 
 Asteroid.prototype._onAdded = function (data) {
 	// Get the name of the collection
@@ -353,12 +292,6 @@ Asteroid.prototype._onAdded = function (data) {
 	this.collections[cName]._remoteToLocalInsert(item);
 };
 
-
-
-/////////////////////////////////////////
-// Handler for the ddp "removed" event //
-/////////////////////////////////////////
-
 Asteroid.prototype._onRemoved = function (data) {
 	// Check the collection exists to avoid exceptions
 	if (!this.collections[data.collection]) {
@@ -367,12 +300,6 @@ Asteroid.prototype._onRemoved = function (data) {
 	// Perform the reomte remove
 	this.collections[data.collection]._remoteToLocalRemove(data.id);
 };
-
-
-
-/////////////////////////////////////////
-// Handler for the ddp "changes" event //
-/////////////////////////////////////////
 
 Asteroid.prototype._onChanged = function (data) {
 	// Check the collection exists to avoid exceptions
@@ -399,10 +326,6 @@ Asteroid.prototype._onChanged = function (data) {
 	// Perform the remote update
 	this.collections[data.collection]._remoteToLocalUpdate(data.id, data.fields);
 };
-
-
-
-
 
 
 
@@ -734,110 +657,31 @@ Asteroid.prototype._getOauthClientId = function (serviceName) {
 	return service.clientId || service.consumerKey || service.appId;
 };
 
-Asteroid.prototype._initOauthLogin = function (service, credentialToken, loginUrl) {
-	// Open the oauth oauth
-	var popup = window.open(loginUrl, "_blank", "location=no,toolbar=no");
-	if (popup.focus) {
-		popup.focus();
-	}
+Asteroid.prototype._afterCredentialSecretReceived = function (credentialToken, credentialSecret) {
 	var self = this;
-	return Q()
-		.then(function () {
-			var deferred = Q.defer();
-			if (window.cordova) {
-				// We're using Cordova's InAppBrowser plugin.
-				// Each time the popup fires the loadstop event,
-				// check if the hash fragment contains the
-				// credentialSecret we need to complete the
-				// authentication flow
-				popup.addEventListener("loadstop", function (e) {
-					// If the url does not contain the # character
-					// it means the loadstop event refers to an
-					// intermediate page, therefore we ignore it
-					if (e.url.indexOf("#") === -1) {
-						return;
-					}
-					// Find the position of the # character
-					var hashPosition = e.url.indexOf("#");
-					// Get the key=value fragments in the hash
-					var hashes = e.url.slice(hashPosition + 1).split("&");
-					// Once again, check that the fragment belongs to the
-					// final oauth page (the one we're looking for)
-					if (
-						!hashes[0] ||
-						hashes[0].split("=")[0] !== "credentialToken" ||
-						!hashes[1] ||
-						hashes[1].split("=")[0] !== "credentialSecret"
-					) {
-						return;
-					}
-					// Retrieve the two tokens
-					var hashCredentialToken = hashes[0].split("=")[1];
-					var hashCredentialSecret = hashes[1].split("=")[1];
-					// Check if the credentialToken corresponds. We could
-					// use this as a way to communicate possible errors by
-					// purposefully mismatching the credentialToken with
-					// the error message. Too much of a hack?
-					if (hashCredentialToken === credentialToken) {
-						// Resolve the promise with the secret
-						deferred.resolve(hashCredentialSecret);
-						// Close the popup
-						popup.close();
-					}
-				});
-			} else {
-				var request = JSON.stringify({
-					credentialToken: credentialToken
-				});
-				var intervalId = setInterval(function () {
-					popup.postMessage(request, self._host);
-				}, 100);
-				window.addEventListener("message", function (e) {
-					var message;
-					try {
-						message = JSON.parse(e.data);
-					} catch (err) {
-						return;
-					}
-					if (e.origin === self._host) {
-						if (message.credentialToken === credentialToken) {
-							clearInterval(intervalId);
-							deferred.resolve(message.credentialSecret);
-						}
-						if (message.error) {
-							clearInterval(intervalId);
-							deferred.reject(message.error);
-						}
-					}
-				});
-			}
-			return deferred.promise;
-		})
-		.then(function (credentialSecret) {
-			var deferred = Q.defer();
-			var loginParameters = {
-				oauth: {
-					credentialToken: credentialToken,
-					credentialSecret: credentialSecret
-				}
-			};
-			self.ddp.method("login", [loginParameters], function (err, res) {
-				if (err) {
-					delete self.userId;
-					delete self.loggedIn;
-					localStorageMulti.del(self._host + "__" + self._instanceId + "__login_token__");
-					deferred.reject(err);
-					self._emit("loginError", err);
-				} else {
-					self.userId = res.id;
-					self.loggedIn = true;
-					localStorageMulti.set(self._host + "__" + self._instanceId + "__login_token__", res.token);
-					self._emit("login", res.id);
-					deferred.resolve(res.id);
-				}
-			});
-			return deferred.promise;
-		});
+	var deferred = Q.defer();
+	var loginParameters = {
+		oauth: {
+			credentialToken: credentialToken,
+			credentialSecret: credentialSecret
+		}
+	};
+	self.ddp.method("login", [loginParameters], function (err, res) {
+		if (err) {
+			delete self.userId;
+			delete self.loggedIn;
+			multiStorage.del(self._host + "__" + self._instanceId + "__login_token__");
+			deferred.reject(err);
+			self._emit("loginError", err);
+		} else {
+			self.userId = res.id;
+			self.loggedIn = true;
+			multiStorage.set(self._host + "__" + self._instanceId + "__login_token__", res.token);
+			self._emit("login", res.id);
+			deferred.resolve(res.id);
+		}
+	});
+	return deferred.promise;
 };
 
 Asteroid.prototype.loginWithFacebook = function (scope) {
@@ -892,7 +736,7 @@ Asteroid.prototype._tryResumeLogin = function () {
 	var self = this;
 	return Q()
 		.then(function () {
-			return localStorageMulti.get(self._host + "__" + self._instanceId + "__login_token__");
+			return multiStorage.get(self._host + "__" + self._instanceId + "__login_token__");
 		})
 		.then(function (token) {
 			if (!token) {
@@ -909,13 +753,13 @@ Asteroid.prototype._tryResumeLogin = function () {
 				if (err) {
 					delete self.userId;
 					delete self.loggedIn;
-					localStorageMulti.del(self._host + "__" + self._instanceId + "__login_token__");
+					multiStorage.del(self._host + "__" + self._instanceId + "__login_token__");
 					self._emit("loginError", err);
 					deferred.reject(err);
 				} else {
 					self.userId = res.id;
 					self.loggedIn = true;
-					localStorageMulti.set(self._host + "__" + self._instanceId + "__login_token__", res.token);
+					multiStorage.set(self._host + "__" + self._instanceId + "__login_token__", res.token);
 					self._emit("login", res.id);
 					deferred.resolve(res.id);
 				}
@@ -940,7 +784,7 @@ Asteroid.prototype.createUser = function (usernameOrEmail, password, profile) {
 		} else {
 			self.userId = res.id;
 			self.loggedIn = true;
-			localStorageMulti.set(self._host + "__" + self._instanceId + "__login_token__", res.token);
+			multiStorage.set(self._host + "__" + self._instanceId + "__login_token__", res.token);
 			self._emit("createUser", res.id);
 			self._emit("login", res.id);
 			deferred.resolve(res.id);
@@ -963,13 +807,13 @@ Asteroid.prototype.loginWithPassword = function (usernameOrEmail, password) {
 		if (err) {
 			delete self.userId;
 			delete self.loggedIn;
-			localStorageMulti.del(self._host + "__" + self._instanceId + "__login_token__");
+			multiStorage.del(self._host + "__" + self._instanceId + "__login_token__");
 			deferred.reject(err);
 			self._emit("loginError", err);
 		} else {
 			self.userId = res.id;
 			self.loggedIn = true;
-			localStorageMulti.set(self._host + "__" + self._instanceId + "__login_token__", res.token);
+			multiStorage.set(self._host + "__" + self._instanceId + "__login_token__", res.token);
 			self._emit("login", res.id);
 			deferred.resolve(res.id);
 		}
@@ -987,7 +831,7 @@ Asteroid.prototype.logout = function () {
 		} else {
 			delete self.userId;
 			delete self.loggedIn;
-			localStorageMulti.del(self._host + "__" + self._instanceId + "__login_token__");
+			multiStorage.del(self._host + "__" + self._instanceId + "__login_token__");
 			self._emit("logout");
 			deferred.resolve();
 		}
@@ -1172,6 +1016,111 @@ Asteroid.prototype._reEstablishSubscriptions = function () {
 		if (subs.hasOwnProperty(id)) {
 			subs[id] = new Subscription(subs[id]._name, subs[id]._params, this);
 		}
+	}
+};
+
+Asteroid.prototype._initOauthLogin = function (service, credentialToken, loginUrl) {
+	var self = this;
+	// Open the oauth popup
+	var popup = window.open(loginUrl, "_blank", "location=no,toolbar=no");
+	// If the focus property exists, it's a function and it needs to be
+	// called in order to focus the popup
+	if (popup.focus) {
+		popup.focus();
+	}
+	var deferred = Q.defer();
+	// Plugin messages are not processed on Android until the next
+	// message. This prevents the loadstop event from firing.
+	// Call exec on an interval to force process messages.
+	// http://stackoverflow.com/q/23352940/230462
+	var checkMessageInterval;
+	if (device.platform === "Android") {
+		checkMessageInterval = setInterval(function () {
+			cordova.exec(null, null, "", "", []);
+		}, 200);
+	}
+	// We're using Cordova's InAppBrowser plugin.
+	// Each time the popup fires the loadstop event,
+	// check if the hash fragment contains the
+	// credentialSecret we need to complete the
+	// authentication flow
+	popup.addEventListener("loadstop", function (e) {
+		if (device.platform === "Android") {
+			clearInterval(checkMessageInterval);
+		}
+		// If the url does not contain the # character
+		// it means the loadstop event refers to an
+		// intermediate page, therefore we ignore it
+		if (e.url.indexOf("#") === -1) {
+			return;
+		}
+		// Find the position of the # character
+		var hashPosition = e.url.indexOf("#");
+		// Get the key=value fragments in the hash
+		var hashes = e.url.slice(hashPosition + 1).split("&");
+		// Once again, check that the fragment belongs to the
+		// final oauth page (the one we're looking for)
+		if (
+			!hashes[0] ||
+			hashes[0].split("=")[0] !== "credentialToken" ||
+			!hashes[1] ||
+			hashes[1].split("=")[0] !== "credentialSecret"
+		) {
+			return;
+		}
+		// Retrieve the two tokens
+		var hashCredentialToken = hashes[0].split("=")[1];
+		var hashCredentialSecret = hashes[1].split("=")[1];
+		// Check if the credentialToken corresponds. We could
+		// use this as a way to communicate possible errors by
+		// purposefully mismatching the credentialToken with
+		// the error message. Too much of a hack?
+		if (hashCredentialToken === credentialToken) {
+			// Resolve the promise with the secret
+			deferred.resolve(hashCredentialToken, hashCredentialSecret);
+			// Close the popup
+			popup.close();
+		}
+	});
+	return deferred.promise
+		.then(self._afterCredentialSecretReceived.bind(self));
+};
+
+multiStorage.get = function (key) {
+	var deferred = Q.defer();
+	deferred.resolve(localStorage[key]);
+	return deferred.promise;
+};
+
+multiStorage.set = function (key, value) {
+	var deferred = Q.defer();
+	localStorage[key] = value;
+	deferred.resolve();
+	return deferred.promise;
+};
+
+multiStorage.del = function (key) {
+	var deferred = Q.defer();
+	delete localStorage[key];
+	deferred.resolve();
+	return deferred.promise;
+};
+
+Asteroid.prototype._setDdpOptions = function (host, ssl, socketInterceptFunction) {
+	// If SockJS is available, use it, otherwise, use WebSocket
+	// Note: SockJS is required for IE9 support
+	if (typeof SockJS === "function") {
+		this._ddpOptions = {
+			endpoint: (ssl ? "https://" : "http://") + host + "/sockjs",
+			SocketConstructor: SockJS,
+			socketInterceptFunction: socketInterceptFunction
+		};
+	} else {
+		this._ddpOptions = {
+			endpoint: (ssl ? "wss://" : "ws://") + host + "/websocket",
+			SocketConstructor: WebSocket,
+			socketInterceptFunction: socketInterceptFunction
+		};
 	}
 };
 
