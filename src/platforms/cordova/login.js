@@ -56,7 +56,10 @@ Asteroid.prototype._initOauthLogin = function (service, credentialToken, loginUr
 		// the error message. Too much of a hack?
 		if (hashCredentialToken === credentialToken) {
 			// Resolve the promise with the secret
-			deferred.resolve(hashCredentialToken, hashCredentialSecret);
+			deferred.resolve({
+				credentialToken: hashCredentialToken,
+				credentialSecret: hashCredentialSecret
+			});
 			// Close the popup
 			popup.close();
 		}

@@ -24,7 +24,10 @@ Asteroid.prototype._initOauthLogin = function (service, credentialToken, loginUr
 		if (e.origin === self._host) {
 			if (message.credentialToken === credentialToken) {
 				clearInterval(intervalId);
-				deferred.resolve(message.credentialToken, message.credentialSecret);
+				deferred.resolve({
+					credentialToken: message.credentialToken,
+					credentialSecret: message.credentialSecret
+				});
 			}
 			if (message.error) {
 				clearInterval(intervalId);

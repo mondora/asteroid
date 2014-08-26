@@ -41,8 +41,11 @@ Asteroid.prototype._initOauthLogin = function (service, credentialToken, loginUr
 		// purposefully mismatching the credentialToken with
 		// the error message. Too much of a hack?
 		if (hashCredentialToken === credentialToken) {
-			// Resolve the promise with the secret
-			deferred.resolve(hashCredentialToken, hashCredentialSecret);
+			// Resolve the promise with the token and secret
+			deferred.resolve({
+				credentialToken: hashCredentialToken,
+				credentialSecret: hashCredentialSecret
+			});
 			// Close the popup
 			chrome.tabs.remove(id);
 		}

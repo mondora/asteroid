@@ -5,14 +5,11 @@ Asteroid.prototype._getOauthClientId = function (serviceName) {
 	return service.clientId || service.consumerKey || service.appId;
 };
 
-Asteroid.prototype._afterCredentialSecretReceived = function (credentialToken, credentialSecret) {
+Asteroid.prototype._afterCredentialSecretReceived = function (credentials) {
 	var self = this;
 	var deferred = Q.defer();
 	var loginParameters = {
-		oauth: {
-			credentialToken: credentialToken,
-			credentialSecret: credentialSecret
-		}
+		oauth: credentials
 	};
 	self.ddp.method("login", [loginParameters], function (err, res) {
 		if (err) {

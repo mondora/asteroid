@@ -657,14 +657,11 @@ Asteroid.prototype._getOauthClientId = function (serviceName) {
 	return service.clientId || service.consumerKey || service.appId;
 };
 
-Asteroid.prototype._afterCredentialSecretReceived = function (credentialToken, credentialSecret) {
+Asteroid.prototype._afterCredentialSecretReceived = function (credentials) {
 	var self = this;
 	var deferred = Q.defer();
 	var loginParameters = {
-		oauth: {
-			credentialToken: credentialToken,
-			credentialSecret: credentialSecret
-		}
+		oauth: credentials
 	};
 	self.ddp.method("login", [loginParameters], function (err, res) {
 		if (err) {
@@ -1062,8 +1059,11 @@ Asteroid.prototype._initOauthLogin = function (service, credentialToken, loginUr
 		// purposefully mismatching the credentialToken with
 		// the error message. Too much of a hack?
 		if (hashCredentialToken === credentialToken) {
-			// Resolve the promise with the secret
-			deferred.resolve(hashCredentialToken, hashCredentialSecret);
+			// Resolve the promise with the token and secret
+			deferred.resolve({
+				credentialToken: hashCredentialToken,
+				credentialSecret: hashCredentialSecret
+			});
 			// Close the popup
 			chrome.tabs.remove(id);
 		}
