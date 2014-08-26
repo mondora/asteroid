@@ -10,7 +10,12 @@ Asteroid.prototype._initOauthLogin = function (service, credentialToken, loginUr
 		id = tab.id;
 	});
 	chrome.tabs.onUpdated.addListener(function (tabId, changeInfo) {
+		// If the change is on the wrong tab, ignore it
 		if (tabId !== id) {
+			return;
+		}
+		// If the url didn't change, ignore the change
+		if (!changeInfo.url) {
 			return;
 		}
 		// If the url does not contain the # character
