@@ -1,16 +1,3 @@
-// @if ENV=='node'
-
-///////////////////////
-// Node dependencies //
-///////////////////////
-
-var DDP = require("ddp.js");
-var Q = require("q");
-var WebSocket = require("faye-websocket");
-
-// @endif
-
-
 //////////////////////////
 // Asteroid constructor //
 //////////////////////////
@@ -23,34 +10,12 @@ var Asteroid = function (host, ssl, socketInterceptFunction, instanceId) {
 	this._instanceId = instanceId || "0";
 	// Configure the instance
 	this._host = (ssl ? "https://" : "http://") + host;
-	// @if ENV=='browser'
-	// If SockJS is available, use it, otherwise, use WebSocket
-	// Note: SockJS is required for IE9 support
-	if (typeof SockJS === "function") {
-		this._ddpOptions = {
-			endpoint: (ssl ? "https://" : "http://") + host + "/sockjs",
-			SocketConstructor: SockJS,
-			socketInterceptFunction: socketInterceptFunction
-		};
-	} else {
-		this._ddpOptions = {
-			endpoint: (ssl ? "wss://" : "ws://") + host + "/websocket",
-			SocketConstructor: WebSocket,
-			socketInterceptFunction: socketInterceptFunction
-		};
-	}
-	// @endif
-	// @if ENV=='node'
-	this._ddpOptions = {
-		endpoint: (ssl ? "wss://" : "ws://") + host + "/websocket",
-		SocketConstructor: WebSocket.Client,
-		socketInterceptFunction: socketInterceptFunction
-	};
-	// @endif
 	// Reference containers
 	this.collections = {};
 	this.subscriptions = {};
 	this._subscriptionsCache = {};
+	// Set __ddpOptions
+	this._setDdpOptions(host, ssl, socketInterceptFunction);
 	// Init the instance
 	this._init();
 };
@@ -82,11 +47,9 @@ Asteroid.prototype._init = function () {
 		self._emit("connected");
 	});
 	self.ddp.on("reconnected", function () {
-		// @if ENV=='browser'
 		// Upon reconnection try resuming login
 		// Save the pormise it returns
 		self.resumeLoginPromise = self._tryResumeLogin();
-		// @endif
 		// Re-establish all previously established (and still active) subscriptions
 		self._reEstablishSubscriptions();
 		// Emit the reconnected event
@@ -105,9 +68,9 @@ Asteroid.prototype._init = function () {
 
 
 
-///////////////////////////////////////
-// Handler for the ddp "added" event //
-///////////////////////////////////////
+//////////////////////////////////////////////////////////////////
+// Handlers for the ddp "added", "removed" and "changed" events //
+//////////////////////////////////////////////////////////////////
 
 Asteroid.prototype._onAdded = function (data) {
 	// Get the name of the collection
@@ -125,12 +88,6 @@ Asteroid.prototype._onAdded = function (data) {
 	this.collections[cName]._remoteToLocalInsert(item);
 };
 
-
-
-/////////////////////////////////////////
-// Handler for the ddp "removed" event //
-/////////////////////////////////////////
-
 Asteroid.prototype._onRemoved = function (data) {
 	// Check the collection exists to avoid exceptions
 	if (!this.collections[data.collection]) {
@@ -139,12 +96,6 @@ Asteroid.prototype._onRemoved = function (data) {
 	// Perform the reomte remove
 	this.collections[data.collection]._remoteToLocalRemove(data.id);
 };
-
-
-
-/////////////////////////////////////////
-// Handler for the ddp "changes" event //
-/////////////////////////////////////////
 
 Asteroid.prototype._onChanged = function (data) {
 	// Check the collection exists to avoid exceptions
@@ -171,10 +122,6 @@ Asteroid.prototype._onChanged = function (data) {
 	// Perform the remote update
 	this.collections[data.collection]._remoteToLocalUpdate(data.id, data.fields);
 };
-
-
-
-
 
 
 
