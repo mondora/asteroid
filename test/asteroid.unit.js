@@ -6,7 +6,7 @@ if (ENV === "node") {
 	global.Q = require("q");
 	global.sinon = require("sinon");
 	global.rewire = require("rewire");
-	global.Asteroid = rewire("./dist/node.asteroid.js");
+	global.Asteroid = rewire("./dist/asteroid.node.js");
 } else {
 	window.glb = window;
 }
