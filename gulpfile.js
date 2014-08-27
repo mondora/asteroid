@@ -17,15 +17,21 @@ var WebSocket	= require("faye-websocket");
 
 
 
+////////////////
+// Build task //
+////////////////
+
 var buildBrowser = function () {
 	console.log("Building for browser");
 	var deferred = Q.defer();
-	gulp.src(["src/wrapper/head.js", "src/lib/*.js", "src/*.js", "src/wrapper/tail.js"])
-		.pipe(plugins.preprocess({context: {ENV: "browser"}}))
-		.pipe(plugins.concat("asteroid.js"))
-		.pipe(gulp.dest("dist/"))
-		.pipe(plugins.uglify())
-		.pipe(plugins.rename("asteroid.min.js"))
+	gulp.src([
+		"src/platforms/browser/wrapper/head.js",
+		"src/core/lib/*.js",
+		"src/core/*.js",
+		"src/platforms/browser/*.js",
+		"src/platforms/browser/wrapper/tail.js"
+	])
+		.pipe(plugins.concat("asteroid.browser.js"))
 		.pipe(gulp.dest("dist/"))
 		.on("end", function () {
 			deferred.resolve();
@@ -36,15 +42,69 @@ var buildBrowser = function () {
 var buildNode = function () {
 	console.log("Building for node");
 	var deferred = Q.defer();
-	gulp.src(["src/wrapper/head.js", "src/lib/*.js", "src/*.js", "src/wrapper/tail.js"])
-		.pipe(plugins.preprocess({context: {ENV: "node"}}))
-		.pipe(plugins.concat("node.asteroid.js"))
+	gulp.src([
+		"src/platforms/node/wrapper/head.js",
+		"src/core/lib/*.js",
+		"src/core/*.js",
+		"src/platforms/node/*.js",
+		"src/platforms/node/wrapper/tail.js"
+	])
+		.pipe(plugins.concat("asteroid.node.js"))
 		.pipe(gulp.dest("dist/"))
 		.on("end", function () {
 			deferred.resolve();
 		});
 	return deferred.promise;
 };
+
+var buildCordova = function () {
+	console.log("Building for cordova");
+	var deferred = Q.defer();
+	gulp.src([
+		"src/platforms/cordova/wrapper/head.js",
+		"src/core/lib/*.js",
+		"src/core/*.js",
+		"src/platforms/cordova/*.js",
+		"src/platforms/cordova/wrapper/tail.js"
+	])
+		.pipe(plugins.concat("asteroid.cordova.js"))
+		.pipe(gulp.dest("dist/"))
+		.on("end", function () {
+			deferred.resolve();
+		});
+	return deferred.promise;
+};
+
+var buildChrome = function () {
+	console.log("Building for chrome");
+	var deferred = Q.defer();
+	gulp.src([
+		"src/platforms/chrome/wrapper/head.js",
+		"src/core/lib/*.js",
+		"src/core/*.js",
+		"src/platforms/chrome/*.js",
+		"src/platforms/chrome/wrapper/tail.js"
+	])
+		.pipe(plugins.concat("asteroid.chrome.js"))
+		.pipe(gulp.dest("dist/"))
+		.on("end", function () {
+			deferred.resolve();
+		});
+	return deferred.promise;
+};
+
+gulp.task("build", function () {
+	buildBrowser();
+	buildCordova();
+	buildChrome();
+	buildNode();
+});
+
+
+
+///////////
+// Tests //
+///////////
 
 var buildTests = function () {
 	console.log("Building tests");
