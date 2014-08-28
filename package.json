@@ -53,6 +53,6 @@
   "dependencies": {
     "ddp.js": "^0.5.0",
     "q": "^1.0.1",
-    "faye-websocket": "^0.7.2",
+    "faye-websocket": "^0.7.2"
   }
 }
