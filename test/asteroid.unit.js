@@ -801,7 +801,7 @@ describe("A reactive query", function () {
 if (ENV === "node") {
 
 	describe("The getFilterFromSelector function should return a function which filters objetcs", function () {
-		var getFilterFromSelector = Asteroid.__get__("getFilterFromSelector");
+		var getFilterFromSelector = Asteroid.utils.getFilterFromSelector;
 		var item0 = {
 			_id: "postOne",
 			title: "TitleOne",

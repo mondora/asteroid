@@ -26,8 +26,13 @@ var buildBrowser = function () {
 	var deferred = Q.defer();
 	gulp.src([
 		"src/platforms/browser/wrapper/head.js",
+		"src/core/asteroid-constructor.js",
 		"src/core/lib/*.js",
-		"src/core/*.js",
+		"src/core/asteroid-methods.js",
+		"src/core/collection.js",
+		"src/core/login.js",
+		"src/core/set.js",
+		"src/core/subscription.js",
 		"src/platforms/browser/*.js",
 		"src/platforms/browser/wrapper/tail.js"
 	])
@@ -44,8 +49,13 @@ var buildChrome = function () {
 	var deferred = Q.defer();
 	gulp.src([
 		"src/platforms/chrome/wrapper/head.js",
+		"src/core/asteroid-constructor.js",
 		"src/core/lib/*.js",
-		"src/core/*.js",
+		"src/core/asteroid-methods.js",
+		"src/core/collection.js",
+		"src/core/login.js",
+		"src/core/set.js",
+		"src/core/subscription.js",
 		"src/platforms/chrome/*.js",
 		"src/platforms/chrome/wrapper/tail.js"
 	])
@@ -62,8 +72,13 @@ var buildCordova = function () {
 	var deferred = Q.defer();
 	gulp.src([
 		"src/platforms/cordova/wrapper/head.js",
+		"src/core/asteroid-constructor.js",
 		"src/core/lib/*.js",
-		"src/core/*.js",
+		"src/core/asteroid-methods.js",
+		"src/core/collection.js",
+		"src/core/login.js",
+		"src/core/set.js",
+		"src/core/subscription.js",
 		"src/platforms/cordova/*.js",
 		"src/platforms/cordova/wrapper/tail.js"
 	])
@@ -80,8 +95,13 @@ var buildNode = function () {
 	var deferred = Q.defer();
 	gulp.src([
 		"src/platforms/node/wrapper/head.js",
+		"src/core/asteroid-constructor.js",
 		"src/core/lib/*.js",
-		"src/core/*.js",
+		"src/core/asteroid-methods.js",
+		"src/core/collection.js",
+		"src/core/login.js",
+		"src/core/set.js",
+		"src/core/subscription.js",
 		"src/platforms/node/*.js",
 		"src/platforms/node/wrapper/tail.js"
 	])
