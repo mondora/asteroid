@@ -10,7 +10,10 @@
 
 "use strict";
 
-function clone (obj) {
+if (!Asteroid.utils) {
+	Asteroid.utils = {};
+}
+Asteroid.utils.clone = function (obj) {
 	if (typeof EJSON !== "undefined") {
 		return EJSON.clone(obj);
 	}
@@ -31,13 +34,16 @@ function clone (obj) {
 		default:
 			return;
 	}
+};
+
+if (!Asteroid.utils) {
+	Asteroid.utils = {};
 }
+Asteroid.utils.EventEmitter = function () {};
 
-var EventEmitter = function () {};
+Asteroid.utils.EventEmitter.prototype = {
 
-EventEmitter.prototype = {
-
-	constructor: EventEmitter,
+	constructor: Asteroid.utils.EventEmitter,
 
 	on: function (name, handler) {
 		if (!this._events) this._events = {};
@@ -63,7 +69,10 @@ EventEmitter.prototype = {
 
 };
 
-var getFilterFromSelector = function (selector) {
+if (!Asteroid.utils) {
+	Asteroid.utils = {};
+}
+Asteroid.utils.getFilterFromSelector = function (selector) {
 
 	// Get the value of the object from a compund key
 	// (e.g. "profile.name.first")
@@ -83,7 +92,7 @@ var getFilterFromSelector = function (selector) {
 
 		var subFilters;
 		if (key === "$and") {
-			subFilters = selector[key].map(getFilterFromSelector);
+			subFilters = selector[key].map(Asteroid.utils.getFilterFromSelector);
 			return function (item) {
 				return subFilters.reduce(function (acc, subFilter) {
 					if (!acc) {
@@ -95,7 +104,7 @@ var getFilterFromSelector = function (selector) {
 		}
 
 		if (key === "$or") {
-			subFilters = selector[key].map(getFilterFromSelector);
+			subFilters = selector[key].map(Asteroid.utils.getFilterFromSelector);
 			return function (item) {
 				return subFilters.reduce(function (acc, subFilter) {
 					if (acc) {
@@ -107,7 +116,7 @@ var getFilterFromSelector = function (selector) {
 		}
 
 		if (key === "$nor") {
-			subFilters = selector[key].map(getFilterFromSelector);
+			subFilters = selector[key].map(Asteroid.utils.getFilterFromSelector);
 			return function (item) {
 				return subFilters.reduce(function (acc, subFilter) {
 					if (!acc) {
@@ -144,7 +153,10 @@ var getFilterFromSelector = function (selector) {
 	};
 };
 
-function formQs (obj) {
+if (!Asteroid.utils) {
+	Asteroid.utils = {};
+}
+Asteroid.utils.formQs = function (obj) {
 	var qs = "";
 	for (var key in obj) {
 		if (obj.hasOwnProperty(key)) {
@@ -153,53 +165,70 @@ function formQs (obj) {
 	}
 	qs = qs.slice(0, -1);
 	return qs;
-}
+};
 
-function guid () {
+if (!Asteroid.utils) {
+	Asteroid.utils = {};
+}
+Asteroid.utils.guid = function () {
 	var ret = "";
 	for (var i=0; i<8; i++) {
 		ret += Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
 	}
 	return ret;
-}
+};
 
-function isEmail (string) {
+if (!Asteroid.utils) {
+	Asteroid.utils = {};
+}
+Asteroid.utils.isEmail = function (string) {
 	return string.indexOf("@") !== -1;
-}
+};
 
-function isEqual (obj1, obj2) {
+if (!Asteroid.utils) {
+	Asteroid.utils = {};
+}
+Asteroid.utils.isEqual = function (obj1, obj2) {
 	var str1 = JSON.stringify(obj1);
 	var str2 = JSON.stringify(obj2);
 	return str1 === str2;
+};
+
+if (!Asteroid.utils) {
+	Asteroid.utils = {};
 }
+Asteroid.utils.multiStorage = {};
 
-var multiStorage = {};
+if (!Asteroid.utils) {
+	Asteroid.utils = {};
+}
+Asteroid.utils.must = {
 
-var must = {};
+	_toString: function (thing) {
+		return Object.prototype.toString.call(thing).slice(8, -1);
+	},
 
-must._toString = function (thing) {
-	return Object.prototype.toString.call(thing).slice(8, -1);
-};
+	beString: function (s) {
+		var type = this._toString(s);
+		if (type !== "String") {
+			throw new Error("Assertion failed: expected String, instead got " + type);
+		}
+	},
 
-must.beString = function (s) {
-	var type = this._toString(s);
-	if (type !== "String") {
-		throw new Error("Assertion failed: expected String, instead got " + type);
+	beArray: function (o) {
+		var type = this._toString(o);
+		if (type !== "Array") {
+			throw new Error("Assertion failed: expected Array, instead got " + type);
+		}
+	},
+
+	beObject: function (o) {
+		var type = this._toString(o);
+		if (type !== "Object") {
+			throw new Error("Assertion failed: expected Object, instead got " + type);
+		}
 	}
-};
 
-must.beArray = function (o) {
-	var type = this._toString(o);
-	if (type !== "Array") {
-		throw new Error("Assertion failed: expected Array, instead got " + type);
-	}
-};
-
-must.beObject = function (o) {
-	var type = this._toString(o);
-	if (type !== "Object") {
-		throw new Error("Assertion failed: expected Object, instead got " + type);
-	}
 };
 
 //////////////////////////
@@ -208,7 +237,7 @@ must.beObject = function (o) {
 
 var Asteroid = function (host, ssl, socketInterceptFunction, instanceId) {
 	// Assert arguments type
-	must.beString(host);
+	Asteroid.utils.must.beString(host);
 	// An id may be assigned to the instance. This is to support
 	// resuming login of multiple connections to the same host.
 	this._instanceId = instanceId || "0";
@@ -224,7 +253,7 @@ var Asteroid = function (host, ssl, socketInterceptFunction, instanceId) {
 	this._init();
 };
 // Asteroid instances are EventEmitter-s
-Asteroid.prototype = Object.create(EventEmitter.prototype);
+Asteroid.prototype = Object.create(Asteroid.utils.EventEmitter.prototype);
 Asteroid.prototype.constructor = Asteroid;
 
 
@@ -335,7 +364,7 @@ Asteroid.prototype._onChanged = function (data) {
 
 Asteroid.prototype.call = function (method /* , param1, param2, ... */) {
 	// Assert arguments type
-	must.beString(method);
+	Asteroid.utils.must.beString(method);
 	// Get the parameters for apply
 	var params = Array.prototype.slice.call(arguments, 1);
 	// Call apply
@@ -344,7 +373,7 @@ Asteroid.prototype.call = function (method /* , param1, param2, ... */) {
 
 Asteroid.prototype.apply = function (method, params) {
 	// Assert arguments type
-	must.beString(method);
+	Asteroid.utils.must.beString(method);
 	// If no parameters are given, use an empty array
 	if (!Array.isArray(params)) {
 		params = [];
@@ -384,7 +413,7 @@ Asteroid.prototype.apply = function (method, params) {
 
 Asteroid.prototype.getCollection = function (name) {
 	// Assert arguments type
-	must.beString(name);
+	Asteroid.utils.must.beString(name);
 	// Only create the collection if it doesn't exist
 	if (!this.collections[name]) {
 		this.collections[name] = new Asteroid._Collection(name, this);
@@ -458,7 +487,7 @@ Collection.prototype._localToRemoteInsert = function (item) {
 Collection.prototype.insert = function (item) {
 	// If the time has no id, generate one for it
 	if (!item._id) {
-		item._id = guid();
+		item._id = Asteroid.utils.guid();
 	}
 	return {
 		// Perform the local insert
@@ -628,7 +657,7 @@ var ReactiveQuery = function (set) {
 	});
 
 };
-ReactiveQuery.prototype = Object.create(EventEmitter.prototype);
+ReactiveQuery.prototype = Object.create(Asteroid.utils.EventEmitter.prototype);
 ReactiveQuery.constructor = ReactiveQuery;
 
 ReactiveQuery.prototype._getResult = function () {
@@ -640,7 +669,7 @@ Collection.prototype.reactiveQuery = function (selectorOrFilter) {
 	if (typeof selectorOrFilter === "function") {
 		filter = selectorOrFilter;
 	} else {
-		filter = getFilterFromSelector(selectorOrFilter);
+		filter = Asteroid.utils.getFilterFromSelector(selectorOrFilter);
 	}
 	var subset = this._set.filter(filter);
 	return new ReactiveQuery(subset);
@@ -657,7 +686,7 @@ Asteroid.prototype._getOauthClientId = function (serviceName) {
 	return service.clientId || service.consumerKey || service.appId;
 };
 
-Asteroid.prototype._afterCredentialSecretReceived = function (credentials) {
+Asteroid.prototype._loginAfterCredentialSecretReceived = function (credentials) {
 	var self = this;
 	var deferred = Q.defer();
 	var loginParameters = {
@@ -667,13 +696,13 @@ Asteroid.prototype._afterCredentialSecretReceived = function (credentials) {
 		if (err) {
 			delete self.userId;
 			delete self.loggedIn;
-			multiStorage.del(self._host + "__" + self._instanceId + "__login_token__");
+			Asteroid.utils.multiStorage.del(self._host + "__" + self._instanceId + "__login_token__");
 			deferred.reject(err);
 			self._emit("loginError", err);
 		} else {
 			self.userId = res.id;
 			self.loggedIn = true;
-			multiStorage.set(self._host + "__" + self._instanceId + "__login_token__", res.token);
+			Asteroid.utils.multiStorage.set(self._host + "__" + self._instanceId + "__login_token__", res.token);
 			self._emit("login", res.id);
 			deferred.resolve(res.id);
 		}
@@ -681,59 +710,26 @@ Asteroid.prototype._afterCredentialSecretReceived = function (credentials) {
 	return deferred.promise;
 };
 
-Asteroid.prototype.loginWithFacebook = function (scope) {
-	var credentialToken = guid();
-	var query = {
-		client_id:		this._getOauthClientId("facebook"),
-		redirect_uri:	this._host + "/_oauth/facebook?close",
-		state:			credentialToken,
-		scope:			scope || "email"
+Asteroid.prototype._connectAfterCredentialSecretReceived = function (credentials) {
+	var deferred = Q.defer();
+	var loginParameters = {
+		oauth: credentials
 	};
-	var loginUrl = "https://www.facebook.com/dialog/oauth?" + formQs(query);
-	return this._initOauthLogin("facebook", credentialToken, loginUrl);
-};
-
-Asteroid.prototype.loginWithGoogle = function (scope) {
-	var credentialToken = guid();
-	var query = {
-		response_type:	"code",
-		client_id:		this._getOauthClientId("google"),
-		redirect_uri:	this._host + "/_oauth/google?close",
-		state:			credentialToken,
-		scope:			scope || "openid email"
-	};
-	var loginUrl = "https://accounts.google.com/o/oauth2/auth?" + formQs(query);
-	return this._initOauthLogin("google", credentialToken, loginUrl);
-};
-
-Asteroid.prototype.loginWithGithub = function (scope) {
-	var credentialToken = guid();
-	var query = {
-		client_id:		this._getOauthClientId("github"),
-		redirect_uri:	this._host + "/_oauth/github?close",
-		state:			credentialToken,
-		scope:			scope || "email"
-	};
-	var loginUrl = "https://github.com/login/oauth/authorize?" + formQs(query);
-	return this._initOauthLogin("github", credentialToken, loginUrl);
-};
-
-Asteroid.prototype.loginWithTwitter = function () {
-	var credentialToken = guid();
-	var callbackUrl = this._host + "/_oauth/twitter?close&state=" + credentialToken;
-	var query = {
-		requestTokenAndRedirect:	encodeURIComponent(callbackUrl),
-		state:						credentialToken
-	};
-	var loginUrl = this._host + "/_oauth/twitter/?" + formQs(query);
-	return this._initOauthLogin("twitter", credentialToken, loginUrl);
+	this.ddp.method("addLoginService", [loginParameters], function (err, res) {
+		if (err) {
+			deferred.reject(err);
+		} else {
+			deferred.resolve();
+		}
+	});
+	return deferred.promise;
 };
 
 Asteroid.prototype._tryResumeLogin = function () {
 	var self = this;
 	return Q()
 		.then(function () {
-			return multiStorage.get(self._host + "__" + self._instanceId + "__login_token__");
+			return Asteroid.utils.multiStorage.get(self._host + "__" + self._instanceId + "__login_token__");
 		})
 		.then(function (token) {
 			if (!token) {
@@ -750,13 +746,13 @@ Asteroid.prototype._tryResumeLogin = function () {
 				if (err) {
 					delete self.userId;
 					delete self.loggedIn;
-					multiStorage.del(self._host + "__" + self._instanceId + "__login_token__");
+					Asteroid.utils.multiStorage.del(self._host + "__" + self._instanceId + "__login_token__");
 					self._emit("loginError", err);
 					deferred.reject(err);
 				} else {
 					self.userId = res.id;
 					self.loggedIn = true;
-					multiStorage.set(self._host + "__" + self._instanceId + "__login_token__", res.token);
+					Asteroid.utils.multiStorage.set(self._host + "__" + self._instanceId + "__login_token__", res.token);
 					self._emit("login", res.id);
 					deferred.resolve(res.id);
 				}
@@ -769,8 +765,8 @@ Asteroid.prototype.createUser = function (usernameOrEmail, password, profile) {
 	var self = this;
 	var deferred = Q.defer();
 	var options = {
-		username: isEmail(usernameOrEmail) ? undefined : usernameOrEmail,
-		email: isEmail(usernameOrEmail) ? usernameOrEmail : undefined,
+		username: Asteroid.utils.isEmail(usernameOrEmail) ? undefined : usernameOrEmail,
+		email: Asteroid.utils.isEmail(usernameOrEmail) ? usernameOrEmail : undefined,
 		password: password,
 		profile: profile
 	};
@@ -781,7 +777,7 @@ Asteroid.prototype.createUser = function (usernameOrEmail, password, profile) {
 		} else {
 			self.userId = res.id;
 			self.loggedIn = true;
-			multiStorage.set(self._host + "__" + self._instanceId + "__login_token__", res.token);
+			Asteroid.utils.multiStorage.set(self._host + "__" + self._instanceId + "__login_token__", res.token);
 			self._emit("createUser", res.id);
 			self._emit("login", res.id);
 			deferred.resolve(res.id);
@@ -796,21 +792,21 @@ Asteroid.prototype.loginWithPassword = function (usernameOrEmail, password) {
 	var loginParameters = {
 		password: password,
 		user: {
-			username: isEmail(usernameOrEmail) ? undefined : usernameOrEmail,
-			email: isEmail(usernameOrEmail) ? usernameOrEmail : undefined
+			username: Asteroid.utils.isEmail(usernameOrEmail) ? undefined : usernameOrEmail,
+			email: Asteroid.utils.isEmail(usernameOrEmail) ? usernameOrEmail : undefined
 		}
 	};
 	self.ddp.method("login", [loginParameters], function (err, res) {
 		if (err) {
 			delete self.userId;
 			delete self.loggedIn;
-			multiStorage.del(self._host + "__" + self._instanceId + "__login_token__");
+			Asteroid.utils.multiStorage.del(self._host + "__" + self._instanceId + "__login_token__");
 			deferred.reject(err);
 			self._emit("loginError", err);
 		} else {
 			self.userId = res.id;
 			self.loggedIn = true;
-			multiStorage.set(self._host + "__" + self._instanceId + "__login_token__", res.token);
+			Asteroid.utils.multiStorage.set(self._host + "__" + self._instanceId + "__login_token__", res.token);
 			self._emit("login", res.id);
 			deferred.resolve(res.id);
 		}
@@ -828,7 +824,7 @@ Asteroid.prototype.logout = function () {
 		} else {
 			delete self.userId;
 			delete self.loggedIn;
-			multiStorage.del(self._host + "__" + self._instanceId + "__login_token__");
+			Asteroid.utils.multiStorage.del(self._host + "__" + self._instanceId + "__login_token__");
 			self._emit("logout");
 			deferred.resolve();
 		}
@@ -850,15 +846,15 @@ var Set = function (readonly) {
 	this._items = {};
 };
 // Inherit from EventEmitter
-Set.prototype = Object.create(EventEmitter.prototype);
+Set.prototype = Object.create(Asteroid.utils.EventEmitter.prototype);
 Set.constructor = Set;
 
 Set.prototype.put = function (id, item) {
 	// Assert arguments type
-	must.beString(id);
-	must.beObject(item);
+	Asteroid.utils.must.beString(id);
+	Asteroid.utils.must.beObject(item);
 	// Save a clone to avoid collateral damage
-	this._items[id] = clone(item);
+	this._items[id] = Asteroid.utils.clone(item);
 	this._emit("put", id);
 	// Return the set instance to allow method chainging
 	return this;
@@ -866,7 +862,7 @@ Set.prototype.put = function (id, item) {
 
 Set.prototype.del = function (id) {
 	// Assert arguments type
-	must.beString(id);
+	Asteroid.utils.must.beString(id);
 	delete this._items[id];
 	this._emit("del", id);
 	// Return the set instance to allow method chainging
@@ -875,14 +871,14 @@ Set.prototype.del = function (id) {
 
 Set.prototype.get = function (id) {
 	// Assert arguments type
-	must.beString(id);
+	Asteroid.utils.must.beString(id);
 	// Return a clone to avoid collateral damage
-	return clone(this._items[id]);
+	return Asteroid.utils.clone(this._items[id]);
 };
 
 Set.prototype.contains = function (id) {
 	// Assert arguments type
-	must.beString(id);
+	Asteroid.utils.must.beString(id);
 	return !!this._items[id];
 };
 
@@ -899,7 +895,7 @@ Set.prototype.filter = function (belongFn) {
 	ids.forEach(function (id) {
 		// Clone the element to avoid
 		// collateral damage
-		var itemClone = clone(items[id]);
+		var itemClone = Asteroid.utils.clone(items[id]);
 		var belongs = belongFn(itemClone);
 		if (belongs) {
 			sub._items[id] = items[id];
@@ -911,7 +907,7 @@ Set.prototype.filter = function (belongFn) {
 	this.on("put", function (id) {
 		// Clone the element to avoid
 		// collateral damage
-		var itemClone = clone(items[id]);
+		var itemClone = Asteroid.utils.clone(items[id]);
 		var belongs = belongFn(itemClone);
 		if (belongs) {
 			sub._put(id, items[id]);
@@ -933,12 +929,12 @@ Set.prototype.toArray = function () {
 		array.push(items[id]);
 	});
 	// Return a clone to avoid collateral damage
-	return clone(array);
+	return Asteroid.utils.clone(array);
 };
 
 Set.prototype.toHash = function () {
 	// Return a clone to avoid collateral damage
-	return clone(this._items);
+	return Asteroid.utils.clone(this._items);
 };
 
 Asteroid.Set = Set;
@@ -991,7 +987,7 @@ Subscription.prototype._onError = function (err) {
 
 Asteroid.prototype.subscribe = function (name /* , param1, param2, ... */) {
 	// Assert arguments type
-	must.beString(name);
+	Asteroid.utils.must.beString(name);
 	// Collect arguments into array
 	var args = Array.prototype.slice.call(arguments);
 	// Hash the arguments to get a key for _subscriptionsCache
@@ -1016,7 +1012,7 @@ Asteroid.prototype._reEstablishSubscriptions = function () {
 	}
 };
 
-Asteroid.prototype._initOauthLogin = function (service, credentialToken, loginUrl) {
+Asteroid.prototype._initOauthLogin = function (service, credentialToken, loginUrl, afterCredentialSecretReceived) {
 	var self = this;
 	var deferred = Q.defer();
 	// Open the oauth tab
@@ -1074,13 +1070,13 @@ Asteroid.prototype._initOauthLogin = function (service, credentialToken, loginUr
 		}
 	});
 	return deferred.promise
-		.then(self._afterCredentialSecretReceived.bind(self));
+		.then(afterCredentialSecretReceived.bind(self));
 };
 
 // For details on the chrome extensions storage API, see
 // https://developer.chrome.com/apps/storage
 
-multiStorage.get = function (key) {
+Asteroid.utils.multiStorage.get = function (key) {
 	var deferred = Q.defer();
 	chrome.storage.local.get(key, function (data) {
 		deferred.resolve(data[key]);
@@ -1088,7 +1084,7 @@ multiStorage.get = function (key) {
 	return deferred.promise;
 };
 
-multiStorage.set = function (key, value) {
+Asteroid.utils.multiStorage.set = function (key, value) {
 	var deferred = Q.defer();
 	var data = {};
 	data[key] = value;
@@ -1098,7 +1094,7 @@ multiStorage.set = function (key, value) {
 	return deferred.promise;
 };
 
-multiStorage.del = function (key) {
+Asteroid.utils.multiStorage.del = function (key) {
 	var deferred = Q.defer();
 	chrome.storage.local.remove(key, function () {
 		deferred.resolve();

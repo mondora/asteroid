@@ -1,0 +1,47 @@
+(function (root, extend) {
+    if (typeof define === "function" && define.amd) {
+		// XXX figure out how to do it
+    } else if (typeof exports === "object") {
+		extend(require("asteroid"));
+    } else {
+        extend(root.Asteroid);
+    }
+}(this, function (Asteroid) {
+
+	"use strict";
+
+	var getTwitterOauthOptions = function () {
+		var credentialToken = Asteroid.utils.guid();
+		var callbackUrl = this._host + "/_oauth/twitter?close&state=" + credentialToken;
+		var query = {
+			requestTokenAndRedirect:	encodeURIComponent(callbackUrl),
+			state:						credentialToken
+		};
+		var loginUrl = this._host + "/_oauth/twitter/?" + Asteroid.utils.formQs(query);
+		return {
+			credentialToken: credentialToken,
+			loginUrl: loginUrl
+		};
+	};
+
+	Asteroid.prototype.loginWithTwitter = function () {
+		var options = getTwitterOauthOptions.call(this);
+		return this._openOauthPopup(
+			"twitter",
+			options.credentialToken,
+			options.loginUrl,
+			this._loginAfterCredentialSecretReceived
+		);
+	};
+
+	Asteroid.prototype.connectWithTwitter = function () {
+		var options = getTwitterOauthOptions.call(this);
+		return this._openOauthPopup(
+			"twitter",
+			options.credentialToken,
+			options.loginUrl,
+			this._connectAfterCredentialSecretReceived
+		);
+	};
+
+}));
