@@ -5,7 +5,7 @@ Asteroid.prototype._getOauthClientId = function (serviceName) {
 	return service.clientId || service.consumerKey || service.appId;
 };
 
-Asteroid.prototype._afterCredentialSecretReceived = function (credentials) {
+Asteroid.prototype._loginAfterCredentialSecretReceived = function (credentials) {
 	var self = this;
 	var deferred = Q.defer();
 	var loginParameters = {
@@ -29,52 +29,19 @@ Asteroid.prototype._afterCredentialSecretReceived = function (credentials) {
 	return deferred.promise;
 };
 
-Asteroid.prototype.loginWithFacebook = function (scope) {
-	var credentialToken = guid();
-	var query = {
-		client_id:		this._getOauthClientId("facebook"),
-		redirect_uri:	this._host + "/_oauth/facebook?close",
-		state:			credentialToken,
-		scope:			scope || "email"
+Asteroid.prototype._connectAfterCredentialSecretReceived = function (credentials) {
+	var deferred = Q.defer();
+	var loginParameters = {
+		oauth: credentials
 	};
-	var loginUrl = "https://www.facebook.com/dialog/oauth?" + formQs(query);
-	return this._initOauthLogin("facebook", credentialToken, loginUrl);
-};
-
-Asteroid.prototype.loginWithGoogle = function (scope) {
-	var credentialToken = guid();
-	var query = {
-		response_type:	"code",
-		client_id:		this._getOauthClientId("google"),
-		redirect_uri:	this._host + "/_oauth/google?close",
-		state:			credentialToken,
-		scope:			scope || "openid email"
-	};
-	var loginUrl = "https://accounts.google.com/o/oauth2/auth?" + formQs(query);
-	return this._initOauthLogin("google", credentialToken, loginUrl);
-};
-
-Asteroid.prototype.loginWithGithub = function (scope) {
-	var credentialToken = guid();
-	var query = {
-		client_id:		this._getOauthClientId("github"),
-		redirect_uri:	this._host + "/_oauth/github?close",
-		state:			credentialToken,
-		scope:			scope || "email"
-	};
-	var loginUrl = "https://github.com/login/oauth/authorize?" + formQs(query);
-	return this._initOauthLogin("github", credentialToken, loginUrl);
-};
-
-Asteroid.prototype.loginWithTwitter = function () {
-	var credentialToken = guid();
-	var callbackUrl = this._host + "/_oauth/twitter?close&state=" + credentialToken;
-	var query = {
-		requestTokenAndRedirect:	encodeURIComponent(callbackUrl),
-		state:						credentialToken
-	};
-	var loginUrl = this._host + "/_oauth/twitter/?" + formQs(query);
-	return this._initOauthLogin("twitter", credentialToken, loginUrl);
+	this.ddp.method("addLoginService", [loginParameters], function (err, res) {
+		if (err) {
+			deferred.reject(err);
+		} else {
+			deferred.resolve();
+		}
+	});
+	return deferred.promise;
 };
 
 Asteroid.prototype._tryResumeLogin = function () {

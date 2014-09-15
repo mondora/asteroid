@@ -1,4 +1,4 @@
-Asteroid.prototype._initOauthLogin = function (service, credentialToken, loginUrl) {
+Asteroid.prototype._initOauthLogin = function (service, credentialToken, loginUrl, afterCredentialSecretReceived) {
 	var self = this;
 	// Open the oauth popup
 	var popup = window.open(loginUrl, "_blank", "location=no,toolbar=no");
@@ -65,5 +65,5 @@ Asteroid.prototype._initOauthLogin = function (service, credentialToken, loginUr
 		}
 	});
 	return deferred.promise
-		.then(self._afterCredentialSecretReceived.bind(self));
+		.then(afterCredentialSecretReceived.bind(self));
 };

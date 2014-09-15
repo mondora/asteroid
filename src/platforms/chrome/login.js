@@ -1,4 +1,4 @@
-Asteroid.prototype._initOauthLogin = function (service, credentialToken, loginUrl) {
+Asteroid.prototype._initOauthLogin = function (service, credentialToken, loginUrl, afterCredentialSecretReceived) {
 	var self = this;
 	var deferred = Q.defer();
 	// Open the oauth tab
@@ -56,5 +56,5 @@ Asteroid.prototype._initOauthLogin = function (service, credentialToken, loginUr
 		}
 	});
 	return deferred.promise
-		.then(self._afterCredentialSecretReceived.bind(self));
+		.then(afterCredentialSecretReceived.bind(self));
 };
