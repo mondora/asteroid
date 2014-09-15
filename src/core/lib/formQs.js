@@ -1,4 +1,7 @@
-function formQs (obj) {
+if (!Asteroid.utils) {
+	Asteroid.utils = {};
+}
+Asteroid.utils.formQs = function (obj) {
 	var qs = "";
 	for (var key in obj) {
 		if (obj.hasOwnProperty(key)) {
@@ -7,4 +10,4 @@ function formQs (obj) {
 	}
 	qs = qs.slice(0, -1);
 	return qs;
-}
+};

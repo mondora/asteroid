@@ -46,7 +46,7 @@ Subscription.prototype._onError = function (err) {
 
 Asteroid.prototype.subscribe = function (name /* , param1, param2, ... */) {
 	// Assert arguments type
-	must.beString(name);
+	Asteroid.utils.must.beString(name);
 	// Collect arguments into array
 	var args = Array.prototype.slice.call(arguments);
 	// Hash the arguments to get a key for _subscriptionsCache

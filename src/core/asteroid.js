@@ -4,7 +4,7 @@
 
 var Asteroid = function (host, ssl, socketInterceptFunction, instanceId) {
 	// Assert arguments type
-	must.beString(host);
+	Asteroid.utils.must.beString(host);
 	// An id may be assigned to the instance. This is to support
 	// resuming login of multiple connections to the same host.
 	this._instanceId = instanceId || "0";
@@ -20,7 +20,7 @@ var Asteroid = function (host, ssl, socketInterceptFunction, instanceId) {
 	this._init();
 };
 // Asteroid instances are EventEmitter-s
-Asteroid.prototype = Object.create(EventEmitter.prototype);
+Asteroid.prototype = Object.create(Asteroid.utils.EventEmitter.prototype);
 Asteroid.prototype.constructor = Asteroid;
 
 
@@ -131,7 +131,7 @@ Asteroid.prototype._onChanged = function (data) {
 
 Asteroid.prototype.call = function (method /* , param1, param2, ... */) {
 	// Assert arguments type
-	must.beString(method);
+	Asteroid.utils.must.beString(method);
 	// Get the parameters for apply
 	var params = Array.prototype.slice.call(arguments, 1);
 	// Call apply
@@ -140,7 +140,7 @@ Asteroid.prototype.call = function (method /* , param1, param2, ... */) {
 
 Asteroid.prototype.apply = function (method, params) {
 	// Assert arguments type
-	must.beString(method);
+	Asteroid.utils.must.beString(method);
 	// If no parameters are given, use an empty array
 	if (!Array.isArray(params)) {
 		params = [];
@@ -180,7 +180,7 @@ Asteroid.prototype.apply = function (method, params) {
 
 Asteroid.prototype.getCollection = function (name) {
 	// Assert arguments type
-	must.beString(name);
+	Asteroid.utils.must.beString(name);
 	// Only create the collection if it doesn't exist
 	if (!this.collections[name]) {
 		this.collections[name] = new Asteroid._Collection(name, this);

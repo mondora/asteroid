@@ -1,7 +1,7 @@
 // For details on the chrome extensions storage API, see
 // https://developer.chrome.com/apps/storage
 
-multiStorage.get = function (key) {
+Asteroid.utils.multiStorage.get = function (key) {
 	var deferred = Q.defer();
 	chrome.storage.local.get(key, function (data) {
 		deferred.resolve(data[key]);
@@ -9,7 +9,7 @@ multiStorage.get = function (key) {
 	return deferred.promise;
 };
 
-multiStorage.set = function (key, value) {
+Asteroid.utils.multiStorage.set = function (key, value) {
 	var deferred = Q.defer();
 	var data = {};
 	data[key] = value;
@@ -19,7 +19,7 @@ multiStorage.set = function (key, value) {
 	return deferred.promise;
 };
 
-multiStorage.del = function (key) {
+Asteroid.utils.multiStorage.del = function (key) {
 	var deferred = Q.defer();
 	chrome.storage.local.remove(key, function () {
 		deferred.resolve();

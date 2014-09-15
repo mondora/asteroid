@@ -15,13 +15,13 @@ Asteroid.prototype._loginAfterCredentialSecretReceived = function (credentials) 
 		if (err) {
 			delete self.userId;
 			delete self.loggedIn;
-			multiStorage.del(self._host + "__" + self._instanceId + "__login_token__");
+			Asteroid.utils.multiStorage.del(self._host + "__" + self._instanceId + "__login_token__");
 			deferred.reject(err);
 			self._emit("loginError", err);
 		} else {
 			self.userId = res.id;
 			self.loggedIn = true;
-			multiStorage.set(self._host + "__" + self._instanceId + "__login_token__", res.token);
+			Asteroid.utils.multiStorage.set(self._host + "__" + self._instanceId + "__login_token__", res.token);
 			self._emit("login", res.id);
 			deferred.resolve(res.id);
 		}
@@ -48,7 +48,7 @@ Asteroid.prototype._tryResumeLogin = function () {
 	var self = this;
 	return Q()
 		.then(function () {
-			return multiStorage.get(self._host + "__" + self._instanceId + "__login_token__");
+			return Asteroid.utils.multiStorage.get(self._host + "__" + self._instanceId + "__login_token__");
 		})
 		.then(function (token) {
 			if (!token) {
@@ -65,13 +65,13 @@ Asteroid.prototype._tryResumeLogin = function () {
 				if (err) {
 					delete self.userId;
 					delete self.loggedIn;
-					multiStorage.del(self._host + "__" + self._instanceId + "__login_token__");
+					Asteroid.utils.multiStorage.del(self._host + "__" + self._instanceId + "__login_token__");
 					self._emit("loginError", err);
 					deferred.reject(err);
 				} else {
 					self.userId = res.id;
 					self.loggedIn = true;
-					multiStorage.set(self._host + "__" + self._instanceId + "__login_token__", res.token);
+					Asteroid.utils.multiStorage.set(self._host + "__" + self._instanceId + "__login_token__", res.token);
 					self._emit("login", res.id);
 					deferred.resolve(res.id);
 				}
@@ -84,8 +84,8 @@ Asteroid.prototype.createUser = function (usernameOrEmail, password, profile) {
 	var self = this;
 	var deferred = Q.defer();
 	var options = {
-		username: isEmail(usernameOrEmail) ? undefined : usernameOrEmail,
-		email: isEmail(usernameOrEmail) ? usernameOrEmail : undefined,
+		username: Asteroid.utils.isEmail(usernameOrEmail) ? undefined : usernameOrEmail,
+		email: Asteroid.utils.isEmail(usernameOrEmail) ? usernameOrEmail : undefined,
 		password: password,
 		profile: profile
 	};
@@ -96,7 +96,7 @@ Asteroid.prototype.createUser = function (usernameOrEmail, password, profile) {
 		} else {
 			self.userId = res.id;
 			self.loggedIn = true;
-			multiStorage.set(self._host + "__" + self._instanceId + "__login_token__", res.token);
+			Asteroid.utils.multiStorage.set(self._host + "__" + self._instanceId + "__login_token__", res.token);
 			self._emit("createUser", res.id);
 			self._emit("login", res.id);
 			deferred.resolve(res.id);
@@ -111,21 +111,21 @@ Asteroid.prototype.loginWithPassword = function (usernameOrEmail, password) {
 	var loginParameters = {
 		password: password,
 		user: {
-			username: isEmail(usernameOrEmail) ? undefined : usernameOrEmail,
-			email: isEmail(usernameOrEmail) ? usernameOrEmail : undefined
+			username: Asteroid.utils.isEmail(usernameOrEmail) ? undefined : usernameOrEmail,
+			email: Asteroid.utils.isEmail(usernameOrEmail) ? usernameOrEmail : undefined
 		}
 	};
 	self.ddp.method("login", [loginParameters], function (err, res) {
 		if (err) {
 			delete self.userId;
 			delete self.loggedIn;
-			multiStorage.del(self._host + "__" + self._instanceId + "__login_token__");
+			Asteroid.utils.multiStorage.del(self._host + "__" + self._instanceId + "__login_token__");
 			deferred.reject(err);
 			self._emit("loginError", err);
 		} else {
 			self.userId = res.id;
 			self.loggedIn = true;
-			multiStorage.set(self._host + "__" + self._instanceId + "__login_token__", res.token);
+			Asteroid.utils.multiStorage.set(self._host + "__" + self._instanceId + "__login_token__", res.token);
 			self._emit("login", res.id);
 			deferred.resolve(res.id);
 		}
@@ -143,7 +143,7 @@ Asteroid.prototype.logout = function () {
 		} else {
 			delete self.userId;
 			delete self.loggedIn;
-			multiStorage.del(self._host + "__" + self._instanceId + "__login_token__");
+			Asteroid.utils.multiStorage.del(self._host + "__" + self._instanceId + "__login_token__");
 			self._emit("logout");
 			deferred.resolve();
 		}

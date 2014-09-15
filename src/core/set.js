@@ -12,15 +12,15 @@ var Set = function (readonly) {
 	this._items = {};
 };
 // Inherit from EventEmitter
-Set.prototype = Object.create(EventEmitter.prototype);
+Set.prototype = Object.create(Asteroid.utils.EventEmitter.prototype);
 Set.constructor = Set;
 
 Set.prototype.put = function (id, item) {
 	// Assert arguments type
-	must.beString(id);
-	must.beObject(item);
+	Asteroid.utils.must.beString(id);
+	Asteroid.utils.must.beObject(item);
 	// Save a clone to avoid collateral damage
-	this._items[id] = clone(item);
+	this._items[id] = Asteroid.utils.clone(item);
 	this._emit("put", id);
 	// Return the set instance to allow method chainging
 	return this;
@@ -28,7 +28,7 @@ Set.prototype.put = function (id, item) {
 
 Set.prototype.del = function (id) {
 	// Assert arguments type
-	must.beString(id);
+	Asteroid.utils.must.beString(id);
 	delete this._items[id];
 	this._emit("del", id);
 	// Return the set instance to allow method chainging
@@ -37,14 +37,14 @@ Set.prototype.del = function (id) {
 
 Set.prototype.get = function (id) {
 	// Assert arguments type
-	must.beString(id);
+	Asteroid.utils.must.beString(id);
 	// Return a clone to avoid collateral damage
-	return clone(this._items[id]);
+	return Asteroid.utils.clone(this._items[id]);
 };
 
 Set.prototype.contains = function (id) {
 	// Assert arguments type
-	must.beString(id);
+	Asteroid.utils.must.beString(id);
 	return !!this._items[id];
 };
 
@@ -61,7 +61,7 @@ Set.prototype.filter = function (belongFn) {
 	ids.forEach(function (id) {
 		// Clone the element to avoid
 		// collateral damage
-		var itemClone = clone(items[id]);
+		var itemClone = Asteroid.utils.clone(items[id]);
 		var belongs = belongFn(itemClone);
 		if (belongs) {
 			sub._items[id] = items[id];
@@ -73,7 +73,7 @@ Set.prototype.filter = function (belongFn) {
 	this.on("put", function (id) {
 		// Clone the element to avoid
 		// collateral damage
-		var itemClone = clone(items[id]);
+		var itemClone = Asteroid.utils.clone(items[id]);
 		var belongs = belongFn(itemClone);
 		if (belongs) {
 			sub._put(id, items[id]);
@@ -95,12 +95,12 @@ Set.prototype.toArray = function () {
 		array.push(items[id]);
 	});
 	// Return a clone to avoid collateral damage
-	return clone(array);
+	return Asteroid.utils.clone(array);
 };
 
 Set.prototype.toHash = function () {
 	// Return a clone to avoid collateral damage
-	return clone(this._items);
+	return Asteroid.utils.clone(this._items);
 };
 
 Asteroid.Set = Set;

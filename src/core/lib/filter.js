@@ -1,4 +1,7 @@
-var getFilterFromSelector = function (selector) {
+if (!Asteroid.utils) {
+	Asteroid.utils = {};
+}
+Asteroid.utils.getFilterFromSelector = function (selector) {
 
 	// Get the value of the object from a compund key
 	// (e.g. "profile.name.first")
@@ -18,7 +21,7 @@ var getFilterFromSelector = function (selector) {
 
 		var subFilters;
 		if (key === "$and") {
-			subFilters = selector[key].map(getFilterFromSelector);
+			subFilters = selector[key].map(Asteroid.utils.getFilterFromSelector);
 			return function (item) {
 				return subFilters.reduce(function (acc, subFilter) {
 					if (!acc) {
@@ -30,7 +33,7 @@ var getFilterFromSelector = function (selector) {
 		}
 
 		if (key === "$or") {
-			subFilters = selector[key].map(getFilterFromSelector);
+			subFilters = selector[key].map(Asteroid.utils.getFilterFromSelector);
 			return function (item) {
 				return subFilters.reduce(function (acc, subFilter) {
 					if (acc) {
@@ -42,7 +45,7 @@ var getFilterFromSelector = function (selector) {
 		}
 
 		if (key === "$nor") {
-			subFilters = selector[key].map(getFilterFromSelector);
+			subFilters = selector[key].map(Asteroid.utils.getFilterFromSelector);
 			return function (item) {
 				return subFilters.reduce(function (acc, subFilter) {
 					if (!acc) {

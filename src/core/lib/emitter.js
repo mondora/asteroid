@@ -1,8 +1,11 @@
-var EventEmitter = function () {};
+if (!Asteroid.utils) {
+	Asteroid.utils = {};
+}
+Asteroid.utils.EventEmitter = function () {};
 
-EventEmitter.prototype = {
+Asteroid.utils.EventEmitter.prototype = {
 
-	constructor: EventEmitter,
+	constructor: Asteroid.utils.EventEmitter,
 
 	on: function (name, handler) {
 		if (!this._events) this._events = {};

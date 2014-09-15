@@ -1,4 +1,7 @@
-function clone (obj) {
+if (!Asteroid.utils) {
+	Asteroid.utils = {};
+}
+Asteroid.utils.clone = function (obj) {
 	if (typeof EJSON !== "undefined") {
 		return EJSON.clone(obj);
 	}
@@ -19,4 +22,4 @@ function clone (obj) {
 		default:
 			return;
 	}
-}
+};

@@ -64,7 +64,7 @@ Collection.prototype._localToRemoteInsert = function (item) {
 Collection.prototype.insert = function (item) {
 	// If the time has no id, generate one for it
 	if (!item._id) {
-		item._id = guid();
+		item._id = Asteroid.utils.guid();
 	}
 	return {
 		// Perform the local insert
@@ -234,7 +234,7 @@ var ReactiveQuery = function (set) {
 	});
 
 };
-ReactiveQuery.prototype = Object.create(EventEmitter.prototype);
+ReactiveQuery.prototype = Object.create(Asteroid.utils.EventEmitter.prototype);
 ReactiveQuery.constructor = ReactiveQuery;
 
 ReactiveQuery.prototype._getResult = function () {
@@ -246,7 +246,7 @@ Collection.prototype.reactiveQuery = function (selectorOrFilter) {
 	if (typeof selectorOrFilter === "function") {
 		filter = selectorOrFilter;
 	} else {
-		filter = getFilterFromSelector(selectorOrFilter);
+		filter = Asteroid.utils.getFilterFromSelector(selectorOrFilter);
 	}
 	var subset = this._set.filter(filter);
 	return new ReactiveQuery(subset);
