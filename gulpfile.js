@@ -39,17 +39,17 @@ var buildBrowser = function () {
 	return deferred.promise;
 };
 
-var buildNode = function () {
-	console.log("Building for node");
+var buildChrome = function () {
+	console.log("Building for chrome");
 	var deferred = Q.defer();
 	gulp.src([
-		"src/platforms/node/wrapper/head.js",
+		"src/platforms/chrome/wrapper/head.js",
 		"src/core/lib/*.js",
 		"src/core/*.js",
-		"src/platforms/node/*.js",
-		"src/platforms/node/wrapper/tail.js"
+		"src/platforms/chrome/*.js",
+		"src/platforms/chrome/wrapper/tail.js"
 	])
-		.pipe(plugins.concat("asteroid.node.js"))
+		.pipe(plugins.concat("asteroid.chrome.js"))
 		.pipe(gulp.dest("dist/"))
 		.on("end", function () {
 			deferred.resolve();
@@ -75,18 +75,30 @@ var buildCordova = function () {
 	return deferred.promise;
 };
 
-var buildChrome = function () {
-	console.log("Building for chrome");
+var buildNode = function () {
+	console.log("Building for node");
 	var deferred = Q.defer();
 	gulp.src([
-		"src/platforms/chrome/wrapper/head.js",
+		"src/platforms/node/wrapper/head.js",
 		"src/core/lib/*.js",
 		"src/core/*.js",
-		"src/platforms/chrome/*.js",
-		"src/platforms/chrome/wrapper/tail.js"
+		"src/platforms/node/*.js",
+		"src/platforms/node/wrapper/tail.js"
 	])
-		.pipe(plugins.concat("asteroid.chrome.js"))
+		.pipe(plugins.concat("asteroid.node.js"))
 		.pipe(gulp.dest("dist/"))
+		.on("end", function () {
+			deferred.resolve();
+		});
+	return deferred.promise;
+};
+
+var buildPlugins = function () {
+	console.log("Building plugins");
+	mkdirp.sync("dist/plugins");
+	var deferred = Q.defer();
+	gulp.src("src/plugins/*.js")
+		.pipe(gulp.dest("dist/plugins/"))
 		.on("end", function () {
 			deferred.resolve();
 		});
@@ -95,9 +107,10 @@ var buildChrome = function () {
 
 gulp.task("build", function () {
 	buildBrowser();
-	buildCordova();
 	buildChrome();
+	buildCordova();
 	buildNode();
+	buildPlugins();
 });
 
 
