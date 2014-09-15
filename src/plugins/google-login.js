@@ -20,7 +20,10 @@
 			scope:			scope || "openid email"
 		};
 		var loginUrl = "https://accounts.google.com/o/oauth2/auth?" + Asteroid.utils.formQs(query);
-		return this._initOauthLogin("google", credentialToken, loginUrl);
+		return {
+			credentialToken: credentialToken,
+			loginUrl: loginUrl
+		};
 	};
 
 	Asteroid.prototype.loginWithGoogle = function (scope) {

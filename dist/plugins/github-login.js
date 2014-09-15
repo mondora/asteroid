@@ -19,7 +19,10 @@
 			scope:			scope || "email"
 		};
 		var loginUrl = "https://github.com/login/oauth/authorize?" + Asteroid.utils.formQs(query);
-		return this._initOauthLogin("github", credentialToken, loginUrl);
+		return {
+			credentialToken: credentialToken,
+			loginUrl: loginUrl
+		};
 	};
 
 	Asteroid.prototype.loginWithGithub = function (scope) {

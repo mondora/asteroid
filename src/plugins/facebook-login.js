@@ -19,7 +19,10 @@
 			scope:			scope || "email"
 		};
 		var loginUrl = "https://www.facebook.com/dialog/oauth?" + Asteroid.utils.formQs(query);
-		return this._initOauthLogin("facebook", credentialToken, loginUrl);
+		return {
+			credentialToken: credentialToken,
+			loginUrl: loginUrl
+		};
 	};
 
 	Asteroid.prototype.loginWithFacebook = function (scope) {
