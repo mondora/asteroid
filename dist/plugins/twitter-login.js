@@ -27,7 +27,6 @@
 	Asteroid.prototype.loginWithTwitter = function () {
 		var options = getTwitterOauthOptions.call(this);
 		return this._openOauthPopup(
-			"twitter",
 			options.credentialToken,
 			options.loginUrl,
 			this._loginAfterCredentialSecretReceived
@@ -37,7 +36,6 @@
 	Asteroid.prototype.connectWithTwitter = function () {
 		var options = getTwitterOauthOptions.call(this);
 		return this._openOauthPopup(
-			"twitter",
 			options.credentialToken,
 			options.loginUrl,
 			this._connectAfterCredentialSecretReceived

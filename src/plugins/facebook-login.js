@@ -25,7 +25,6 @@
 	Asteroid.prototype.loginWithFacebook = function (scope) {
 		var options = getFacebookOauthOptions.call(this, scope);
 		return this._openOauthPopup(
-			"twitter",
 			options.credentialToken,
 			options.loginUrl,
 			this._loginAfterCredentialSecretReceived
@@ -35,7 +34,6 @@
 	Asteroid.prototype.connectWithFacebook = function (scope) {
 		var options = getFacebookOauthOptions.call(this, scope);
 		return this._openOauthPopup(
-			"twitter",
 			options.credentialToken,
 			options.loginUrl,
 			this._connectAfterCredentialSecretReceived

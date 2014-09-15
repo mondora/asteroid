@@ -25,7 +25,6 @@
 	Asteroid.prototype.loginWithGithub = function (scope) {
 		var options = getGithubOauthOptions.call(this, scope);
 		return this._openOauthPopup(
-			"twitter",
 			options.credentialToken,
 			options.loginUrl,
 			this._loginAfterCredentialSecretReceived
@@ -35,7 +34,6 @@
 	Asteroid.prototype.connectWithGithub = function (scope) {
 		var options = getGithubOauthOptions.call(this, scope);
 		return this._openOauthPopup(
-			"twitter",
 			options.credentialToken,
 			options.loginUrl,
 			this._connectAfterCredentialSecretReceived

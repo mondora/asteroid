@@ -26,7 +26,6 @@
 	Asteroid.prototype.loginWithGoogle = function (scope) {
 		var options = getGoogleOauthOptions.call(this, scope);
 		return this._openOauthPopup(
-			"twitter",
 			options.credentialToken,
 			options.loginUrl,
 			this._loginAfterCredentialSecretReceived
@@ -36,7 +35,6 @@
 	Asteroid.prototype.connectWithGoogle = function (scope) {
 		var options = getGoogleOauthOptions.call(this, scope);
 		return this._openOauthPopup(
-			"twitter",
 			options.credentialToken,
 			options.loginUrl,
 			this._connectAfterCredentialSecretReceived

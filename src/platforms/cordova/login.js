@@ -1,4 +1,4 @@
-Asteroid.prototype._initOauthLogin = function (service, credentialToken, loginUrl, afterCredentialSecretReceived) {
+Asteroid.prototype._initOauthLogin = function (credentialToken, loginUrl, afterCredentialSecretReceived) {
 	var self = this;
 	// Open the oauth popup
 	var popup = window.open(loginUrl, "_blank", "location=no,toolbar=no");
