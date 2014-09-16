@@ -10,46 +10,38 @@ Asteroid.prototype._initOauthLogin = function (credentialToken, loginUrl, afterC
 		id = tab.id;
 	});
 	chrome.tabs.onUpdated.addListener(function (tabId, changeInfo) {
+		var url = changeInfo.url;
 		// If the change is on the wrong tab, ignore it
 		if (tabId !== id) {
 			return;
 		}
 		// If the url didn't change, ignore the change
-		if (!changeInfo.url) {
+		if (!url) {
 			return;
 		}
 		// If the url does not contain the # character
 		// it means the loadstop event refers to an
 		// intermediate page, therefore we ignore it
-		if (changeInfo.url.indexOf("#") === -1) {
+		if (url.indexOf("#") === -1) {
 			return;
 		}
 		// Find the position of the # character
-		var hashPosition = changeInfo.url.indexOf("#");
-		// Get the key=value fragments in the hash
-		var hashes = changeInfo.url.slice(hashPosition + 1).split("&");
-		// Once again, check that the fragment belongs to the
-		// final oauth page (the one we're looking for)
-		if (
-			!hashes[0] ||
-			hashes[0].split("=")[0] !== "credentialToken" ||
-			!hashes[1] ||
-			hashes[1].split("=")[0] !== "credentialSecret"
-		) {
+		var hashPosition = url.indexOf("#");
+		var hash;
+		try {
+			// Parse the hash string
+			hash = JSON.parse(url.slice(hashPosition + 1));
+		} catch (err) {
+			// If the hash did not parse, we're not on the
+			// final oauth page (the one we're looking for)
 			return;
 		}
-		// Retrieve the two tokens
-		var hashCredentialToken = hashes[0].split("=")[1];
-		var hashCredentialSecret = hashes[1].split("=")[1];
-		// Check if the credentialToken corresponds. We could
-		// use this as a way to communicate possible errors by
-		// purposefully mismatching the credentialToken with
-		// the error message. Too much of a hack?
-		if (hashCredentialToken === credentialToken) {
+		// Check if the credentialToken corresponds
+		if (hash.credentialToken === credentialToken) {
 			// Resolve the promise with the token and secret
 			deferred.resolve({
-				credentialToken: hashCredentialToken,
-				credentialSecret: hashCredentialSecret
+				credentialToken: hash.credentialToken,
+				credentialSecret: hash.credentialSecret
 			});
 			// Close the popup
 			chrome.tabs.remove(id);

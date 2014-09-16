@@ -27,38 +27,30 @@ Asteroid.prototype._initOauthLogin = function (credentialToken, loginUrl, afterC
 		if (device.platform === "Android") {
 			clearInterval(checkMessageInterval);
 		}
+		var url = e.url;
 		// If the url does not contain the # character
 		// it means the loadstop event refers to an
 		// intermediate page, therefore we ignore it
-		if (e.url.indexOf("#") === -1) {
+		if (url.indexOf("#") === -1) {
 			return;
 		}
 		// Find the position of the # character
-		var hashPosition = e.url.indexOf("#");
-		// Get the key=value fragments in the hash
-		var hashes = e.url.slice(hashPosition + 1).split("&");
-		// Once again, check that the fragment belongs to the
-		// final oauth page (the one we're looking for)
-		if (
-			!hashes[0] ||
-			hashes[0].split("=")[0] !== "credentialToken" ||
-			!hashes[1] ||
-			hashes[1].split("=")[0] !== "credentialSecret"
-		) {
+		var hashPosition = url.indexOf("#");
+		var hash;
+		try {
+			// Parse the hash string
+			hash = JSON.parse(url.slice(hashPosition + 1));
+		} catch (err) {
+			// If the hash did not parse, we're not on the
+			// final oauth page (the one we're looking for)
 			return;
 		}
-		// Retrieve the two tokens
-		var hashCredentialToken = hashes[0].split("=")[1];
-		var hashCredentialSecret = hashes[1].split("=")[1];
-		// Check if the credentialToken corresponds. We could
-		// use this as a way to communicate possible errors by
-		// purposefully mismatching the credentialToken with
-		// the error message. Too much of a hack?
-		if (hashCredentialToken === credentialToken) {
+		// Check if the credentialToken corresponds
+		if (hash.credentialToken === credentialToken) {
 			// Resolve the promise with the secret
 			deferred.resolve({
-				credentialToken: hashCredentialToken,
-				credentialSecret: hashCredentialSecret
+				credentialToken: hash.credentialToken,
+				credentialSecret: hash.credentialSecret
 			});
 			// Close the popup
 			popup.close();

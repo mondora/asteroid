@@ -15,7 +15,7 @@
 		var query = {
 			client_id:		this._getOauthClientId("facebook"),
 			redirect_uri:	this._host + "/_oauth/facebook",
-			state:			credentialToken,
+			state:			Asteroid.utils.getOauthState(credentialToken),
 			scope:			scope || "email"
 		};
 		var loginUrl = "https://www.facebook.com/dialog/oauth?" + Asteroid.utils.formQs(query);

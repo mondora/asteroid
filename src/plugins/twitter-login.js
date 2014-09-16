@@ -14,7 +14,7 @@
 		var credentialToken = Asteroid.utils.guid();
 		var query = {
 			requestTokenAndRedirect:	this._host + "/_oauth/twitter?&state=" + credentialToken,
-			state:						credentialToken
+			state:			Asteroid.utils.getOauthState(credentialToken)
 		};
 		var loginUrl = this._host + "/_oauth/twitter/?" + Asteroid.utils.formQs(query);
 		return {
