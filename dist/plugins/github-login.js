@@ -14,7 +14,7 @@
 		var credentialToken = Asteroid.utils.guid();
 		var query = {
 			client_id:		this._getOauthClientId("github"),
-			redirect_uri:	this._host + "/_oauth/github?close",
+			redirect_uri:	this._host + "/_oauth/github",
 			state:			credentialToken,
 			scope:			scope || "email"
 		};

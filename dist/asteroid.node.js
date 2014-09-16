@@ -176,7 +176,7 @@ Asteroid.utils.formQs = function (obj) {
 	var qs = "";
 	for (var key in obj) {
 		if (obj.hasOwnProperty(key)) {
-			qs += key + "=" + obj[key] + "&";
+			qs += encodeURIComponent(key) + "=" + encodeURIComponent(obj[key]) + "&";
 		}
 	}
 	qs = qs.slice(0, -1);
