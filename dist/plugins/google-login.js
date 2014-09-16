@@ -16,7 +16,7 @@
 			response_type:	"code",
 			client_id:		this._getOauthClientId("google"),
 			redirect_uri:	this._host + "/_oauth/google",
-			state:			credentialToken,
+			state:			Asteroid.utils.getOauthState(credentialToken),
 			scope:			scope || "openid email"
 		};
 		var loginUrl = "https://accounts.google.com/o/oauth2/auth?" + Asteroid.utils.formQs(query);

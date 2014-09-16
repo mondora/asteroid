@@ -131,6 +131,7 @@ gulp.task("build", function () {
 	buildCordova();
 	buildNode();
 	buildPlugins();
+	buildTests();
 });
 
 
@@ -194,7 +195,10 @@ var runTests = function () {
 
 gulp.task("default", function () {
 	buildBrowser();
+	buildCordova();
+	buildChrome();
 	buildNode();
+	buildPlugins();
 	buildTests();
 
 	// Set up static file server
@@ -227,7 +231,13 @@ gulp.task("default", function () {
 	// rebuild them and reload the browser.
 	var srcWatcher = gulp.watch("src/**/*.js");
 	var srcHandler = _.throttle(function () {
-		Q.all([buildBrowser(), buildNode()])
+		Q.all([
+			buildBrowser(),
+			buildCordova(),
+			buildChrome(),
+			buildNode(),
+			buildPlugins()
+		])
 			.then(function () {
 				return runTests();
 			}).then(function () {

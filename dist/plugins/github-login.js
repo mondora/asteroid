@@ -15,7 +15,7 @@
 		var query = {
 			client_id:		this._getOauthClientId("github"),
 			redirect_uri:	this._host + "/_oauth/github",
-			state:			credentialToken,
+			state:			Asteroid.utils.getOauthState(credentialToken),
 			scope:			scope || "email"
 		};
 		var loginUrl = "https://github.com/login/oauth/authorize?" + Asteroid.utils.formQs(query);
