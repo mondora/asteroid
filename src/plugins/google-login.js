@@ -15,7 +15,7 @@
 		var query = {
 			response_type:	"code",
 			client_id:		this._getOauthClientId("google"),
-			redirect_uri:	this._host + "/_oauth/google?close",
+			redirect_uri:	this._host + "/_oauth/google",
 			state:			credentialToken,
 			scope:			scope || "openid email"
 		};

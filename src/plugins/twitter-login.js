@@ -12,9 +12,8 @@
 
 	var getTwitterOauthOptions = function () {
 		var credentialToken = Asteroid.utils.guid();
-		var callbackUrl = this._host + "/_oauth/twitter?close&state=" + credentialToken;
 		var query = {
-			requestTokenAndRedirect:	encodeURIComponent(callbackUrl),
+			requestTokenAndRedirect:	this._host + "/_oauth/twitter?&state=" + credentialToken,
 			state:						credentialToken
 		};
 		var loginUrl = this._host + "/_oauth/twitter/?" + Asteroid.utils.formQs(query);
