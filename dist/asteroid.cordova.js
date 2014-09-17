@@ -1115,7 +1115,7 @@ Asteroid.prototype._reEstablishSubscriptions = function () {
 	}
 };
 
-Asteroid.prototype._initOauthLogin = function (credentialToken, loginUrl, afterCredentialSecretReceived) {
+Asteroid.prototype._openOauthPopup = function (credentialToken, loginUrl, afterCredentialSecretReceived) {
 	var self = this;
 	// Open the oauth popup
 	var popup = window.open(loginUrl, "_blank", "location=no,toolbar=no");
