@@ -1,32 +1,12 @@
 Asteroid.prototype._openOauthPopup = function (credentialToken, loginUrl, afterCredentialSecretReceived) {
 	var self = this;
-	// Open the oauth popup
-	var popup = window.open(loginUrl, "_blank", "location=no,toolbar=no");
-	// If the focus property exists, it's a function and it needs to be
-	// called in order to focus the popup
-	if (popup.focus) {
-		popup.focus();
-	}
 	var deferred = Q.defer();
-	// Plugin messages are not processed on Android until the next
-	// message. This prevents the loadstop event from firing.
-	// Call exec on an interval to force process messages.
-	// http://stackoverflow.com/q/23352940/230462
-	var checkMessageInterval;
-	if (device.platform === "Android") {
-		checkMessageInterval = setInterval(function () {
-			cordova.exec(null, null, "", "", []);
-		}, 200);
-	}
 	// We're using Cordova's InAppBrowser plugin.
 	// Each time the popup fires the loadstop event,
 	// check if the hash fragment contains the
 	// credentialSecret we need to complete the
 	// authentication flow
-	popup.addEventListener("loadstop", function (e) {
-		if (device.platform === "Android") {
-			clearInterval(checkMessageInterval);
-		}
+	var onLoadstop = function (e) {
 		var url = e.url;
 		// If the url does not contain the # character
 		// it means the loadstop event refers to an
@@ -39,7 +19,9 @@ Asteroid.prototype._openOauthPopup = function (credentialToken, loginUrl, afterC
 		var hash;
 		try {
 			// Parse the hash string
-			hash = JSON.parse(url.slice(hashPosition + 1));
+			var encodedHashString = url.slice(hashPosition + 1);
+			var decodedHashString = decodeURIComponent(encodedHashString);
+			hash = JSON.parse(decodedHashString);
 		} catch (err) {
 			// If the hash did not parse, we're not on the
 			// final oauth page (the one we're looking for)
@@ -52,10 +34,27 @@ Asteroid.prototype._openOauthPopup = function (credentialToken, loginUrl, afterC
 				credentialToken: hash.credentialToken,
 				credentialSecret: hash.credentialSecret
 			});
-			// Close the popup
-			popup.close();
+			// On iOS, this seems to prevent "Warning: Attempt to dismiss from
+			// view controller <MainViewController: ...> while a presentation
+			// or dismiss is in progress". My guess is that the last
+			// navigation of the OAuth popup is still in progress while we try
+			// to close the popup. See
+			// https://issues.apache.org/jira/browse/CB-2285.
+			setTimeout(function () {
+				popup.close();
+			}, 100);
 		}
-	});
+	};
+	var onExit = function () {
+		popup.removeEventListener("loadstop", onLoadstop);
+		popup.removeEventListener("exit", onExit);
+	};
+	// Open the oauth popup
+	var popup = window.open(loginUrl, "_blank", "location=yes,hidden=yes");
+	// Attach events
+	popup.addEventListener("loadstop", onLoadstop);
+	popup.addEventListener("exit", onExit);
+	popup.show();
 	return deferred.promise
 		.then(afterCredentialSecretReceived.bind(self));
 };

@@ -1147,7 +1147,9 @@ Asteroid.prototype._openOauthPopup = function (credentialToken, loginUrl, afterC
 		var hash;
 		try {
 			// Parse the hash string
-			hash = JSON.parse(url.slice(hashPosition + 1));
+			var encodedHashString = url.slice(hashPosition + 1);
+			var decodedHashString = decodeURIComponent(encodedHashString);
+			hash = JSON.parse(decodedHashString);
 		} catch (err) {
 			// If the hash did not parse, we're not on the
 			// final oauth page (the one we're looking for)
