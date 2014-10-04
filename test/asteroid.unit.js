@@ -1427,13 +1427,16 @@ describe("The Asteroid.subscribe method", function () {
 				if (e === "changed") ddp.emitChanged = f;
 				if (e === "removed") ddp.emitRemoved = f;
 			};
-			ddp.sub = function (n, p, f, s, r) {
-				ddp.resolve = f;
-				ddp.stop = s;
-				ddp.reject = r;
-				ddp.params = p;
-				return 0;
-			};
+			ddp.sub = (function () {
+				var i = 0;
+				return function (n, p, f, s, r) {
+					ddp.resolve = f;
+					ddp.stop = s;
+					ddp.reject = r;
+					ddp.params = p;
+					return i++;
+				};
+			})();
 			ddp.unsub = sinon.spy(function () {
 				ddp.stop();
 			});
@@ -1465,8 +1468,10 @@ describe("The Asteroid.subscribe method", function () {
 
 	it("should save a reference to the subscription", function () {
 		var ceres = new Asteroid("example.com");	
-		var sub = ceres.subscribe("sub");
-		ceres.subscriptions[sub.id].should.equal(sub);
+		var sub0 = ceres.subscribe("sub0");
+		var sub1 = ceres.subscribe("sub1");
+		ceres.subscriptions[sub0.id].should.equal(sub0);
+		ceres.subscriptions[sub1.id].should.equal(sub1);
 	});
 
 	describe("should return an object with a ready property, which", function () {
@@ -1489,6 +1494,16 @@ describe("The Asteroid.subscribe method", function () {
 			var promise = ceres.subscribe("sub").ready;
 			ceres.ddp.reject();
 			promise.isRejected().should.equal(true);	
+		});
+
+		it("if rejected, should clean up all references of the subscription", function () {
+			var ceres = new Asteroid("example.com");	
+			var sub = ceres.subscribe("sub");
+			var promise = sub.ready;
+			ceres.ddp.reject();
+			promise.isRejected().should.equal(true);	
+			_.isUndefined(ceres.subscriptions[sub.id]).should.equal(true);
+			_.isUndefined(ceres._subscriptionsCache[sub._fingerprint]).should.equal(true);
 		});
 
 	});
@@ -1514,6 +1529,7 @@ describe("The Asteroid.subscribe method", function () {
 			ceres.subscriptions[sub.id].should.equal(sub);
 			sub.stop();
 			_.isUndefined(ceres.subscriptions[sub.id]).should.equal(true);
+			_.isUndefined(ceres._subscriptionsCache[sub._fingerprint]).should.equal(true);
 		});
 
 	});
@@ -1541,7 +1557,7 @@ describe("The Asteroid.subscribe method", function () {
 		sub0.should.equal(sub1);
 	});
 
-	it("should not cache non identical calls", function () {
+	it("should not cache non-identical calls", function () {
 		var p = {};
 		var p0 = {a: 0};
 		var p1 = {a: 1};
@@ -1550,6 +1566,62 @@ describe("The Asteroid.subscribe method", function () {
 		var sub0 = ceres.subscribe("sub", p, p0);
 		var sub1 = ceres.subscribe("sub", p, p1);
 		sub0.should.not.equal(sub1);
+	});
+
+});
+
+describe("The Asteroid._reEstablishSubscriptions method", function () {
+
+	var tmp;
+	beforeEach(function () {
+		var ddpStub = function () {
+			ddp = {};
+			ddp.on = function (e, f) {
+				if (e === "connected") ddp.emitConnected = f;
+				if (e === "added") ddp.emitAdded = f;
+				if (e === "changed") ddp.emitChanged = f;
+				if (e === "removed") ddp.emitRemoved = f;
+			};
+			ddp.sub = (function () {
+				var i = 0;
+				return function (n, p, f, s, r) {
+					ddp.resolve = f;
+					ddp.stop = s;
+					ddp.reject = r;
+					ddp.params = p;
+					return i++;
+				};
+			})();
+			ddp.unsub = sinon.spy(function () {
+				ddp.stop();
+			});
+			return ddp;
+		};
+		if (ENV === "node") {
+			tmp = glb.Asteroid.__get__("DDP");
+			glb.Asteroid.__set__("DDP", ddpStub);
+		} else {
+			glb.DDP = ddpStub;
+		}
+	});
+
+	afterEach(function () {
+		if (ENV === "node") {
+			glb.Asteroid.__set__("DDP", tmp);
+		} else {
+			delete glb.DDP;
+		}
+	});
+
+	it("should replay all active subscriptions", function ()  {
+		var ceres = new Asteroid("example.com");	
+		var sub0 = ceres.subscribe("sub", 0, 1);
+		var sub1 = ceres.subscribe("sub", 1, 2);
+		_.keys(ceres.subscriptions).length.should.equal(2);
+		ceres._reEstablishSubscriptions();
+		_.keys(ceres.subscriptions).length.should.equal(2);
+		_.isUndefined(ceres._subscriptionsCache[sub0._fingerprint]).should.equal(false);
+		_.isUndefined(ceres._subscriptionsCache[sub1._fingerprint]).should.equal(false);
 	});
 
 });

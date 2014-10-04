@@ -5,7 +5,7 @@
 var crypto		= require("crypto");
 var fs			= require("fs");
 var gulp		= require("gulp");
-var plugins		= require("gulp-load-plugins")();
+var concat		= require("gulp-concat");
 var http		= require("http");
 var _			= require("lodash");
 var mkdirp		= require("mkdirp");
@@ -36,7 +36,7 @@ var buildBrowser = function () {
 		"src/platforms/browser/*.js",
 		"src/platforms/browser/wrapper/tail.js"
 	])
-		.pipe(plugins.concat("asteroid.browser.js"))
+		.pipe(concat("asteroid.browser.js"))
 		.pipe(gulp.dest("dist/"))
 		.on("end", function () {
 			deferred.resolve();
@@ -59,7 +59,7 @@ var buildChrome = function () {
 		"src/platforms/chrome/*.js",
 		"src/platforms/chrome/wrapper/tail.js"
 	])
-		.pipe(plugins.concat("asteroid.chrome.js"))
+		.pipe(concat("asteroid.chrome.js"))
 		.pipe(gulp.dest("dist/"))
 		.on("end", function () {
 			deferred.resolve();
@@ -82,7 +82,7 @@ var buildCordova = function () {
 		"src/platforms/cordova/*.js",
 		"src/platforms/cordova/wrapper/tail.js"
 	])
-		.pipe(plugins.concat("asteroid.cordova.js"))
+		.pipe(concat("asteroid.cordova.js"))
 		.pipe(gulp.dest("dist/"))
 		.on("end", function () {
 			deferred.resolve();
@@ -105,7 +105,7 @@ var buildNode = function () {
 		"src/platforms/node/*.js",
 		"src/platforms/node/wrapper/tail.js"
 	])
-		.pipe(plugins.concat("asteroid.node.js"))
+		.pipe(concat("asteroid.node.js"))
 		.pipe(gulp.dest("dist/"))
 		.on("end", function () {
 			deferred.resolve();
@@ -144,7 +144,7 @@ var buildTests = function () {
 	console.log("Building tests");
 	var deferred = Q.defer();
 	gulp.src("test/unit/**/*.unit.js")
-		.pipe(plugins.concat("asteroid.unit.js"))
+		.pipe(concat("asteroid.unit.js"))
 		.pipe(gulp.dest("test/"))
 		.on("end", function () {
 			deferred.resolve();
@@ -155,7 +155,7 @@ var buildTests = function () {
 var runTests = function () {
 	console.log("Running tests");
 	var deferred = Q.defer();
-	exec("mocha test/asteroid.unit.js -R json", function (err, stdout) {
+	exec("node_modules/mocha/bin/mocha test/asteroid.unit.js -R json", function (err, stdout) {
 		// Construct the html
 		var res;
 		try {
