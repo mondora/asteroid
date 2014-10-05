@@ -26,6 +26,7 @@
     "faye-websocket": "^0.7.3",
     "gulp": "^3.8.8",
     "gulp-concat": "^2.4.1",
+    "istanbul": "^0.3.2",
     "lodash": "^2.4.1",
     "mkdirp": "^0.5.0",
     "mocha": "git+https://github.com/visionmedia/mocha.git",
@@ -38,7 +39,7 @@
   },
   "dependencies": {
     "ddp.js": "^0.5.0",
-    "q": "^1.0.1",
-    "faye-websocket": "^0.7.2"
+    "faye-websocket": "^0.7.2",
+    "q": "^1.0.1"
   }
 }
