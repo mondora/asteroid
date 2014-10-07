@@ -83,12 +83,17 @@ Asteroid.prototype._tryResumeLogin = function () {
 Asteroid.prototype.createUser = function (usernameOrEmail, password, profile) {
 	var self = this;
 	var deferred = Q.defer();
-	var options = {
-		username: Asteroid.utils.isEmail(usernameOrEmail) ? undefined : usernameOrEmail,
-		email: Asteroid.utils.isEmail(usernameOrEmail) ? usernameOrEmail : undefined,
-		password: password,
-		profile: profile
-	};
+	var options;
+	if (typeof usernameOrEmail === "string") {
+		options = {
+			username: Asteroid.utils.isEmail(usernameOrEmail) ? undefined : usernameOrEmail,
+			email: Asteroid.utils.isEmail(usernameOrEmail) ? usernameOrEmail : undefined,
+			password: password,
+			profile: profile
+		};
+	} else if (typeof usernameOrEmail === "object") {
+		options = usernameOrEmail;
+	}
 	self.ddp.method("createUser", [options], function (err, res) {
 		if (err) {
 			self._emit("createUserError", err);
