@@ -22,8 +22,6 @@ A javascript client (browser and node) for a Meteor backend.
 
 [Contribute](#contribute)
 
-[Todo](#todo)
-
 [API](#api)
 
 ##Why
@@ -126,7 +124,7 @@ dependencies:
     cd asteroid/
     npm install
 
-Start the development environment /requires ´gulp` installed globally:
+Start the development environment (requires ´gulp` installed globally):
 
     gulp
 
