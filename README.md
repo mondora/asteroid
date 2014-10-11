@@ -50,17 +50,26 @@ First, dowload the library:
 
     bower install asteroid
 
-Then, add the necessary libraries to your index.html:
+Then, add the necessary libraries to your `index.html`:
 
     <script src="bower_components/ddp.js/src/ddp.js"></script>
     <script src="bower_components/q/q.js"></script>
-    <script src="bower_components/asteroid/dist/asteroid.js"></script>
+    <script src="bower_components/asteroid/dist/asteroid.browser.js"></script>
+    
+If you want to login via oauth providers (facebook, google etc),
+also include the appropriate plugin:
+
+    <script src="bower_components/asteroid/dist/plugins/facebook-login.js"></script>
+    
+###In a chrome extension or in cordova
+
+Just replace `asteroid.browser.js` with `asteroid.chrome.js` or `asteroid.cordova.js`.
 
 ###In node
 
 Download the package:
 
-    npm install git+https://github.com/mondora/asteroid
+    npm install asteroid
 
 Require it in your project:
 
@@ -68,20 +77,24 @@ Require it in your project:
 
 ##Example usage
 
-**Warning: the API is in still a bit in flux.**
-
 ```javascript
 // Connect to a Meteor backend
 var ceres = new Asteroid("localhost:3000");
 
 // Use real-time collections
-ceres.subscribe("tasks");
+ceres.subscribe("tasksPublication");
 var tasks = ceres.getCollection("tasks");
 tasks.insert({
   description: "Do the laundry"
 });
-var laundryTaskQuery = tasks.reactiveQuery({description: "Do the laundry"});
-console.log(laundryTaskQuery.result); // Logs the array of results
+// Get the task
+var laundryTaskRQ = tasks.reactiveQuery({description: "Do the laundry"});
+// Log the array of results
+console.log(laundryTaskRQ.result);
+// Listen for changes
+laundryTaskRQ.on("change", function () {
+  console.log(laundryTaskRQ.result);
+});
 
 // Login your user
 ceres.loginWithTwitter();
@@ -89,16 +102,7 @@ ceres.loginWithTwitter();
 
 ##Advantages over the canonical Meteor front-end
 
-* Small footprint. The library is about ~10Kb minified. It
-  depends on ddp.js (~4Kb minified), and a q-compatible
-  promise library (q is ~17Kb minified, for a lightweight
-  alternative, check out my fork of
-  [ayepromise](https://github.com/mondora/ayepromise), which
-  is ~2Kb minified). In the demo app, the [Asteroid
-  client](http://s27.postimg.org/hc1qjnjsz/Asteroid.png),
-  which includes AngularJS (not required, but included for
-  the demo), is almost half the size of the [Meteor
-  client](http://s29.postimg.org/3mxaifziv/Meteor.png).
+* Small footprint.
 
 * Framework agnostic. Use the tools you already know and
   love to build your app.
@@ -121,71 +125,20 @@ dependencies:
 
     cd asteroid/
     npm install
-    bower install
 
-For conveninece, I suggest installing a few `npm` modules
-globally:
+Start the development environment /requires ´gulp` installed globally:
 
-    npm install -g gulp karma mocha
+    gulp
 
-Modfy the source files under `src/` as needed, then rebuild
-the distribution files, which will get placed in the `dist/`
-directory:
+Visit `localhost:8080/browser.html` and `localhost:8080/node.html`
+for unit tests result.
 
-    gulp buildBrowser
-    gulp buildNode
-
-You can add your unit tests in one of the files under `test/unit/`
-(or you can add another file in that folder if needed).
-Once you've added unit tests, you need also to rebuild the
-tests:
-
-    gulp buildTests
-
-Now you can run tests. For **nodejs** run:
-
-    mocha test/asteroid.unit.js
-
-For the browser run:
-
-    karma start test/karma.conf.js
-
-You can set up an automated dev environment with automatic
-re-builds of source files and tests by running:
-
-    gulp dev
-    
-This will set up a webserver listening on `localhost:8080`, where
-you'll find a report for browser unit tests being run.
 
 ##Contribute
 
 Contributions are as always very very welcome. If you
 want to help but don't know how to get started,
 [feel free to schedule a pair programming session with me!](http://mondora.com/#!/post/4ddde81d13b2152ab068b54e85bd4a2a)
-
-*Contributing guidelines coming soon.*
-
-##Todo
-
-Here follows a list of things which need to be done before
-the library can be considered "production ready":
-
-* allow using selectors and modifiers to update an item
-  (currently you can only replace top-level fields in the
-  document with the Collection.update method). Difficulty
-  8/10
-
-* allow using selectors with the reactiveQuery method.
-  Difficulty 8/10
-
-* add EJSON support (by porting Meteor's EJSON package).
-  Difficulty 3/10
-
-* just an idea, but I'd fancy trying to integrate it with
-  [nedb](https://github.com/louischatriot/nedb)
-
-
 
 
 
