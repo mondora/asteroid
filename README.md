@@ -63,6 +63,8 @@ also include the appropriate plugin:
 
 Just replace `asteroid.browser.js` with `asteroid.chrome.js` or `asteroid.cordova.js`.
 
+If using from within a chrome extension make sure to request for the `tabs` and `storage` permissions in your extensions manifest file.
+
 ###In node
 
 Download the package:
