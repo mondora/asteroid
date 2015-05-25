@@ -58,6 +58,9 @@ If you want to login via oauth providers (facebook, google etc),
 also include the appropriate plugin:
 
     <script src="bower_components/asteroid/dist/plugins/facebook-login.js"></script>
+
+For facebook connect support in cordova via the [facebook connect plugin](https://github.com/Wizcorp/phonegap-facebook-plugin),
+see https://github.com/keyvanfatehi/asteroid-facebook-connect
     
 ###In a chrome extension or in cordova
 
