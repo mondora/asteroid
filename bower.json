@@ -6,7 +6,7 @@
     "Paolo Scanferla <paolo.scanferla@mondora.com>"
   ],
   "description": "A lightweight and flexible alternative to Meteor's client-side framework",
-  "main": "dist/asteroid.js",
+  "main": "dist/asteroid.browser.js",
   "moduleType": [
     "amd",
     "globals",
