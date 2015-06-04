@@ -155,6 +155,18 @@ Asteroid.utils.EventEmitter.prototype = {
 		this._events[name].push(handler);
 	},
 
+	once: function (name, handler) {
+		var self = this;
+		if (!this._events) this._events = {};
+		this._events[name] = this._events[name] || [];
+		var handlerWrapper = function(){
+			var args = Array.prototype.slice.call(arguments);
+			delete self._events[name];
+			handler.apply(self, args);
+		};
+		this._events[name].push(handlerWrapper);
+	},
+
 	off: function (name, handler) {
 		if (!this._events) this._events = {};
 		if (!this._events[name]) return;
