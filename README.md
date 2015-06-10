@@ -101,7 +101,19 @@ laundryTaskRQ.on("change", function () {
 
 // Login your user
 ceres.loginWithTwitter();
+
+// Call method and use promises via the Q library
+var ret = ceres.call('newUser');
+
+ret.result
+  .then(function (result) {
+  console.log('Success:', result);
+}).catch(function (error) {
+  console.error('Error:', error);
+});
 ```
+
+Please refer to the [Q documentation](https://github.com/kriskowal/q) for more information about handling promises.
 
 ##Advantages over the canonical Meteor front-end
 
