@@ -141,7 +141,7 @@ dependencies:
     cd asteroid/
     npm install
 
-Start the development environment (requires ´gulp` installed globally):
+Start the development environment (requires `gulp` installed globally):
 
     gulp
 
