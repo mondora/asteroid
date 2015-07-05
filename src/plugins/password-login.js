@@ -43,7 +43,7 @@ exports._resumeLogin = function () {
             };
         })
         .then(function (loginParameters) {
-            return self.call("login", [loginParameters]);
+            return self.call("login", loginParameters);
         })
         .then(_login(self))
         .catch(_logout(self));

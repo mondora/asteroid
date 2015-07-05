@@ -2,7 +2,7 @@
   "name": "asteroid",
   "version": "1.0.0",
   "description": "Aletrnative Meteor client",
-  "main": "dist/asteroid.js",
+  "main": "src/index.js",
   "scripts": {
     "test": "./node_modules/mocha/bin/mocha"
   },
