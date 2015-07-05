@@ -1,14 +1,14 @@
 {
   "name": "asteroid",
-  "version": "0.6.1",
+  "version": "1.0.0",
   "description": "Aletrnative Meteor client",
-  "main": "dist/asteroid.node.js",
+  "main": "dist/asteroid.js",
   "scripts": {
-    "test": "./node_modules/mocha/bin/mocha ./test/asteroid.unit.js"
+    "test": "./node_modules/mocha/bin/mocha"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/mondora/asteroid"
+    "url": "https://github.com/mondora/asteroid.git"
   },
   "keywords": [
     "ddp",
@@ -21,25 +21,10 @@
     "url": "https://github.com/mondora/asteroid/issues"
   },
   "homepage": "https://github.com/mondora/asteroid",
-  "devDependencies": {
-    "coveralls": "^2.11.2",
-    "faye-websocket": "^0.7.3",
-    "gulp": "^3.8.8",
-    "gulp-concat": "^2.4.1",
-    "istanbul": "^0.3.2",
-    "lodash": "^2.4.1",
-    "mkdirp": "^0.5.0",
-    "mocha": "git+https://github.com/visionmedia/mocha.git",
-    "mocha-lcov-reporter": "0.0.1",
-    "node-static": "^0.7.6",
-    "q": "^1.0.1",
-    "rewire": "^2.1.0",
-    "should": "^4.0.4",
-    "sinon": "^1.10.3"
-  },
+  "devDependencies": {},
   "dependencies": {
-    "ddp.js": "^0.5.0",
-    "faye-websocket": "^0.7.2",
-    "q": "^1.0.1"
+    "ddp.js": "^1.0.0",
+    "promiz": "^1.0.3",
+    "wolfy87-eventemitter": "^4.2.11"
   }
 }

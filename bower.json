@@ -1,12 +1,12 @@
 {
   "name": "asteroid",
-  "version": "0.6.1",
+  "version": "1.0.0",
   "homepage": "https://github.com/mondora/asteroid",
   "authors": [
     "Paolo Scanferla <paolo.scanferla@mondora.com>"
   ],
-  "description": "A lightweight and flexible alternative to Meteor's client-side framework",
-  "main": "dist/asteroid.browser.js",
+  "description": "Aletrnative Meteor client",
+  "main": "dist/asteroid.js",
   "moduleType": [
     "amd",
     "globals",
@@ -24,12 +24,6 @@
     "bower_components",
     "test",
     "tests",
-	"src",
-	"demo",
-	"gulpfile.js"
-  ],
-  "dependencies": {
-    "ddp.js": "~0.6.0",
-    "q": "1.0.1"
-  }
+    "src"
+  ]
 }

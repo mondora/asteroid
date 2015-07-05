@@ -1,0 +1,32 @@
+{
+    "ecmaFeatures": {
+    },
+    "env": {
+        "browser": true,
+        "mocha": true,
+        "node": true
+    },
+    "globals": {
+        "chrome": true
+    },
+    "rules": {
+        "brace-style": [2, "1tbs"],
+        "comma-spacing": [2, {"before": false, "after": true}],
+        "computed-property-spacing": [2, "never"],
+        "func-style": [2, "expression"],
+        "indent": [2, 4],
+        "linebreak-style": [2, "unix"],
+        "no-multi-spaces": [0],
+        "no-underscore-dangle": [0],
+        "object-curly-spacing": [2, "never"],
+        "one-var": [2, "never"],
+        "quotes": [2, "double"],
+        "semi": [2, "always"],
+        "space-after-keywords": [2, "always"],
+        "space-before-blocks": [2, "always"],
+        "space-before-function-paren": [2, "always"],
+        "space-in-parens": [2, "never"],
+        "spaced-comment": [2, "always"],
+        "strict": [2, "never"]
+    }
+}
