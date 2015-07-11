@@ -5,7 +5,7 @@
   "authors": [
     "Paolo Scanferla <paolo.scanferla@mondora.com>"
   ],
-  "description": "Aletrnative Meteor client",
+  "description": "Alternative Meteor client",
   "main": "dist/asteroid.js",
   "moduleType": [
     "amd",

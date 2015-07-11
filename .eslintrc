@@ -1,8 +1,11 @@
+
 {
     "ecmaFeatures": {
+        "modules": true
     },
     "env": {
         "browser": true,
+        "es6": true,
         "mocha": true,
         "node": true
     },
@@ -13,9 +16,9 @@
         "brace-style": [2, "1tbs"],
         "comma-spacing": [2, {"before": false, "after": true}],
         "computed-property-spacing": [2, "never"],
-        "func-style": [2, "expression"],
         "indent": [2, 4],
         "linebreak-style": [2, "unix"],
+        "new-cap": [2, {"capIsNew": false}],
         "no-multi-spaces": [0],
         "no-underscore-dangle": [0],
         "object-curly-spacing": [2, "never"],

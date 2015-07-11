@@ -1,6 +1,3 @@
-module.exports = function fingerprintSub (name, params) {
-    return JSON.stringify({
-        name: name,
-        params: params
-    });
-};
+export default function fingerprintSub (name, params) {
+    return JSON.stringify({name, params});
+}

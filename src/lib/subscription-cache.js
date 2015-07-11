@@ -1,38 +1,33 @@
-var SubscriptionCache = function SubscriptionCache () {
-    this.byFingerprint = {};
-    this.byId = {};
-};
+export default class SubscriptionCache {
 
-SubscriptionCache.prototype.add = function add (sub) {
-    this.byFingerprint[sub.fingerprint] = sub;
-    this.byId[sub.id] = sub;
-};
+    constructor () {
+        this.byFingerprint = {};
+        this.byId = {};
+    }
 
-SubscriptionCache.prototype.getById = function getById (id) {
-    return this.byId[id] || null;
-};
+    add (sub) {
+        this.byFingerprint[sub.fingerprint] = sub;
+        this.byId[sub.id] = sub;
+    }
 
-SubscriptionCache.prototype.getByFingerprint = function getByFingerprint (fingerprint) {
-    return this.byFingerprint[fingerprint] || null;
-};
+    get (idOrFingerprint) {
+        return (
+            this.byId[idOrFingerprint] ||
+            this.byFingerprint[idOrFingerprint] ||
+            null
+        );
+    }
 
-SubscriptionCache.prototype.delById = function delById (id) {
-    var sub = this.getById(id) || {};
-    delete this.byFingerprint[sub.fingerprint];
-    delete this.byId[sub.id];
-};
+    del (idOrFingerprint) {
+        var sub = this.get(idOrFingerprint) || {};
+        delete this.byFingerprint[sub.fingerprint];
+        delete this.byId[sub.id];
+    }
 
-SubscriptionCache.prototype.delByFingerprint = function delByFingerprint (fingerprint) {
-    var sub = this.getByFingerprint(fingerprint) || {};
-    delete this.byFingerprint[sub.fingerprint];
-    delete this.byId[sub.id];
-};
+    forEach (iterator) {
+        Object.keys(this.byId).forEach(id => {
+            iterator(this.byId[id]);
+        });
+    }
 
-SubscriptionCache.prototype.forEach = function forEach (iterator) {
-    var self = this;
-    Object.keys(self.byId).forEach(function (id) {
-        iterator(self.byId[id]);
-    });
-};
-
-module.exports = SubscriptionCache;
+}

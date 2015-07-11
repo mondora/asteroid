@@ -1,29 +1,36 @@
-var EventEmitter = require("wolfy87-eventemitter");
+import EventEmitter from "wolfy87-eventemitter";
 
-var Asteroid = function (options) {
-    this._init(options);
-};
-Asteroid.constructor = Asteroid;
-Asteroid.prototype = Object.create(EventEmitter.prototype);
+import ddp from "./mixins/ddp";
+import methods from "./mixins/methods";
+import subscriptions from "./mixins/subscriptions";
+import passwordLogin from "./mixins/password-login";
 
-Asteroid.prototype._inits = [];
+export default class Asteroid extends EventEmitter {
 
-Asteroid.addPlugin = function addPlugin (plugin) {
-    Object.keys(plugin).forEach(function (key) {
-        var fn = plugin[key];
+    constructor (options) {
+        Asteroid.initFunctions.forEach(fn => {
+            fn.call(this, options);
+        });
+    }
+
+}
+
+Asteroid.initFunctions = [];
+
+Asteroid.mixin = function (mixin) {
+    Object.keys(mixin).forEach(key => {
+        var fn = mixin[key];
         if (key === "init") {
-            Asteroid.prototype._inits.push(fn);
+            Asteroid.initFunctions.push(fn);
         } else {
             Asteroid.prototype[key] = fn;
         }
     });
+    return Asteroid;
 };
 
-Asteroid.prototype._init = function _init (options) {
-    var self = this;
-    self._inits.forEach(function (fn) {
-        fn.call(self, options);
-    });
-};
-
-module.exports = Asteroid;
+Asteroid
+    .mixin(ddp)
+    .mixin(methods)
+    .mixin(subscriptions)
+    .mixin(passwordLogin);
