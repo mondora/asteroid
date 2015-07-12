@@ -7,11 +7,10 @@ var webpack = require("webpack");
 
 var build = function (minify, callback) {
     webpack({
-        entry: "./src/asteroid.js",
+        entry: "./src/index.js",
         module: {
             loaders: [{
                 test: /\.js$/,
-                exclude: /(node_modules|bower_components)/,
                 loader: "babel"
             }]
         },
@@ -44,9 +43,12 @@ gulp.task("build", function (callback) {
 });
 
 gulp.task("test", function () {
-    return gulp.src(["test/**/*.js"], {read: false})
+    return gulp.src(["test/unit/**/*.js"], {read: false})
         .pipe(mocha({
             compilers: "js:babel/register",
+            env: {
+                NODE_PATH: "./src/"
+            },
             istanbul: true
         }));
 });
@@ -58,5 +60,5 @@ gulp.task("lint", function () {
 });
 
 gulp.task("default", ["test", "lint"], function () {
-    return gulp.watch(["src/**/*.js", "test/**/*.js"], ["test", "lint"]);
+    return gulp.watch(["src/**/*.js", "test/unit/**/*.js"], ["test", "lint"]);
 });

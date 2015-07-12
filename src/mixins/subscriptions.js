@@ -4,6 +4,8 @@ import fingerprintSub from "../lib/fingerprint-sub.js";
 
 function _restartSubscriptions () {
     this._subscriptionsCache.forEach(sub => {
+        // The subscription must be deleted *before* re-subscribing, otherwise
+        // `subscribe` hits the cache and does nothing
         this._subscriptionsCache.del(sub.id);
         this.subscribe(sub.name, ...sub.params);
     });
@@ -11,7 +13,7 @@ function _restartSubscriptions () {
 
 export function init () {
     this._subscriptionsCache = new SubscriptionCache();
-    this._ddp
+    this.ddp
         .on("ready", msg => {
             msg.subs.forEach(id => {
                 this._subscriptionsCache.get(id).emit("ready");
@@ -31,13 +33,12 @@ export function subscribe (name, ...params) {
     var sub = this._subscriptionsCache.get(fingerprint);
     if (!sub) {
         // If there is no cached subscription, subscribe
-        var id = this._ddp.sub(name, params);
+        var id = this.ddp.sub(name, params);
         // Build the subscription object and save it in the cache
-        sub = new EventEmitter();
-        sub.fingerprint = fingerprint;
-        sub.id = id;
-        sub.name = name;
-        sub.params = params;
+        sub = Object.assign(
+            new EventEmitter(),
+            {fingerprint, id, name, params}
+        );
         this._subscriptionsCache.add(sub);
     }
     // Return the subscription object
@@ -45,5 +46,5 @@ export function subscribe (name, ...params) {
 }
 
 export function unsubscribe (id) {
-    this._ddp.unsub(id);
+    this.ddp.unsub(id);
 }

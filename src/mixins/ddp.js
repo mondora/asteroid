@@ -2,11 +2,12 @@ import DDP from "ddp.js";
 
 export function init ({endpoint, SocketConstructor}) {
     this.endpoint = endpoint;
+    this.status = "disconnected";
     var options = {
         endpoint: endpoint,
         SocketConstructor: SocketConstructor || WebSocket
     };
-    this._ddp = new DDP(options)
+    this.ddp = new DDP(options)
         .on("connected", () => {
             this.status = "connected";
             this.emit("connected");

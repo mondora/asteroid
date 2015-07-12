@@ -36,7 +36,7 @@ function _resumeLogin () {
 export function init () {
     this.userId = null;
     this.loggedIn = false;
-    this._ddp.on("connected", _resumeLogin.bind(this));
+    this.ddp.on("connected", _resumeLogin.bind(this));
 }
 
 export function createUser (options) {
