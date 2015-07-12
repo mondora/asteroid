@@ -5,7 +5,7 @@ import methods from "./mixins/methods";
 import subscriptions from "./mixins/subscriptions";
 import passwordLogin from "./mixins/password-login";
 
-Asteroid
+export default Asteroid
     .mixin(ddp)
     .mixin(methods)
     .mixin(subscriptions)
