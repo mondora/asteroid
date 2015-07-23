@@ -1,3 +1,4 @@
+import assign from "lodash.assign";
 import EventEmitter from "wolfy87-eventemitter";
 
 export default class Asteroid extends EventEmitter {
@@ -12,7 +13,7 @@ export default class Asteroid extends EventEmitter {
                 }
             }
         }
-        Object.assign(subClass.prototype, mixin);
+        assign(subClass.prototype, mixin);
         delete subClass.prototype.init;
         return subClass;
     }

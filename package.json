@@ -46,6 +46,8 @@
   },
   "dependencies": {
     "ddp.js": "^1.1.0",
+    "lodash.assign": "^3.2.0",
+    "promiz": "^1.0.4",
     "wolfy87-eventemitter": "^4.2.11"
   }
 }

@@ -1,3 +1,4 @@
+import assign from "lodash.assign";
 import EventEmitter from "wolfy87-eventemitter";
 import SubscriptionCache from "../lib/subscription-cache";
 import fingerprintSub from "../lib/fingerprint-sub.js";
@@ -35,7 +36,7 @@ export function subscribe (name, ...params) {
         // If there is no cached subscription, subscribe
         var id = this.ddp.sub(name, params);
         // Build the subscription object and save it in the cache
-        sub = Object.assign(
+        sub = assign(
             new EventEmitter(),
             {fingerprint, id, name, params}
         );

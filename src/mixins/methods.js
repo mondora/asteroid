@@ -1,3 +1,5 @@
+import Promise from "promiz";
+
 export function init () {
     this._methodsCache = {};
     this.ddp.on("result", msg => {
