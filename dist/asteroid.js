@@ -60,6 +60,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    value: true
 	});
 
+	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj["default"] = obj; return newObj; } }
+
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
 	var _asteroid = __webpack_require__(1);
@@ -68,21 +70,21 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _mixinsDdp = __webpack_require__(14);
 
-	var _mixinsDdp2 = _interopRequireDefault(_mixinsDdp);
+	var ddp = _interopRequireWildcard(_mixinsDdp);
 
 	var _mixinsMethods = __webpack_require__(16);
 
-	var _mixinsMethods2 = _interopRequireDefault(_mixinsMethods);
+	var methods = _interopRequireWildcard(_mixinsMethods);
 
 	var _mixinsSubscriptions = __webpack_require__(21);
 
-	var _mixinsSubscriptions2 = _interopRequireDefault(_mixinsSubscriptions);
+	var subscriptions = _interopRequireWildcard(_mixinsSubscriptions);
 
 	var _mixinsPasswordLogin = __webpack_require__(24);
 
-	var _mixinsPasswordLogin2 = _interopRequireDefault(_mixinsPasswordLogin);
+	var passwordLogin = _interopRequireWildcard(_mixinsPasswordLogin);
 
-	exports["default"] = _asteroid2["default"].mixin(_mixinsDdp2["default"]).mixin(_mixinsMethods2["default"]).mixin(_mixinsSubscriptions2["default"]).mixin(_mixinsPasswordLogin2["default"]);
+	exports["default"] = _asteroid2["default"].mixin(ddp).mixin(methods).mixin(subscriptions).mixin(passwordLogin);
 	module.exports = exports["default"];
 
 /***/ },
@@ -2991,18 +2993,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	exports.login = login;
 	exports.logout = logout;
 
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
+	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj["default"] = obj; return newObj; } }
 
 	var _libMultiStorageJs = __webpack_require__(25);
 
-	var _libMultiStorageJs2 = _interopRequireDefault(_libMultiStorageJs);
+	var multiStorage = _interopRequireWildcard(_libMultiStorageJs);
 
 	function _login(result) {
 	    var _this = this;
 
 	    this.userId = result.id;
 	    this.loggedIn = true;
-	    return _libMultiStorageJs2["default"].set(this.endpoint + "__login_token__", result.token).then(function () {
+	    return multiStorage.set(this.endpoint + "__login_token__", result.token).then(function () {
 	        _this.emit("loggedIn");
 	    });
 	}
@@ -3012,7 +3014,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    this.userId = null;
 	    this.loggedIn = false;
-	    return _libMultiStorageJs2["default"].del(this.endpoint + "__login_token__").then(function () {
+	    return multiStorage.del(this.endpoint + "__login_token__").then(function () {
 	        _this2.emit("loggedOut");
 	    });
 	}
@@ -3020,7 +3022,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	function _resumeLogin() {
 	    var _this3 = this;
 
-	    return _libMultiStorageJs2["default"].get(this.endpoint + "__login_token__").then(function (resume) {
+	    return multiStorage.get(this.endpoint + "__login_token__").then(function (resume) {
 	        if (!resume) {
 	            throw "No login token";
 	        }

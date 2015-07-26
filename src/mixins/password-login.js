@@ -1,4 +1,4 @@
-import multiStorage from "../lib/multi-storage.js";
+import * as multiStorage from "../lib/multi-storage.js";
 
 function _login (result) {
     this.userId = result.id;
