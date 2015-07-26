@@ -5,8 +5,12 @@ import fingerprintSub from "../lib/fingerprint-sub.js";
 
 function _restartSubscriptions () {
     this._subscriptionsCache.forEach(sub => {
-        // The subscription must be deleted *before* re-subscribing, otherwise
-        // `subscribe` hits the cache and does nothing
+        if (sub.stillInQueue) {
+            // The subscription is still in ddp's queue, no need to restart it.
+            return;
+        }
+        // The subscription must be deleted *before* re-subscribing,
+        // otherwise `subscribe` hits the cache and does nothing
         this._subscriptionsCache.del(sub.id);
         this.subscribe(sub.name, ...sub.params);
     });
@@ -35,10 +39,18 @@ export function subscribe (name, ...params) {
     if (!sub) {
         // If there is no cached subscription, subscribe
         var id = this.ddp.sub(name, params);
+        // ddp.js enqueues messages to send if a connection has not yet been
+        // established. Upon connection, when subscriptions are restarted, we
+        // don't want to restart those subscriptions which had been made when
+        // the connection had not yet been established, and therefore are still
+        // in the queue. For this reason, we save ddp's connection status onto
+        // the subscription object and we check it later to decide wether to
+        // restart the subscription or not.
+        var stillInQueue = (this.ddp.status !== "connected");
         // Build the subscription object and save it in the cache
         sub = assign(
             new EventEmitter(),
-            {fingerprint, id, name, params}
+            {fingerprint, id, name, params, stillInQueue}
         );
         this._subscriptionsCache.add(sub);
     }

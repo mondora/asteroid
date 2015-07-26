@@ -3,7 +3,6 @@ import chaiAsPromised from "chai-as-promised";
 import sinon from "sinon";
 import sinonChai from "sinon-chai";
 import EventEmitter from "wolfy87-eventemitter";
-import takeTen from "../take-ten";
 
 chai.use(chaiAsPromised);
 chai.use(sinonChai);
@@ -94,7 +93,7 @@ describe("`subscriptions` mixin", function () {
 
     describe("`connected` event handler", function () {
 
-        it("triggers a re-subscription to all cached subscriptions", function () {
+        it("triggers a re-subscription to cached subscriptions which are not still in ddp's queue", function () {
             var instance = {
                 ddp: new EventEmitter(),
                 subscribe: sinon.spy()
@@ -104,17 +103,43 @@ describe("`subscriptions` mixin", function () {
                 id: "id1",
                 fingerprint: "id1",
                 name: "1",
-                params: ["1", "11", "111"]
+                params: ["1", "11", "111"],
+                stillInQueue: false
             });
             instance._subscriptionsCache.add({
                 id: "id2",
                 fingerprint: "id2",
                 name: "2",
-                params: ["2", "22", "222"]
+                params: ["2", "22", "222"],
+                stillInQueue: false
             });
             instance.ddp.emit("connected");
             expect(instance.subscribe.firstCall).to.have.been.calledWith("1", "1", "11", "111");
             expect(instance.subscribe.secondCall).to.have.been.calledWith("2", "2", "22", "222");
+        });
+
+        it("doesn't trigger a re-subscription to cached subscriptions which are still in ddp's queue", function () {
+            var instance = {
+                ddp: new EventEmitter(),
+                subscribe: sinon.spy()
+            };
+            init.call(instance);
+            instance._subscriptionsCache.add({
+                id: "id1",
+                fingerprint: "id1",
+                name: "1",
+                params: ["1", "11", "111"],
+                stillInQueue: true
+            });
+            instance._subscriptionsCache.add({
+                id: "id2",
+                fingerprint: "id2",
+                name: "2",
+                params: ["2", "22", "222"],
+                stillInQueue: false
+            });
+            instance.ddp.emit("connected");
+            expect(instance.subscribe).to.have.callCount(1);
         });
 
     });

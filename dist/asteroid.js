@@ -2860,8 +2860,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var _this = this;
 
 	    this._subscriptionsCache.forEach(function (sub) {
-	        // The subscription must be deleted *before* re-subscribing, otherwise
-	        // `subscribe` hits the cache and does nothing
+	        if (sub.stillInQueue) {
+	            // The subscription is still in ddp's queue, no need to restart it.
+	            return;
+	        }
+	        // The subscription must be deleted *before* re-subscribing,
+	        // otherwise `subscribe` hits the cache and does nothing
 	        _this._subscriptionsCache.del(sub.id);
 	        _this.subscribe.apply(_this, [sub.name].concat(_toConsumableArray(sub.params)));
 	    });
@@ -2893,8 +2897,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (!sub) {
 	        // If there is no cached subscription, subscribe
 	        var id = this.ddp.sub(name, params);
+	        // ddp.js enqueues messages to send if a connection has not yet been
+	        // established. Upon connection, when subscriptions are restarted, we
+	        // don't want to restart those subscriptions which had been made when
+	        // the connection had not yet been established, and therefore are still
+	        // in the queue. For this reason, we save ddp's connection status onto
+	        // the subscription object and we check it later to decide wether to
+	        // restart the subscription or not.
+	        var stillInQueue = this.ddp.status !== "connected";
 	        // Build the subscription object and save it in the cache
-	        sub = (0, _lodashAssign2["default"])(new _wolfy87Eventemitter2["default"](), { fingerprint: fingerprint, id: id, name: name, params: params });
+	        sub = (0, _lodashAssign2["default"])(new _wolfy87Eventemitter2["default"](), { fingerprint: fingerprint, id: id, name: name, params: params, stillInQueue: stillInQueue });
 	        this._subscriptionsCache.add(sub);
 	    }
 	    // Return the subscription object
