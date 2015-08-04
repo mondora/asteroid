@@ -40,7 +40,7 @@ export function init () {
 }
 
 export function createUser (options) {
-    return this.call("createUser", options).then(_login(this));
+    return this.call("createUser", options).then(_login.bind(this));
 }
 
 export function login ({email, password, username}) {
@@ -51,9 +51,9 @@ export function login ({email, password, username}) {
             email
         }
     };
-    return this.call("login", loginParameters).then(_login(this));
+    return this.call("login", loginParameters).then(_login.bind(this));
 }
 
 export function logout () {
-    return this.call("logout").then(_logout(this));
+    return this.call("logout").then(_logout.bind(this));
 }
