@@ -13,7 +13,7 @@ var Q			= require("q");
 var exec		= require("child_process").exec;
 var static		= require("node-static");
 var util		= require("util");
-var WebSocket	= require("faye-websocket");
+var WebSocket	= require("websocket");
 
 
 
