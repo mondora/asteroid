@@ -23,7 +23,6 @@
   "homepage": "https://github.com/mondora/asteroid",
   "devDependencies": {
     "coveralls": "^2.11.2",
-    "faye-websocket": "^0.7.3",
     "gulp": "^3.8.8",
     "gulp-concat": "^2.4.1",
     "istanbul": "^0.3.2",
@@ -39,7 +38,7 @@
   },
   "dependencies": {
     "ddp.js": "^0.5.0",
-    "faye-websocket": "^0.7.2",
+    "websocket": "^1.0.21",
     "q": "^1.0.1"
   }
 }
