@@ -1,9 +1,9 @@
-var gulp    = require("gulp");
-var eslint  = require("gulp-eslint");
-var mocha   = require("gulp-spawn-mocha");
-var gutil   = require("gulp-util");
-var path    = require("path");
-var webpack = require("webpack");
+var execSync = require("child_process").execSync;
+var gulp     = require("gulp");
+var eslint   = require("gulp-eslint");
+var gutil    = require("gulp-util");
+var path     = require("path");
+var webpack  = require("webpack");
 
 var build = function (minify, callback) {
     webpack({
@@ -44,14 +44,9 @@ gulp.task("build", function (callback) {
 });
 
 gulp.task("test", function () {
-    return gulp.src(["test/unit/**/*.js"], {read: false})
-        .pipe(mocha({
-            compilers: "js:babel/register",
-            env: {
-                NODE_PATH: "./src/"
-            },
-            istanbul: true
-        }));
+    execSync("npm test", {
+        stdio: [null, process.stdout]
+    });
 });
 
 gulp.task("lint", function () {

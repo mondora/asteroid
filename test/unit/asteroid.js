@@ -4,49 +4,62 @@ import sinonChai from "sinon-chai";
 
 chai.use(sinonChai);
 
-import Asteroid from "asteroid";
+import * as asteroid from "asteroid";
 
-describe("`Asteroid` class", function () {
+describe("`createClass` method", function () {
 
-    describe("upon instantiation", function () {
-
-        it("calls all mixins `init`-s (if present)", function () {
-            var init1 = sinon.spy();
-            var init3 = sinon.spy();
-            var Asteroid1 = Asteroid.mixin({init: init1});
-            var Asteroid2 = Asteroid1.mixin({});
-            var Asteroid3 = Asteroid2.mixin({init: init3});
-            var options = {};
-            var asteroid = new Asteroid3(options);
-            expect(asteroid).to.be.an.instanceOf(Asteroid);
-            expect(asteroid).to.be.an.instanceOf(Asteroid1);
-            expect(asteroid).to.be.an.instanceOf(Asteroid2);
-            expect(asteroid).to.be.an.instanceOf(Asteroid3);
-            expect(init1).to.have.callCount(1);
-            expect(init1).to.have.been.calledWithExactly(options);
-            expect(init3).to.have.callCount(1);
-            expect(init3).to.have.been.calledWithExactly(options);
-        });
-
+    it("return a class (function with prototype)", function () {
+        const Asteroid = asteroid.createClass();
+        expect(Asteroid).to.be.a("function");
+        expect(Asteroid.prototype).to.be.an("object");
     });
 
-    describe("`mixin` static method", function () {
+});
 
-        it("returns a class which extends Asteroid", function () {
-            var Asteroid1 = Asteroid.mixin({});
-            expect(Asteroid1).to.be.a("function");
-            expect(Asteroid1.prototype.constructor).to.equal(Asteroid1);
-            var asteroid = new Asteroid1({});
-            expect(asteroid).to.be.an.instanceOf(Asteroid);
-            expect(asteroid).to.be.an.instanceOf(Asteroid1);
-        });
+describe("The `Asteroid` class returned by `createClass`", function () {
 
-        it("adds mixin's methods to `.prototype`", function () {
-            var myMethod = sinon.spy();
-            var Asteroid1 = Asteroid.mixin({myMethod});
-            expect(Asteroid1.prototype.myMethod).to.be.a("function");
-        });
+    const ddp = {ddpMethod: sinon.spy()};
+    const methods = {methodsMethod: sinon.spy()};
+    const subscriptions = {subscriptionsMethod: sinon.spy()};
+    const login = {loginMethod: sinon.spy()};
 
+    beforeEach(function () {
+        asteroid.__Rewire__("ddp", ddp);
+        asteroid.__Rewire__("methods", methods);
+        asteroid.__Rewire__("subscriptions", subscriptions);
+        asteroid.__Rewire__("login", login);
+    });
+
+    afterEach(function () {
+        asteroid.__ResetDependency__("ddp");
+        asteroid.__ResetDependency__("methods");
+        asteroid.__ResetDependency__("subscriptions");
+        asteroid.__ResetDependency__("login");
+    });
+
+    it("should have the methods defined by the 4 base mixins mixed-in", function () {
+        const Asteroid = asteroid.createClass();
+        expect(Asteroid.prototype).to.have.property("ddpMethod", ddp.ddpMethod);
+        expect(Asteroid.prototype).to.have.property("methodsMethod", methods.methodsMethod);
+        expect(Asteroid.prototype).to.have.property("subscriptionsMethod", subscriptions.subscriptionsMethod);
+        expect(Asteroid.prototype).to.have.property("loginMethod", login.loginMethod);
+    });
+
+    it("should haven't an init method in prototype", function () {
+        const Asteroid = asteroid.createClass();
+        expect(Asteroid.prototype.init).to.equal(undefined);
+    });
+
+    it("should call all mixins' init functions when constructing the instance", function () {
+        const mixin_1 = {init: sinon.spy()};
+        const mixin_2 = {init: sinon.spy()};
+        const Asteroid = asteroid.createClass([mixin_1, mixin_2]);
+        const instance = {};
+        Asteroid.call(instance, 0, 1, 2);
+        expect(mixin_1.init).to.have.been.calledWith(0, 1, 2);
+        expect(mixin_1.init).to.have.been.calledOn(instance);
+        expect(mixin_2.init).to.have.been.calledWith(0, 1, 2);
+        expect(mixin_2.init).to.have.been.calledOn(instance);
     });
 
 });

@@ -9,20 +9,20 @@ import takeTen from "../take-ten";
 chai.use(chaiAsPromised);
 chai.use(sinonChai);
 
-import {init, apply, call} from "mixins/methods";
+import {init, apply, call} from "base-mixins/methods";
 
 describe("`methods` mixin", function () {
 
     describe("`result` event handler", function () {
 
-        it("resolves the promise in the `_methodsCache` if no errors occurred", function () {
-            var instance = {
+        it("resolves the promise in the `methods.cache` if no errors occurred", function () {
+            const instance = {
                 ddp: new EventEmitter()
             };
             init.call(instance);
-            var resolve = sinon.spy();
-            var reject = sinon.spy();
-            instance._methodsCache["id"] = {resolve, reject};
+            const resolve = sinon.spy();
+            const reject = sinon.spy();
+            instance.methods.cache["id"] = {resolve, reject};
             instance.ddp.emit("result", {
                 id: "id",
                 result: {}
@@ -31,14 +31,14 @@ describe("`methods` mixin", function () {
             expect(reject).to.have.callCount(0);
         });
 
-        it("rejects the promise in the `_methodsCache` if errors occurred", function () {
-            var instance = {
+        it("rejects the promise in the `methods.cache` if errors occurred", function () {
+            const instance = {
                 ddp: new EventEmitter()
             };
             init.call(instance);
-            var resolve = sinon.spy();
-            var reject = sinon.spy();
-            instance._methodsCache["id"] = {resolve, reject};
+            const resolve = sinon.spy();
+            const reject = sinon.spy();
+            instance.methods.cache["id"] = {resolve, reject};
             instance.ddp.emit("result", {
                 id: "id",
                 error: {}
@@ -52,18 +52,18 @@ describe("`methods` mixin", function () {
     describe("`apply` method", function () {
 
         it("returns a promise", function () {
-            var instance = {
+            const instance = {
                 ddp: {
                     method: sinon.spy()
                 }
             };
-            var ret = apply.call(instance);
+            const ret = apply.call(instance);
             expect(ret).to.be.an.instanceOf(Promise);
             expect(ret.then).to.be.a("function");
         });
 
         it("calls `ddp.method`", function (done) {
-            var instance = {
+            const instance = {
                 ddp: {
                     method: sinon.spy()
                 }
@@ -79,10 +79,10 @@ describe("`methods` mixin", function () {
     describe("`call` method", function () {
 
         it("calls `ddp.method`", function () {
-            var instance = {
+            const instance = {
                 apply: sinon.spy(() => "Promise")
             };
-            var ret = call.call(instance, "method", {}, {});
+            const ret = call.call(instance, "method", {}, {});
             expect(instance.apply).to.have.been.calledWith("method", [{}, {}]);
             expect(ret).to.equal("Promise");
         });
