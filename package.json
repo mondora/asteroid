@@ -4,6 +4,7 @@
   "description": "Alternative Meteor client",
   "main": "dist/asteroid.js",
   "scripts": {
+    "prepublish": "gulp build",
     "build": "gulp build",
     "coveralls": "cat ./coverage/lcov.info | coveralls",
     "dev": "gulp",
