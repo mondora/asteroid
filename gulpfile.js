@@ -7,7 +7,7 @@ var webpack  = require("webpack");
 
 var build = function (minify, callback) {
     webpack({
-        entry: "./src/index.js",
+        entry: "./src/asteroid.js",
         module: {
             loaders: [{
                 test: /\.js$/,

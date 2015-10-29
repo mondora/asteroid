@@ -1,5 +1,5 @@
 [![Build Status](https://travis-ci.org/mondora/asteroid.svg?branch=master)](https://travis-ci.org/mondora/asteroid)
-[![Coverage Status](https://coveralls.io/repos/mondora/asteroid/badge.png)](https://coveralls.io/r/mondora/asteroid)
+[![Coverage Status](https://coveralls.io/repos/mondora/asteroid/badge.svg)](https://coveralls.io/r/mondora/asteroid)
 
 #asteroid
 
