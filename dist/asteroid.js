@@ -80,11 +80,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var methods = _interopRequireWildcard(_baseMixinsMethods);
 
-	var _baseMixinsSubscriptions = __webpack_require__(9);
+	var _baseMixinsSubscriptions = __webpack_require__(5);
 
 	var subscriptions = _interopRequireWildcard(_baseMixinsSubscriptions);
 
-	var _baseMixinsLogin = __webpack_require__(23);
+	var _baseMixinsLogin = __webpack_require__(19);
 
 	var login = _interopRequireWildcard(_baseMixinsLogin);
 
@@ -1061,7 +1061,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 4 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ function(module, exports) {
 
 	/*
 	*   The methods mixin:
@@ -1070,6 +1070,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	*     the ddp method call - it must maintain a cache (under the `methods.cache`
 	*     property of the Asteroid instance) of ddp method calls, which is then used
 	*     to match ddp `result` messages received from the server
+	*/
+
+	/*
+	*   Public methods
 	*/
 
 	"use strict";
@@ -1081,20 +1085,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	exports.call = call;
 	exports.init = init;
 
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
-
-	var _promiz = __webpack_require__(5);
-
-	var _promiz2 = _interopRequireDefault(_promiz);
-
-	/*
-	*   Public methods
-	*/
-
 	function apply(method, params) {
 	    var _this = this;
 
-	    return new _promiz2["default"](function (resolve, reject) {
+	    return new Promise(function (resolve, reject) {
 	        var id = _this.ddp.method(method, params);
 	        _this.methods.cache[id] = { resolve: resolve, reject: reject };
 	    });
@@ -1137,522 +1131,6 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 5 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/* WEBPACK VAR INJECTION */(function(global, setImmediate, module) {(function () {
-	  global = this
-
-	  var queueId = 1
-	  var queue = {}
-	  var isRunningTask = false
-
-	  if (!global.setImmediate)
-	    global.addEventListener('message', function (e) {
-	      if (e.source == global){
-	        if (isRunningTask)
-	          nextTick(queue[e.data])
-	        else {
-	          isRunningTask = true
-	          try {
-	            queue[e.data]()
-	          } catch (e) {}
-
-	          delete queue[e.data]
-	          isRunningTask = false
-	        }
-	      }
-	    })
-
-	  function nextTick(fn) {
-	    if (global.setImmediate) setImmediate(fn)
-	    // if inside of web worker
-	    else if (global.importScripts) setTimeout(fn)
-	    else {
-	      queueId++
-	      queue[queueId] = fn
-	      global.postMessage(queueId, '*')
-	    }
-	  }
-
-	  Deferred.resolve = function (value) {
-	    if (!(this._d == 1))
-	      throw TypeError()
-
-	    if (value instanceof Deferred)
-	      return value
-
-	    return new Deferred(function (resolve) {
-	        resolve(value)
-	    })
-	  }
-
-	  Deferred.reject = function (value) {
-	    if (!(this._d == 1))
-	      throw TypeError()
-
-	    return new Deferred(function (resolve, reject) {
-	        reject(value)
-	    })
-	  }
-
-	  Deferred.all = function (arr) {
-	    if (!(this._d == 1))
-	      throw TypeError()
-
-	    if (!(arr instanceof Array))
-	      return Deferred.reject(TypeError())
-
-	    var d = new Deferred()
-
-	    function done(e, v) {
-	      if (v)
-	        return d.resolve(v)
-
-	      if (e)
-	        return d.reject(e)
-
-	      var unresolved = arr.reduce(function (cnt, v) {
-	        if (v && v.then)
-	          return cnt + 1
-	        return cnt
-	      }, 0)
-
-	      if(unresolved == 0)
-	        d.resolve(arr)
-
-	      arr.map(function (v, i) {
-	        if (v && v.then)
-	          v.then(function (r) {
-	            arr[i] = r
-	            done()
-	            return r
-	          }, done)
-	      })
-	    }
-
-	    done()
-
-	    return d
-	  }
-
-	  Deferred.race = function (arr) {
-	    if (!(this._d == 1))
-	      throw TypeError()
-
-	    if (!(arr instanceof Array))
-	      return Deferred.reject(TypeError())
-
-	    if (arr.length == 0)
-	      return new Deferred()
-
-	    var d = new Deferred()
-
-	    function done(e, v) {
-	      if (v)
-	        return d.resolve(v)
-
-	      if (e)
-	        return d.reject(e)
-
-	      var unresolved = arr.reduce(function (cnt, v) {
-	        if (v && v.then)
-	          return cnt + 1
-	        return cnt
-	      }, 0)
-
-	      if(unresolved == 0)
-	        d.resolve(arr)
-
-	      arr.map(function (v, i) {
-	        if (v && v.then)
-	          v.then(function (r) {
-	            done(null, r)
-	          }, done)
-	      })
-	    }
-
-	    done()
-
-	    return d
-	  }
-
-	  Deferred._d = 1
-
-
-	  /**
-	   * @constructor
-	   */
-	  function Deferred(resolver) {
-	    'use strict'
-	    if (typeof resolver != 'function' && resolver != undefined)
-	      throw TypeError()
-
-	    if (typeof this != 'object' || (this && this.then))
-	      throw TypeError()
-
-	    // states
-	    // 0: pending
-	    // 1: resolving
-	    // 2: rejecting
-	    // 3: resolved
-	    // 4: rejected
-	    var self = this,
-	      state = 0,
-	      val = 0,
-	      next = [],
-	      fn, er;
-
-	    self['promise'] = self
-
-	    self['resolve'] = function (v) {
-	      fn = self.fn
-	      er = self.er
-	      if (!state) {
-	        val = v
-	        state = 1
-
-	        nextTick(fire)
-	      }
-	      return self
-	    }
-
-	    self['reject'] = function (v) {
-	      fn = self.fn
-	      er = self.er
-	      if (!state) {
-	        val = v
-	        state = 2
-
-	        nextTick(fire)
-
-	      }
-	      return self
-	    }
-
-	    self['_d'] = 1
-
-	    self['then'] = function (_fn, _er) {
-	      if (!(this._d == 1))
-	        throw TypeError()
-
-	      var d = new Deferred()
-
-	      d.fn = _fn
-	      d.er = _er
-	      if (state == 3) {
-	        d.resolve(val)
-	      }
-	      else if (state == 4) {
-	        d.reject(val)
-	      }
-	      else {
-	        next.push(d)
-	      }
-
-	      return d
-	    }
-
-	    self['catch'] = function (_er) {
-	      return self['then'](null, _er)
-	    }
-
-	    var finish = function (type) {
-	      state = type || 4
-	      next.map(function (p) {
-	        state == 3 && p.resolve(val) || p.reject(val)
-	      })
-	    }
-
-	    try {
-	      if (typeof resolver == 'function')
-	        resolver(self['resolve'], self['reject'])
-	    } catch (e) {
-	      self['reject'](e)
-	    }
-
-	    return self
-
-	    // ref : reference to 'then' function
-	    // cb, ec, cn : successCallback, failureCallback, notThennableCallback
-	    function thennable (ref, cb, ec, cn) {
-	      if ((typeof val == 'object' || typeof val == 'function') && typeof ref == 'function') {
-	        try {
-
-	          // cnt protects against abuse calls from spec checker
-	          var cnt = 0
-	          ref.call(val, function (v) {
-	            if (cnt++) return
-	            val = v
-	            cb()
-	          }, function (v) {
-	            if (cnt++) return
-	            val = v
-	            ec()
-	          })
-	        } catch (e) {
-	          val = e
-	          ec()
-	        }
-	      } else {
-	        cn()
-	      }
-	    };
-
-	    function fire() {
-
-	      // check if it's a thenable
-	      var ref;
-	      try {
-	        ref = val && val.then
-	      } catch (e) {
-	        val = e
-	        state = 2
-	        return fire()
-	      }
-
-	      thennable(ref, function () {
-	        state = 1
-	        fire()
-	      }, function () {
-	        state = 2
-	        fire()
-	      }, function () {
-	        try {
-	          if (state == 1 && typeof fn == 'function') {
-	            val = fn(val)
-	          }
-
-	          else if (state == 2 && typeof er == 'function') {
-	            val = er(val)
-	            state = 1
-	          }
-	        } catch (e) {
-	          val = e
-	          return finish()
-	        }
-
-	        if (val == self) {
-	          val = TypeError()
-	          finish()
-	        } else thennable(ref, function () {
-	            finish(3)
-	          }, finish, function () {
-	            finish(state == 1 && 3)
-	          })
-
-	      })
-	    }
-
-
-	  }
-
-	  // Export our library object, either for node.js or as a globally scoped variable
-	  if (true) {
-	    module['exports'] = Deferred
-	  } else {
-	    global['Promise'] = global['Promise'] || Deferred
-	  }
-	})()
-
-	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }()), __webpack_require__(6).setImmediate, __webpack_require__(8)(module)))
-
-/***/ },
-/* 6 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/* WEBPACK VAR INJECTION */(function(setImmediate, clearImmediate) {var nextTick = __webpack_require__(7).nextTick;
-	var apply = Function.prototype.apply;
-	var slice = Array.prototype.slice;
-	var immediateIds = {};
-	var nextImmediateId = 0;
-
-	// DOM APIs, for completeness
-
-	exports.setTimeout = function() {
-	  return new Timeout(apply.call(setTimeout, window, arguments), clearTimeout);
-	};
-	exports.setInterval = function() {
-	  return new Timeout(apply.call(setInterval, window, arguments), clearInterval);
-	};
-	exports.clearTimeout =
-	exports.clearInterval = function(timeout) { timeout.close(); };
-
-	function Timeout(id, clearFn) {
-	  this._id = id;
-	  this._clearFn = clearFn;
-	}
-	Timeout.prototype.unref = Timeout.prototype.ref = function() {};
-	Timeout.prototype.close = function() {
-	  this._clearFn.call(window, this._id);
-	};
-
-	// Does not start the time, just sets up the members needed.
-	exports.enroll = function(item, msecs) {
-	  clearTimeout(item._idleTimeoutId);
-	  item._idleTimeout = msecs;
-	};
-
-	exports.unenroll = function(item) {
-	  clearTimeout(item._idleTimeoutId);
-	  item._idleTimeout = -1;
-	};
-
-	exports._unrefActive = exports.active = function(item) {
-	  clearTimeout(item._idleTimeoutId);
-
-	  var msecs = item._idleTimeout;
-	  if (msecs >= 0) {
-	    item._idleTimeoutId = setTimeout(function onTimeout() {
-	      if (item._onTimeout)
-	        item._onTimeout();
-	    }, msecs);
-	  }
-	};
-
-	// That's not how node.js implements it but the exposed api is the same.
-	exports.setImmediate = typeof setImmediate === "function" ? setImmediate : function(fn) {
-	  var id = nextImmediateId++;
-	  var args = arguments.length < 2 ? false : slice.call(arguments, 1);
-
-	  immediateIds[id] = true;
-
-	  nextTick(function onNextTick() {
-	    if (immediateIds[id]) {
-	      // fn.call() is faster so we optimize for the common use-case
-	      // @see http://jsperf.com/call-apply-segu
-	      if (args) {
-	        fn.apply(null, args);
-	      } else {
-	        fn.call(null);
-	      }
-	      // Prevent ids from leaking
-	      exports.clearImmediate(id);
-	    }
-	  });
-
-	  return id;
-	};
-
-	exports.clearImmediate = typeof clearImmediate === "function" ? clearImmediate : function(id) {
-	  delete immediateIds[id];
-	};
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(6).setImmediate, __webpack_require__(6).clearImmediate))
-
-/***/ },
-/* 7 */
-/***/ function(module, exports) {
-
-	// shim for using process in browser
-
-	var process = module.exports = {};
-	var queue = [];
-	var draining = false;
-	var currentQueue;
-	var queueIndex = -1;
-
-	function cleanUpNextTick() {
-	    draining = false;
-	    if (currentQueue.length) {
-	        queue = currentQueue.concat(queue);
-	    } else {
-	        queueIndex = -1;
-	    }
-	    if (queue.length) {
-	        drainQueue();
-	    }
-	}
-
-	function drainQueue() {
-	    if (draining) {
-	        return;
-	    }
-	    var timeout = setTimeout(cleanUpNextTick);
-	    draining = true;
-
-	    var len = queue.length;
-	    while(len) {
-	        currentQueue = queue;
-	        queue = [];
-	        while (++queueIndex < len) {
-	            if (currentQueue) {
-	                currentQueue[queueIndex].run();
-	            }
-	        }
-	        queueIndex = -1;
-	        len = queue.length;
-	    }
-	    currentQueue = null;
-	    draining = false;
-	    clearTimeout(timeout);
-	}
-
-	process.nextTick = function (fun) {
-	    var args = new Array(arguments.length - 1);
-	    if (arguments.length > 1) {
-	        for (var i = 1; i < arguments.length; i++) {
-	            args[i - 1] = arguments[i];
-	        }
-	    }
-	    queue.push(new Item(fun, args));
-	    if (queue.length === 1 && !draining) {
-	        setTimeout(drainQueue, 0);
-	    }
-	};
-
-	// v8 likes predictible objects
-	function Item(fun, array) {
-	    this.fun = fun;
-	    this.array = array;
-	}
-	Item.prototype.run = function () {
-	    this.fun.apply(null, this.array);
-	};
-	process.title = 'browser';
-	process.browser = true;
-	process.env = {};
-	process.argv = [];
-	process.version = ''; // empty string to avoid regexp issues
-	process.versions = {};
-
-	function noop() {}
-
-	process.on = noop;
-	process.addListener = noop;
-	process.once = noop;
-	process.off = noop;
-	process.removeListener = noop;
-	process.removeAllListeners = noop;
-	process.emit = noop;
-
-	process.binding = function (name) {
-	    throw new Error('process.binding is not supported');
-	};
-
-	process.cwd = function () { return '/' };
-	process.chdir = function (dir) {
-	    throw new Error('process.chdir is not supported');
-	};
-	process.umask = function() { return 0; };
-
-
-/***/ },
-/* 8 */
-/***/ function(module, exports) {
-
-	module.exports = function(module) {
-		if(!module.webpackPolyfill) {
-			module.deprecate = function() {};
-			module.paths = [];
-			// module.parent = undefined by default
-			module.children = [];
-			module.webpackPolyfill = 1;
-		}
-		return module;
-	}
-
-
-/***/ },
-/* 9 */
-/***/ function(module, exports, __webpack_require__) {
-
 	/*
 	*   The subscriptions mixin:
 	*   - defines the `subscribe` and `unsubscribe` methods, used to send ddp `sub`
@@ -1678,7 +1156,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i]; return arr2; } else { return Array.from(arr); } }
 
-	var _lodashAssign = __webpack_require__(10);
+	var _lodashAssign = __webpack_require__(6);
 
 	var _lodashAssign2 = _interopRequireDefault(_lodashAssign);
 
@@ -1686,11 +1164,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _wolfy87Eventemitter2 = _interopRequireDefault(_wolfy87Eventemitter);
 
-	var _libSubscriptionCache = __webpack_require__(21);
+	var _libSubscriptionCache = __webpack_require__(17);
 
 	var _libSubscriptionCache2 = _interopRequireDefault(_libSubscriptionCache);
 
-	var _libFingerprintSubJs = __webpack_require__(22);
+	var _libFingerprintSubJs = __webpack_require__(18);
 
 	var _libFingerprintSubJs2 = _interopRequireDefault(_libFingerprintSubJs);
 
@@ -1778,7 +1256,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 10 */
+/* 6 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -1789,9 +1267,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * Copyright 2009-2015 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
 	 * Available under MIT license <https://lodash.com/license>
 	 */
-	var baseAssign = __webpack_require__(11),
-	    createAssigner = __webpack_require__(17),
-	    keys = __webpack_require__(13);
+	var baseAssign = __webpack_require__(7),
+	    createAssigner = __webpack_require__(13),
+	    keys = __webpack_require__(9);
 
 	/**
 	 * A specialized version of `_.assign` for customizing assigned values without
@@ -1864,7 +1342,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 11 */
+/* 7 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -1875,8 +1353,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * Copyright 2009-2015 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
 	 * Available under MIT license <https://lodash.com/license>
 	 */
-	var baseCopy = __webpack_require__(12),
-	    keys = __webpack_require__(13);
+	var baseCopy = __webpack_require__(8),
+	    keys = __webpack_require__(9);
 
 	/**
 	 * The base implementation of `_.assign` without support for argument juggling,
@@ -1897,7 +1375,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 12 */
+/* 8 */
 /***/ function(module, exports) {
 
 	/**
@@ -1935,7 +1413,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 13 */
+/* 9 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -1946,9 +1424,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * Copyright 2009-2015 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
 	 * Available under MIT license <https://lodash.com/license>
 	 */
-	var getNative = __webpack_require__(14),
-	    isArguments = __webpack_require__(15),
-	    isArray = __webpack_require__(16);
+	var getNative = __webpack_require__(10),
+	    isArguments = __webpack_require__(11),
+	    isArray = __webpack_require__(12);
 
 	/** Used to detect unsigned integer values. */
 	var reIsUint = /^\d+$/;
@@ -2177,7 +1655,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 14 */
+/* 10 */
 /***/ function(module, exports) {
 
 	/**
@@ -2320,7 +1798,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 15 */
+/* 11 */
 /***/ function(module, exports) {
 
 	/**
@@ -2432,7 +1910,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 16 */
+/* 12 */
 /***/ function(module, exports) {
 
 	/**
@@ -2618,7 +2096,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 17 */
+/* 13 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -2629,9 +2107,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * Copyright 2009-2015 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
 	 * Available under MIT license <https://lodash.com/license>
 	 */
-	var bindCallback = __webpack_require__(18),
-	    isIterateeCall = __webpack_require__(19),
-	    restParam = __webpack_require__(20);
+	var bindCallback = __webpack_require__(14),
+	    isIterateeCall = __webpack_require__(15),
+	    restParam = __webpack_require__(16);
 
 	/**
 	 * Creates a function that assigns properties of source object(s) to a given
@@ -2676,7 +2154,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 18 */
+/* 14 */
 /***/ function(module, exports) {
 
 	/**
@@ -2747,7 +2225,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 19 */
+/* 15 */
 /***/ function(module, exports) {
 
 	/**
@@ -2885,7 +2363,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 20 */
+/* 16 */
 /***/ function(module, exports) {
 
 	/**
@@ -2958,7 +2436,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 21 */
+/* 17 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -3015,7 +2493,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = exports["default"];
 
 /***/ },
-/* 22 */
+/* 18 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -3032,7 +2510,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = exports["default"];
 
 /***/ },
-/* 23 */
+/* 19 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
@@ -3051,7 +2529,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj["default"] = obj; return newObj; } }
 
-	var _libMultiStorageJs = __webpack_require__(24);
+	var _libMultiStorageJs = __webpack_require__(20);
 
 	var multiStorage = _interopRequireWildcard(_libMultiStorageJs);
 
@@ -3107,8 +2585,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 24 */
-/***/ function(module, exports, __webpack_require__) {
+/* 20 */
+/***/ function(module, exports) {
 
 	"use strict";
 
@@ -3119,18 +2597,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	exports.set = set;
 	exports.del = del;
 
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
-
 	function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-
-	var _promiz = __webpack_require__(5);
-
-	var _promiz2 = _interopRequireDefault(_promiz);
 
 	var genericStorage = {};
 
 	function get(key) {
-	    return new _promiz2["default"](function (resolve) {
+	    return new Promise(function (resolve) {
 	        if (typeof chrome !== "undefined" && chrome.storage) {
 	            chrome.storage.local.get(key, function (data) {
 	                return resolve(data[key]);
@@ -3144,7 +2616,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	function set(key, value) {
-	    return new _promiz2["default"](function (resolve) {
+	    return new Promise(function (resolve) {
 	        if (typeof chrome !== "undefined" && chrome.storage) {
 	            var data = _defineProperty({}, key, value);
 	            chrome.storage.local.set(data, resolve);
@@ -3159,7 +2631,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	function del(key) {
-	    return new _promiz2["default"](function (resolve) {
+	    return new Promise(function (resolve) {
 	        if (typeof chrome !== "undefined" && chrome.storage) {
 	            chrome.storage.local.remove(key, resolve);
 	        } else if (typeof localStorage !== "undefined") {

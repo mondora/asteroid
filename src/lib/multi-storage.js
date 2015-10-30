@@ -1,5 +1,3 @@
-import Promise from "promiz";
-
 var genericStorage = {};
 
 export function get (key) {

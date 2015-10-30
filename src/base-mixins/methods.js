@@ -7,8 +7,6 @@
 *     to match ddp `result` messages received from the server
 */
 
-import Promise from "promiz";
-
 /*
 *   Public methods
 */

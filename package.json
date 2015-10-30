@@ -49,7 +49,6 @@
   },
   "dependencies": {
     "ddp.js": "^1.1.0",
-    "promiz": "^1.0.4",
     "wolfy87-eventemitter": "^4.3.0"
   }
 }
