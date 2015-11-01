@@ -621,6 +621,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	*     it in the `ddp` property of the Asteroid instance
 	*   - listens for the `connected` and `disconnected` events of the DDP instance
 	*     and proxies them to the Asteroid instance
+	*    - exposes the `endpoint` public property
 	*/
 
 	"use strict";
@@ -647,6 +648,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var _ref$SocketConstructor = _ref.SocketConstructor;
 	    var SocketConstructor = _ref$SocketConstructor === undefined ? WebSocket : _ref$SocketConstructor;
 
+	    this.endpoint = endpoint;
 	    this.ddp = new _ddpJs2["default"]({ endpoint: endpoint, SocketConstructor: SocketConstructor }).on("connected", function () {
 	        return _this.emit("connected");
 	    }).on("disconnected", function () {
@@ -2515,7 +2517,8 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	/*
 	*   Login mixin:
-	*    - defines the `login` and `logout` methods.
+	*    - defines the `login` and `logout` methods
+	*    - exposes the `userId` and `loggedIn` public properties
 	*/
 
 	"use strict";
