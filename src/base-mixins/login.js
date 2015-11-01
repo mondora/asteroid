@@ -1,6 +1,7 @@
 /*
 *   Login mixin:
-*    - defines the `login` and `logout` methods.
+*    - defines the `login` and `logout` methods
+*    - exposes the `userId` and `loggedIn` public properties
 */
 
 import * as multiStorage from "../lib/multi-storage.js";

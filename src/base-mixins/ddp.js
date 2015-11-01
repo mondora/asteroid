@@ -4,6 +4,7 @@
 *     it in the `ddp` property of the Asteroid instance
 *   - listens for the `connected` and `disconnected` events of the DDP instance
 *     and proxies them to the Asteroid instance
+*    - exposes the `endpoint` public property
 */
 
 import DDP from "ddp.js";
@@ -13,6 +14,7 @@ import DDP from "ddp.js";
 */
 
 export function init ({endpoint, SocketConstructor = WebSocket}) {
+    this.endpoint = endpoint;
     this.ddp = new DDP({endpoint, SocketConstructor})
         .on("connected", () => this.emit("connected"))
         .on("disconnected", () => this.emit("disconnected"));

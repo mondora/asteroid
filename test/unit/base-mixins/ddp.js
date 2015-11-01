@@ -11,6 +11,18 @@ class SocketConstructorMock {}
 
 describe("`ddp` mixin", function () {
 
+    it("should expose the `endpoint` public property", function () {
+        const instance = {
+            emit: sinon.spy()
+        };
+        const options = {
+            endpoint: "endpoint",
+            SocketConstructor: SocketConstructorMock
+        };
+        init.call(instance, options);
+        expect(instance.endpoint).to.equal("endpoint");
+    });
+
     describe("`connected` event handler", function () {
 
         it("emit `connected` event", function (done) {
