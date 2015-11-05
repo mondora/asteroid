@@ -6,6 +6,8 @@ export function get (key) {
             chrome.storage.local.get(key, data => resolve(data[key]));
         } else if (typeof localStorage !== "undefined") {
             resolve(localStorage[key]);
+        } else if (typeof AsyncStorage !== "undefined") {
+            AsyncStorage.getItem(key, (e, data) => resolve(data));
         } else {
             resolve(genericStorage[key]);
         }
@@ -22,6 +24,8 @@ export function set (key, value) {
         } else if (typeof localStorage !== "undefined") {
             localStorage[key] = value;
             resolve();
+        } else if (typeof AsyncStorage !== "undefined") {
+            AsyncStorage.setItem(key, value);
         } else {
             genericStorage[key] = value;
             resolve();
@@ -36,6 +40,8 @@ export function del (key) {
         } else if (typeof localStorage !== "undefined") {
             delete localStorage[key];
             resolve();
+        } else if (typeof AsyncStorage !== "undefined") {
+            AsyncStorage.removeItem(key);
         } else {
             delete genericStorage[key];
             resolve();

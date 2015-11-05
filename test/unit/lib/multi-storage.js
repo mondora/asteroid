@@ -61,6 +61,26 @@ describe("`multiStorage` lib", function () {
 
         });
 
+        describe("`react-native` storage", function () {
+
+          before(function () {
+            global.AsyncStorage = {
+              getItem: sinon.spy(function (key, cb) {
+                  cb(undefined, "value");
+              })
+            };
+          });
+
+          after(function () {
+              delete global.AsyncStorage;
+          });
+
+          it("should resolve the promise with the correct parameters", function () {
+              return expect(multiStorage.get("key")).to.become("value");
+          });
+
+        });
+
         describe("`genericStorage`", function () {
 
             const genericStorage = {key: "value"};
@@ -124,6 +144,25 @@ describe("`multiStorage` lib", function () {
             it("should set a value in the `localStorage`", function () {
                 multiStorage.set("key", "value");
                 expect(localStorage.key).to.be.equal("value");
+            });
+
+        });
+
+        describe("`react-native`", function () {
+
+            before(function () {
+                global.AsyncStorage = {
+                    setItem: sinon.stub().returns(Promise.resolve())
+                };
+            });
+
+            after(function () {
+                delete global.AsyncStorage;
+            });
+
+            it("should set a value in the `AsyncStorage` storage", function () {
+                multiStorage.set("key", "value");
+                expect(AsyncStorage.setItem).to.be.calledWith("key", "value");
             });
 
         });
@@ -194,6 +233,25 @@ describe("`multiStorage` lib", function () {
             it("should remove a value from the `localStorage`", function () {
                 multiStorage.del("key");
                 expect(localStorage.key).to.be.equal(undefined);
+            });
+
+        });
+
+        describe("`react-native` storage", function () {
+
+            before(function () {
+                global.AsyncStorage = {
+                    removeItem: sinon.stub().returns(Promise.resolve())
+                };
+            });
+
+            after(function () {
+                delete global.AsyncStorage;
+            });
+
+            it("should remove a value from the `react-native` storage", function () {
+                multiStorage.del("key");
+                expect(AsyncStorage.removeItem).to.be.calledWith("key");
             });
 
         });
