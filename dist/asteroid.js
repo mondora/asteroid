@@ -2562,7 +2562,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	            throw new Error("No login token");
 	        }
 	        return { resume: resume };
-	    }).then(this.login.bind(this)).then(onLogin.bind(this))["catch"](onLogout.bind(this));
+	    }).then(this.login.bind(this))
+	    // TODO: è giusto toglierlo? .then(onLogin.bind(this))
+	    ["catch"](onLogout.bind(this));
 	}
 
 	/*

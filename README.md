@@ -1,11 +1,11 @@
 [![Build Status](https://travis-ci.org/mondora/asteroid.svg?branch=master)](https://travis-ci.org/mondora/asteroid)
 [![Coverage Status](https://coveralls.io/repos/mondora/asteroid/badge.svg)](https://coveralls.io/r/mondora/asteroid)
 
-#asteroid
+# asteroid
 
 A javascript client (browser and node) for a Meteor backend.
 
-##Table of contents
+## Table of contents
 
 [Why](#why)
 
@@ -36,13 +36,22 @@ Some of the things Asteroid allows you to do are:
     npm install asteroid
 ```
 
+## Available mixins
+
+The mixins now available are:
+
+*   asteroid-collections-mixin
+
+*   asteroid-oauth-mixin
+
+
 ## Example usage
 
 ```javascript
 import {createClass} from "asteroid";
-import passwordMixin from "asteroid-password";
+import collectionsMixin from "asteroid-collections-mixin";
 
-const Asteroid = createClass([passwordMixin]);
+const Asteroid = createClass([collectionsMixin]);
 // Connect to a Meteor backend
 const ceres = new Asteroid({
     endpoint: "ws://localhost:3000/websocket"
