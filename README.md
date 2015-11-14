@@ -30,6 +30,8 @@ Some of the things Asteroid allows you to do are:
 
 *	develop browser extensions backed by Meteor
 
+* use a Meteor backend for react-native
+
 ## Install
 
 ```sh
