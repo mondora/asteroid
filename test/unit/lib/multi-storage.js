@@ -63,21 +63,27 @@ describe("`multiStorage` lib", function () {
 
         describe("`react-native` storage", function () {
 
-          before(function () {
-            global.AsyncStorage = {
-              getItem: sinon.spy(function (key, cb) {
-                  cb(undefined, "value");
-              })
-            };
-          });
+            before(function () {
+                global.AsyncStorage = {};
+            });
 
-          after(function () {
-              delete global.AsyncStorage;
-          });
+            after(function () {
+                delete global.AsyncStorage;
+            });
 
-          it("should resolve the promise with the correct parameters", function () {
-              return expect(multiStorage.get("key")).to.become("value");
-          });
+            it("should resolve the promise with the correct parameters", function () {
+                global.AsyncStorage.getItem = sinon.spy(function (key, cb) {
+                    cb(undefined, "value");
+                });
+                return expect(multiStorage.get("key")).to.become("value");
+            });
+
+            it("should reject the promise if there is an error", function () {
+                global.AsyncStorage.getItem = sinon.spy(function (key, cb) {
+                    cb("error", undefined);
+                });
+                return expect(multiStorage.get("key")).to.be.rejectedWith("error");
+            });
 
         });
 
@@ -151,9 +157,7 @@ describe("`multiStorage` lib", function () {
         describe("`react-native`", function () {
 
             before(function () {
-                global.AsyncStorage = {
-                    setItem: sinon.stub().returns(Promise.resolve())
-                };
+                global.AsyncStorage = {};
             });
 
             after(function () {
@@ -161,9 +165,27 @@ describe("`multiStorage` lib", function () {
             });
 
             it("should set a value in the `AsyncStorage` storage", function () {
+                global.AsyncStorage.setItem = sinon.spy();
                 multiStorage.set("key", "value");
                 expect(AsyncStorage.setItem).to.be.calledWith("key", "value");
             });
+
+            it("should resolve the promise if there isn't any error", function () {
+                global.AsyncStorage.setItem = sinon.spy(function (key, value, cb) {
+                    cb(undefined);
+                });
+                const ret = multiStorage.set("key", "value");
+                return expect(ret).to.become(undefined);
+            });
+
+            it("should reject the promise if there is an error", function () {
+                global.AsyncStorage.setItem = sinon.spy(function (key, value, cb) {
+                    cb("error");
+                });
+                const ret = multiStorage.set("key", "value");
+                return expect(ret).to.be.rejectedWith("error");
+            });
+
 
         });
 
@@ -240,9 +262,7 @@ describe("`multiStorage` lib", function () {
         describe("`react-native` storage", function () {
 
             before(function () {
-                global.AsyncStorage = {
-                    removeItem: sinon.stub().returns(Promise.resolve())
-                };
+                global.AsyncStorage = {};
             });
 
             after(function () {
@@ -250,8 +270,25 @@ describe("`multiStorage` lib", function () {
             });
 
             it("should remove a value from the `react-native` storage", function () {
+                AsyncStorage.removeItem = sinon.spy();
                 multiStorage.del("key");
                 expect(AsyncStorage.removeItem).to.be.calledWith("key");
+            });
+
+            it("should resolve the promise if there isn't any error", function () {
+                global.AsyncStorage.removeItem = sinon.spy(function (key, cb) {
+                    cb(undefined);
+                });
+                const ret = multiStorage.del("key");
+                return expect(ret).to.become(undefined);
+            });
+
+            it("should reject the promise if there is an error", function () {
+                global.AsyncStorage.removeItem = sinon.spy(function (key, cb) {
+                    cb("error");
+                });
+                const ret = multiStorage.del("key");
+                return expect(ret).to.be.rejectedWith("error");
             });
 
         });
