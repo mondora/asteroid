@@ -1,9 +1,10 @@
 import EventEmitter from "wolfy87-eventemitter";
 
 import * as ddp from "./base-mixins/ddp";
-import * as methods from "./base-mixins/methods";
-import * as subscriptions from "./base-mixins/subscriptions";
 import * as login from "./base-mixins/login";
+import * as methods from "./base-mixins/methods";
+import * as loginWithPassword from "./base-mixins/password-login";
+import * as subscriptions from "./base-mixins/subscriptions";
 
 /*
 *   A mixin is a plain javascript object. Mixins are composed by merging the
@@ -24,7 +25,8 @@ import * as login from "./base-mixins/login";
 export function createClass (customMixins) {
 
     // Include base mixins before custom ones
-    const mixins = [ddp, methods, subscriptions, login].concat(customMixins);
+    const mixins = [ddp, methods, subscriptions, login, loginWithPassword]
+        .concat(customMixins);
 
     const Asteroid = function Asteroid (/* arguments */) {
         const args = arguments;

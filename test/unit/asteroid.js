@@ -19,29 +19,33 @@ describe("`createClass` method", function () {
 describe("The `Asteroid` class returned by `createClass`", function () {
 
     const ddp = {ddpMethod: sinon.spy()};
-    const methods = {methodsMethod: sinon.spy()};
-    const subscriptions = {subscriptionsMethod: sinon.spy()};
     const login = {loginMethod: sinon.spy()};
+    const methods = {methodsMethod: sinon.spy()};
+    const loginWithPassword = {loginWithPasswordMethod: sinon.spy()};
+    const subscriptions = {subscriptionsMethod: sinon.spy()};
 
     beforeEach(function () {
         asteroid.__Rewire__("ddp", ddp);
-        asteroid.__Rewire__("methods", methods);
-        asteroid.__Rewire__("subscriptions", subscriptions);
         asteroid.__Rewire__("login", login);
+        asteroid.__Rewire__("methods", methods);
+        asteroid.__Rewire__("loginWithPassword", loginWithPassword);
+        asteroid.__Rewire__("subscriptions", subscriptions);
     });
 
     afterEach(function () {
         asteroid.__ResetDependency__("ddp");
-        asteroid.__ResetDependency__("methods");
-        asteroid.__ResetDependency__("subscriptions");
         asteroid.__ResetDependency__("login");
+        asteroid.__ResetDependency__("methods");
+        asteroid.__ResetDependency__("loginWithPassword");
+        asteroid.__ResetDependency__("subscriptions");
     });
 
-    it("should have the methods defined by the 4 base mixins mixed-in", function () {
+    it("should have the methods defined by the 5 base mixins mixed-in", function () {
         const Asteroid = asteroid.createClass();
         expect(Asteroid.prototype).to.have.property("ddpMethod", ddp.ddpMethod);
         expect(Asteroid.prototype).to.have.property("methodsMethod", methods.methodsMethod);
         expect(Asteroid.prototype).to.have.property("subscriptionsMethod", subscriptions.subscriptionsMethod);
+        expect(Asteroid.prototype).to.have.property("loginWithPasswordMethod", loginWithPassword.loginWithPasswordMethod);
         expect(Asteroid.prototype).to.have.property("loginMethod", login.loginMethod);
     });
 
