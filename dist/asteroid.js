@@ -76,17 +76,21 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var ddp = _interopRequireWildcard(_baseMixinsDdp);
 
-	var _baseMixinsMethods = __webpack_require__(4);
+	var _baseMixinsLogin = __webpack_require__(4);
+
+	var login = _interopRequireWildcard(_baseMixinsLogin);
+
+	var _baseMixinsMethods = __webpack_require__(7);
 
 	var methods = _interopRequireWildcard(_baseMixinsMethods);
 
-	var _baseMixinsSubscriptions = __webpack_require__(5);
+	var _baseMixinsPasswordLogin = __webpack_require__(8);
+
+	var loginWithPassword = _interopRequireWildcard(_baseMixinsPasswordLogin);
+
+	var _baseMixinsSubscriptions = __webpack_require__(9);
 
 	var subscriptions = _interopRequireWildcard(_baseMixinsSubscriptions);
-
-	var _baseMixinsLogin = __webpack_require__(19);
-
-	var login = _interopRequireWildcard(_baseMixinsLogin);
 
 	/*
 	*   A mixin is a plain javascript object. Mixins are composed by merging the
@@ -107,7 +111,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	function createClass(customMixins) {
 
 	    // Include base mixins before custom ones
-	    var mixins = [ddp, methods, subscriptions, login].concat(customMixins);
+	    var mixins = [ddp, methods, subscriptions, login, loginWithPassword].concat(customMixins);
 
 	    var Asteroid = function Asteroid() /* arguments */{
 	        var _this = this;
@@ -589,6 +593,176 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 4 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/*
+	*   Login mixin:
+	*    - defines the `login` and `logout` methods
+	*    - exposes the `userId` and `loggedIn` public properties
+	*/
+
+	"use strict";
+
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	exports.login = login;
+	exports.logout = logout;
+	exports.init = init;
+
+	var _libLoginMethod = __webpack_require__(5);
+
+	/*
+	*   Public methods
+	*/
+
+	function login(loginParameters) {
+	    return this.call("login", loginParameters).then(_libLoginMethod.onLogin.bind(this));
+	}
+
+	function logout() {
+	    return this.call("logout").then(_libLoginMethod.onLogout.bind(this));
+	}
+
+	/*
+	*   Init method
+	*/
+
+	function init() {
+	    this.userId = null;
+	    this.loggedIn = false;
+	    this.ddp.on("connected", _libLoginMethod.resumeLogin.bind(this));
+	}
+
+/***/ },
+/* 5 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	exports.onLogin = onLogin;
+	exports.onLogout = onLogout;
+	exports.resumeLogin = resumeLogin;
+
+	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj["default"] = obj; return newObj; } }
+
+	var _libMultiStorageJs = __webpack_require__(6);
+
+	var multiStorage = _interopRequireWildcard(_libMultiStorageJs);
+
+	function onLogin(_ref) {
+	    var id = _ref.id;
+	    var token = _ref.token;
+
+	    this.userId = id;
+	    this.loggedIn = true;
+	    return multiStorage.set(this.endpoint + "__login_token__", token).then(this.emit.bind(this, "loggedIn", id));
+	}
+
+	function onLogout() {
+	    this.userId = null;
+	    this.loggedIn = false;
+	    return multiStorage.del(this.endpoint + "__login_token__").then(this.emit.bind(this, "loggedOut"));
+	}
+
+	function resumeLogin() {
+	    return multiStorage.get(this.endpoint + "__login_token__").then(function (resume) {
+	        if (!resume) {
+	            throw new Error("No login token");
+	        }
+	        return { resume: resume };
+	    }).then(this.login.bind(this))["catch"](onLogout.bind(this));
+	}
+
+/***/ },
+/* 6 */
+/***/ function(module, exports) {
+
+	"use strict";
+
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	exports.get = get;
+	exports.set = set;
+	exports.del = del;
+
+	function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+	var genericStorage = {};
+
+	function get(key) {
+	    return new Promise(function (resolve, reject) {
+	        if (typeof chrome !== "undefined" && chrome.storage) {
+	            chrome.storage.local.get(key, function (data) {
+	                return resolve(data[key]);
+	            });
+	        } else if (typeof localStorage !== "undefined") {
+	            resolve(localStorage[key]);
+	        } else if (typeof AsyncStorage !== "undefined") {
+	            AsyncStorage.getItem(key, function (error, data) {
+	                if (error) {
+	                    reject(error);
+	                } else {
+	                    resolve(data);
+	                }
+	            });
+	        } else {
+	            resolve(genericStorage[key]);
+	        }
+	    });
+	}
+
+	function set(key, value) {
+	    return new Promise(function (resolve, reject) {
+	        if (typeof chrome !== "undefined" && chrome.storage) {
+	            var data = _defineProperty({}, key, value);
+	            chrome.storage.local.set(data, resolve);
+	        } else if (typeof localStorage !== "undefined") {
+	            localStorage[key] = value;
+	            resolve();
+	        } else if (typeof AsyncStorage !== "undefined") {
+	            AsyncStorage.setItem(key, value, function (error) {
+	                if (error) {
+	                    reject(error);
+	                } else {
+	                    resolve();
+	                }
+	            });
+	        } else {
+	            genericStorage[key] = value;
+	            resolve();
+	        }
+	    });
+	}
+
+	function del(key) {
+	    return new Promise(function (resolve, reject) {
+	        if (typeof chrome !== "undefined" && chrome.storage) {
+	            chrome.storage.local.remove(key, resolve);
+	        } else if (typeof localStorage !== "undefined") {
+	            delete localStorage[key];
+	            resolve();
+	        } else if (typeof AsyncStorage !== "undefined") {
+	            AsyncStorage.removeItem(key, function (error) {
+	                if (error) {
+	                    reject(error);
+	                } else {
+	                    resolve();
+	                }
+	            });
+	        } else {
+	            delete genericStorage[key];
+	            resolve();
+	        }
+	    });
+	}
+
+/***/ },
+/* 7 */
 /***/ function(module, exports) {
 
 	/*
@@ -656,7 +830,51 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 5 */
+/* 8 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	exports.createUser = createUser;
+	exports.loginWithPassword = loginWithPassword;
+
+	var _libLoginMethod = __webpack_require__(5);
+
+	function createUser(_ref) {
+	    var username = _ref.username;
+	    var email = _ref.email;
+	    var password = _ref.password;
+
+	    var options = {
+	        password: password,
+	        user: {
+	            username: username,
+	            email: email
+	        }
+	    };
+	    return this.call("createUser", options).then(_libLoginMethod.onLogin.bind(this));
+	}
+
+	function loginWithPassword(_ref2) {
+	    var username = _ref2.username;
+	    var email = _ref2.email;
+	    var password = _ref2.password;
+
+	    var loginParameters = {
+	        password: password,
+	        user: {
+	            username: username,
+	            email: email
+	        }
+	    };
+	    return this.call("login", loginParameters).then(_libLoginMethod.onLogin.bind(this));
+	}
+
+/***/ },
+/* 9 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
@@ -684,7 +902,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i]; return arr2; } else { return Array.from(arr); } }
 
-	var _lodashAssign = __webpack_require__(6);
+	var _lodashAssign = __webpack_require__(10);
 
 	var _lodashAssign2 = _interopRequireDefault(_lodashAssign);
 
@@ -692,11 +910,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _wolfy87Eventemitter2 = _interopRequireDefault(_wolfy87Eventemitter);
 
-	var _libSubscriptionCache = __webpack_require__(17);
+	var _libSubscriptionCache = __webpack_require__(21);
 
 	var _libSubscriptionCache2 = _interopRequireDefault(_libSubscriptionCache);
 
-	var _libFingerprintSubJs = __webpack_require__(18);
+	var _libFingerprintSubJs = __webpack_require__(22);
 
 	var _libFingerprintSubJs2 = _interopRequireDefault(_libFingerprintSubJs);
 
@@ -784,7 +1002,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 6 */
+/* 10 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -795,9 +1013,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * Copyright 2009-2015 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
 	 * Available under MIT license <https://lodash.com/license>
 	 */
-	var baseAssign = __webpack_require__(7),
-	    createAssigner = __webpack_require__(13),
-	    keys = __webpack_require__(9);
+	var baseAssign = __webpack_require__(11),
+	    createAssigner = __webpack_require__(17),
+	    keys = __webpack_require__(13);
 
 	/**
 	 * A specialized version of `_.assign` for customizing assigned values without
@@ -870,7 +1088,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 7 */
+/* 11 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -881,8 +1099,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * Copyright 2009-2015 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
 	 * Available under MIT license <https://lodash.com/license>
 	 */
-	var baseCopy = __webpack_require__(8),
-	    keys = __webpack_require__(9);
+	var baseCopy = __webpack_require__(12),
+	    keys = __webpack_require__(13);
 
 	/**
 	 * The base implementation of `_.assign` without support for argument juggling,
@@ -903,7 +1121,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 8 */
+/* 12 */
 /***/ function(module, exports) {
 
 	/**
@@ -941,7 +1159,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 9 */
+/* 13 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -952,9 +1170,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * Copyright 2009-2015 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
 	 * Available under MIT license <https://lodash.com/license>
 	 */
-	var getNative = __webpack_require__(10),
-	    isArguments = __webpack_require__(11),
-	    isArray = __webpack_require__(12);
+	var getNative = __webpack_require__(14),
+	    isArguments = __webpack_require__(15),
+	    isArray = __webpack_require__(16);
 
 	/** Used to detect unsigned integer values. */
 	var reIsUint = /^\d+$/;
@@ -1183,7 +1401,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 10 */
+/* 14 */
 /***/ function(module, exports) {
 
 	/**
@@ -1326,7 +1544,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 11 */
+/* 15 */
 /***/ function(module, exports) {
 
 	/**
@@ -1438,7 +1656,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 12 */
+/* 16 */
 /***/ function(module, exports) {
 
 	/**
@@ -1624,7 +1842,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 13 */
+/* 17 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -1635,9 +1853,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * Copyright 2009-2015 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
 	 * Available under MIT license <https://lodash.com/license>
 	 */
-	var bindCallback = __webpack_require__(14),
-	    isIterateeCall = __webpack_require__(15),
-	    restParam = __webpack_require__(16);
+	var bindCallback = __webpack_require__(18),
+	    isIterateeCall = __webpack_require__(19),
+	    restParam = __webpack_require__(20);
 
 	/**
 	 * Creates a function that assigns properties of source object(s) to a given
@@ -1682,7 +1900,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 14 */
+/* 18 */
 /***/ function(module, exports) {
 
 	/**
@@ -1753,7 +1971,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 15 */
+/* 19 */
 /***/ function(module, exports) {
 
 	/**
@@ -1891,7 +2109,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 16 */
+/* 20 */
 /***/ function(module, exports) {
 
 	/**
@@ -1964,7 +2182,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 17 */
+/* 21 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -2021,7 +2239,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = exports["default"];
 
 /***/ },
-/* 18 */
+/* 22 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -2036,152 +2254,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	module.exports = exports["default"];
-
-/***/ },
-/* 19 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/*
-	*   Login mixin:
-	*    - defines the `login` and `logout` methods
-	*    - exposes the `userId` and `loggedIn` public properties
-	*/
-
-	"use strict";
-
-	Object.defineProperty(exports, "__esModule", {
-	    value: true
-	});
-	exports.login = login;
-	exports.logout = logout;
-	exports.init = init;
-
-	var _libLoginMethod = __webpack_require__(20);
-
-	/*
-	*   Public methods
-	*/
-
-	function login(loginParameters) {
-	    return this.call("login", loginParameters).then(_libLoginMethod.onLogin.bind(this));
-	}
-
-	function logout() {
-	    return this.call("logout").then(_libLoginMethod.onLogout.bind(this));
-	}
-
-	/*
-	*   Init method
-	*/
-
-	function init() {
-	    this.userId = null;
-	    this.loggedIn = false;
-	    this.ddp.on("connected", _libLoginMethod.resumeLogin.bind(this));
-	}
-
-/***/ },
-/* 20 */
-/***/ function(module, exports, __webpack_require__) {
-
-	"use strict";
-
-	Object.defineProperty(exports, "__esModule", {
-	    value: true
-	});
-	exports.onLogin = onLogin;
-	exports.onLogout = onLogout;
-	exports.resumeLogin = resumeLogin;
-
-	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj["default"] = obj; return newObj; } }
-
-	var _libMultiStorageJs = __webpack_require__(21);
-
-	var multiStorage = _interopRequireWildcard(_libMultiStorageJs);
-
-	function onLogin(_ref) {
-	    var id = _ref.id;
-	    var token = _ref.token;
-
-	    this.userId = id;
-	    this.loggedIn = true;
-	    return multiStorage.set(this.endpoint + "__login_token__", token).then(this.emit.bind(this, "loggedIn", id));
-	}
-
-	function onLogout() {
-	    this.userId = null;
-	    this.loggedIn = false;
-	    return multiStorage.del(this.endpoint + "__login_token__").then(this.emit.bind(this, "loggedOut"));
-	}
-
-	function resumeLogin() {
-	    return multiStorage.get(this.endpoint + "__login_token__").then(function (resume) {
-	        if (!resume) {
-	            throw new Error("No login token");
-	        }
-	        return { resume: resume };
-	    }).then(this.login.bind(this))["catch"](onLogout.bind(this));
-	}
-
-/***/ },
-/* 21 */
-/***/ function(module, exports) {
-
-	"use strict";
-
-	Object.defineProperty(exports, "__esModule", {
-	    value: true
-	});
-	exports.get = get;
-	exports.set = set;
-	exports.del = del;
-
-	function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-
-	var genericStorage = {};
-
-	function get(key) {
-	    return new Promise(function (resolve) {
-	        if (typeof chrome !== "undefined" && chrome.storage) {
-	            chrome.storage.local.get(key, function (data) {
-	                return resolve(data[key]);
-	            });
-	        } else if (typeof localStorage !== "undefined") {
-	            resolve(localStorage[key]);
-	        } else {
-	            resolve(genericStorage[key]);
-	        }
-	    });
-	}
-
-	function set(key, value) {
-	    return new Promise(function (resolve) {
-	        if (typeof chrome !== "undefined" && chrome.storage) {
-	            var data = _defineProperty({}, key, value);
-	            chrome.storage.local.set(data, resolve);
-	        } else if (typeof localStorage !== "undefined") {
-	            localStorage[key] = value;
-	            resolve();
-	        } else {
-	            genericStorage[key] = value;
-	            resolve();
-	        }
-	    });
-	}
-
-	function del(key) {
-	    return new Promise(function (resolve) {
-	        if (typeof chrome !== "undefined" && chrome.storage) {
-	            chrome.storage.local.remove(key, resolve);
-	        } else if (typeof localStorage !== "undefined") {
-	            delete localStorage[key];
-	            resolve();
-	        } else {
-	            delete genericStorage[key];
-	            resolve();
-	        }
-	    });
-	}
 
 /***/ }
 /******/ ])
