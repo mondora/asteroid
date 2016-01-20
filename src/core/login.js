@@ -112,7 +112,6 @@ Asteroid.prototype.createUser = function (usernameOrEmail, password, profile) {
 
 Asteroid.prototype.loginWithPassword = function (usernameOrEmail, password) {
 	var self = this;
-	var deferred = Q.defer();
 	var loginParameters = {
 		password: password,
 		user: {
@@ -120,6 +119,12 @@ Asteroid.prototype.loginWithPassword = function (usernameOrEmail, password) {
 			email: Asteroid.utils.isEmail(usernameOrEmail) ? usernameOrEmail : undefined
 		}
 	};
+	return self.login(loginParameters);
+};
+
+Asteroid.prototype.login = function (loginParameters) {
+	var self = this;
+	var deferred = Q.defer();
 	self.ddp.method("login", [loginParameters], function (err, res) {
 		if (err) {
 			delete self.userId;
