@@ -1,4 +1,4 @@
-var genericStorage = {};
+const genericStorage = {};
 
 export function get (key) {
     return new Promise(function (resolve, reject) {

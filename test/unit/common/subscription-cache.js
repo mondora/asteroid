@@ -6,7 +6,7 @@ import sinonChai from "sinon-chai";
 chai.use(chaiAsPromised);
 chai.use(sinonChai);
 
-import SubscriptionCache from "lib/subscription-cache";
+import SubscriptionCache from "common/subscription-cache";
 
 describe("`SubscriptionCache` class", function () {
 

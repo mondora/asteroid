@@ -1,4 +1,4 @@
-import * as multiStorage from "../lib/multi-storage.js";
+import * as multiStorage from "./multi-storage";
 
 export function onLogin ({id, token}) {
     this.userId = id;

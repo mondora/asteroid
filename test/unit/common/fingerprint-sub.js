@@ -3,7 +3,7 @@ import sinonChai from "sinon-chai";
 
 chai.use(sinonChai);
 
-import fingerprintSub from "lib/fingerprint-sub";
+import fingerprintSub from "common/fingerprint-sub";
 
 describe("`fingerprintSub` lib", function () {
 

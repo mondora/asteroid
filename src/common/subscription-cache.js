@@ -19,7 +19,7 @@ export default class SubscriptionCache {
     }
 
     del (idOrFingerprint) {
-        var sub = this.get(idOrFingerprint) || {};
+        const sub = this.get(idOrFingerprint) || {};
         delete this.byFingerprint[sub.fingerprint];
         delete this.byId[sub.id];
     }

@@ -6,7 +6,7 @@ import sinonChai from "sinon-chai";
 chai.use(chaiAsPromised);
 chai.use(sinonChai);
 
-import * as multiStorage from "lib/multi-storage";
+import * as multiStorage from "common/multi-storage";
 
 describe("`multiStorage` lib", function () {
 

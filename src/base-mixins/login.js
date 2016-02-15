@@ -4,7 +4,7 @@
 *    - exposes the `userId` and `loggedIn` public properties
 */
 
-import {onLogin, onLogout, resumeLogin} from "../lib/login-method";
+import {onLogin, onLogout, resumeLogin} from "../common/login-method";
 
 /*
 *   Public methods

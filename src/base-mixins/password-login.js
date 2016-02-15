@@ -1,4 +1,4 @@
-import {onLogin} from "../lib/login-method";
+import {onLogin} from "../common/login-method";
 
 export function createUser ({username, email, password}) {
     const options = {

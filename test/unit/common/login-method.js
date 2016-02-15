@@ -6,7 +6,7 @@ import sinonChai from "sinon-chai";
 chai.use(chaiAsPromised);
 chai.use(sinonChai);
 
-import * as loginMethod from "lib/login-method";
+import * as loginMethod from "common/login-method";
 
 describe("`onLogin` function", function () {
 
