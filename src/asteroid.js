@@ -35,6 +35,7 @@ export function createClass (customMixins) {
     };
 
     Asteroid.prototype = Object.create(EventEmitter.prototype);
+    Asteroid.prototype.constructor = Asteroid;
     // Merge all mixins into Asteroid.prototype
     assign(Asteroid.prototype, ...mixins);
     // And delete the "dangling" init property

@@ -1,17 +1,38 @@
 import chai, {expect} from "chai";
 import sinon from "sinon";
 import sinonChai from "sinon-chai";
+import EventEmitter from "wolfy87-eventemitter";
 
 import * as asteroid from "asteroid";
 
 chai.use(sinonChai);
 
+class SocketConstructorMock {}
+
 describe("`createClass` method", () => {
 
-    it("return a class (function with prototype)", () => {
-        const Asteroid = asteroid.createClass();
-        expect(Asteroid).to.be.a("function");
-        expect(Asteroid.prototype).to.be.an("object");
+    it("returns a class", () => {
+        const Asteroid = asteroid.createClass([]);
+        const a = new Asteroid({
+            SocketConstructor: SocketConstructorMock
+        });
+        expect(a).to.be.an.instanceOf(Asteroid);
+    });
+
+    it("returns a class extending EventEmitter", () => {
+        const Asteroid = asteroid.createClass([]);
+        const a = new Asteroid({
+            SocketConstructor: SocketConstructorMock
+        });
+        expect(a).to.be.an.instanceOf(Asteroid);
+        expect(a).to.be.an.instanceOf(EventEmitter);
+    });
+
+    it("doesn't throw if no mixins are passed", () => {
+        const peacemaker = () => {
+            asteroid.createClass();
+        };
+        expect(peacemaker).not.to.throw();
     });
 
 });
