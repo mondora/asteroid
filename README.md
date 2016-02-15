@@ -128,7 +128,7 @@ The `Asteroid` class.
 
 ### new Asteroid(options)
 
-Creates a new Asteroid instance.
+Creates a new Asteroid instance (which is also an `EventEmitter`).
 
 On instantiation:
 * the `ddp` mixin will automatically connect to the Meteor backend
@@ -157,6 +157,40 @@ An Asteroid instance.
 
 ---
 
+### connect()
+
+Provided by the `ddp` mixin.
+
+Establishes a connection to the ddp server. No-op if a connection is already
+established.
+
+##### Arguments
+
+None.
+
+##### Returns
+
+Nothing.
+
+---
+
+### disconnect()
+
+Provided by the `ddp` mixin.
+
+Terminates the connection to the ddp server. No-op if there's no active
+connection.
+
+##### Arguments
+
+None.
+
+##### Returns
+
+Nothing.
+
+---
+
 ### call(method, [param1, param2, ...])
 
 Provided by the `methods` mixin.
@@ -171,7 +205,8 @@ Calls a server-side method with the specified arguments.
 
 ##### Returns
 
-A promise to the method return value.
+A promise to the method return value (the promise is rejected if the method
+throws).
 
 ---
 
@@ -211,7 +246,15 @@ make sense to re-subscribe).
 
 ##### Returns
 
-A subscription instance.
+A subscription object. Subscription objects have an `id`, which you can
+later use to unsubscribe, and are `EventEmitter`-s. You can listen for the
+following events:
+
+* `ready`: emitted without parameters when the subscription is marked as `ready`
+  by the server
+* `error`: emitted with the error as first and only parameter when the server
+  signals an error occurred on the subscription
+* **TODO** `stopped`: emitted when the subscription stops
 
 ---
 
@@ -307,3 +350,12 @@ None
 ##### Returns
 
 A promise which resolves when the logout succeeds, or rejects when it fails.
+
+---
+
+### Public `Asteroid` events
+
+* `connected` (emitted by the `ddp` mixin)
+* `disconnected` (emitted by the `ddp` mixin)
+* `loggedIn` (emitted by the `login` mixin)
+* `loggedOut` (emitted by the `login` mixin)
