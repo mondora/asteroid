@@ -150,6 +150,8 @@ On instantiation:
     auto-reconnect when the connection drops for whatever reason. This option
     will be ignored - and the connection won't be re-established - if the
     connection is terminated by calling the `disconnect` method
+  * `reconnectInterval` **number** _optional_ [default: 10000]: the interval in
+    ms between reconnection attempts
 
 ##### Returns
 
