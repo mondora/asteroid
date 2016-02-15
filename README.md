@@ -118,7 +118,7 @@ mixins.
 
 ##### Arguments
 
-* `mixins` **Array<object>** _optional_: mixins you want to use
+* `mixins` **Array< object >** _optional_: mixins you want to use
 
 ##### Returns
 
@@ -219,7 +219,7 @@ Same as `call`, but using as array of parameters instead of a list.
 ##### Arguments
 
 * `method` **string** _required_: the name of the method to call
-* `params` **Array<any>** _optional_: an array of parameters passed to the
+* `params` **Array< any >** _optional_: an array of parameters passed to the
   server method
 
 ##### Returns
