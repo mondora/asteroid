@@ -293,7 +293,8 @@ Note: you must specify either `options.username` or `options.email`.
 
 ##### Returns
 
-A promise which resolves when the creation succeeds, or rejects when it fails.
+A promise which resolves to the `userId` of the created user when the creation
+succeeds, or rejects when it fails.
 
 ---
 
@@ -316,7 +317,8 @@ Note: you must specify either `options.username` or `options.email`.
 
 ##### Returns
 
-A promise which resolves when the login succeeds, or rejects when it fails.
+A promise which resolves to the `userId` of the logged in user when the login
+succeeds, or rejects when it fails.
 
 ---
 
@@ -333,7 +335,8 @@ Log in the user.
 
 ##### Returns
 
-A promise which resolves when the login succeeds, or rejects when it fails.
+A promise which resolves to the `userId` of the logged in user when the login
+succeeds, or rejects when it fails.
 
 ---
 
@@ -349,7 +352,8 @@ None
 
 ##### Returns
 
-A promise which resolves when the logout succeeds, or rejects when it fails.
+A promise which resolves to null when the logout succeeds, or rejects when it
+fails.
 
 ---
 

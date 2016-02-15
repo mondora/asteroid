@@ -21,7 +21,7 @@ describe("`login` mixin", () => {
             loginMixin.__ResetDependency__("resumeLogin");
         });
 
-        it("should register the `resumeLogin` function as a handler of the ddp `connected` event", () => {
+        it("registers the `resumeLogin` function as a handler of the ddp `connected` event", () => {
             /*
             *   Here we test indirectly the registration: if the `resumeLogin`
             *   function is called in response to the `connected` event, it
@@ -37,7 +37,7 @@ describe("`login` mixin", () => {
             expect(resumeLogin).to.be.calledOn(instance);
         });
 
-        it("should set the `userId` property to `null`", () => {
+        it("sets the `userId` property to `null`", () => {
             const instance = {
                 ddp: new EventEmitter()
             };
@@ -45,7 +45,7 @@ describe("`login` mixin", () => {
             expect(instance).to.have.property("userId", null);
         });
 
-        it("should set the `loggedIn` property to `false`", () => {
+        it("sets the `loggedIn` property to `false`", () => {
             const instance = {
                 ddp: new EventEmitter()
             };
@@ -57,7 +57,7 @@ describe("`login` mixin", () => {
 
     describe("`login` method", () => {
 
-        const onLogin = sinon.spy();
+        const onLogin = sinon.stub().returns(Promise.resolve("onLoginReturnValue"));
         beforeEach(() => {
             onLogin.reset();
             loginMixin.__Rewire__("onLogin", onLogin);
@@ -66,7 +66,7 @@ describe("`login` mixin", () => {
             loginMixin.__ResetDependency__("onLogin");
         });
 
-        it("should call the `call` instance method with the correct parameters", () => {
+        it("calls the `call` instance method with the correct parameters", () => {
             const instance = {
                 call: sinon.stub().returns(Promise.resolve({}))
             };
@@ -75,7 +75,7 @@ describe("`login` mixin", () => {
             expect(instance.call).to.have.been.calledWith("login", loginParameters);
         });
 
-        it("should call the `onLogin` function when the `call` instance method is resolved", () => {
+        it("calls the `onLogin` function when the `call` instance method is resolved", () => {
             const instance = {
                 call: sinon.stub().returns(Promise.resolve({}))
             };
@@ -87,11 +87,21 @@ describe("`login` mixin", () => {
                 });
         });
 
+        it("eventually returns whatever `onLogin` returns", () => {
+            const instance = {
+                call: sinon.stub().returns(Promise.resolve({}))
+            };
+            return loginMixin.login.call(instance)
+                .then(ret => {
+                    expect(ret).to.equal("onLoginReturnValue");
+                });
+        });
+
     });
 
     describe("`logout` method", () => {
 
-        const onLogout = sinon.spy();
+        const onLogout = sinon.stub().returns(Promise.resolve("onLogoutReturnValue"));
         beforeEach(() => {
             onLogout.reset();
             loginMixin.__Rewire__("onLogout", onLogout);
@@ -100,7 +110,7 @@ describe("`login` mixin", () => {
             loginMixin.__ResetDependency__("onLogout");
         });
 
-        it("should call the `call` instance method with the correct parameters", () => {
+        it("calls the `call` instance method with the correct parameters", () => {
             const instance = {
                 call: sinon.stub().returns(Promise.resolve({}))
             };
@@ -108,7 +118,7 @@ describe("`login` mixin", () => {
             expect(instance.call).to.have.been.calledWith("logout");
         });
 
-        it("should call the `onLogout` function when the `call` instance method is resolved", () => {
+        it("calls the `onLogout` function when the `call` instance method is resolved", () => {
             const instance = {
                 call: sinon.stub().returns(Promise.resolve({}))
             };
@@ -116,6 +126,16 @@ describe("`login` mixin", () => {
                 .then(() => {
                     expect(onLogout).to.have.callCount(1);
                     expect(onLogout).to.have.calledOn(instance);
+                });
+        });
+
+        it("eventually returns whatever `onLogout` returns", () => {
+            const instance = {
+                call: sinon.stub().returns(Promise.resolve({}))
+            };
+            return loginMixin.logout.call(instance)
+                .then(ret => {
+                    expect(ret).to.equal("onLogoutReturnValue");
                 });
         });
 
