@@ -1,59 +1,46 @@
+[![npm version](https://badge.fury.io/js/asteroid.svg)](https://badge.fury.io/js/asteroid)
 [![Build Status](https://travis-ci.org/mondora/asteroid.svg?branch=master)](https://travis-ci.org/mondora/asteroid)
-[![Coverage Status](https://coveralls.io/repos/mondora/asteroid/badge.svg)](https://coveralls.io/r/mondora/asteroid)
+[![Coverage Status](https://img.shields.io/coveralls/mondora/asteroid.svg)](https://coveralls.io/r/mondora/asteroid?branch=master)
+[![Dependency Status](https://david-dm.org/mondora/asteroid.svg)](https://david-dm.org/mondora/asteroid)
+[![devDependency Status](https://david-dm.org/mondora/asteroid/dev-status.svg)](https://david-dm.org/mondora/asteroid#info=devDependencies)
 
 # asteroid
 
 A javascript client (node) for a Meteor backend.
 
-## Table of contents
-
-[Why](#why)
-
-[Install](#install)
-
-[Mixin](#available-mixins)
-
-[Example usage](#example-usage)
-
-[Advantages over the canonical Meteor front-end](#advantages-over-the-canonical-meteor-front-end)
-
-[Build asteroid locally](#build-asteroid-locally)
-
 ## Why
 
-Meteor is an awesome platform, but its canonical front-end is not very flexible.
-Asteroid gives the possibility to connect to a Meteor backend with any JS app.
+Meteor is an awesome framework for building real-time APIs. Its canonical
+front-end framework however is not very flexible. Adopting other front-ends
+comes with the cost of having to work around the limitations of meteor's build
+tool, which makes it very difficult, for instance, to use other tools like
+webpack, or to manage dependencies via `npm`.
 
-Some of the things Asteroid allows you to do are:
+Asteroid is an isomorphic/universal javascript library which allows to connect
+to a Meteor backend from almost any JS environment.
 
-*	make any existing application reactive
+With Asteroid you can:
+* hook any existing application to a real-time meteor API
+* use any front-end framework you want with a Meteor backend
+* develop browser extensions backed by Meteor
+* use Meteor as a backend for a react-native app
 
-*	use any front-end framework you want with Meteor
+### Advantages over the canonical Meteor front-end
 
-*	develop browser extensions backed by Meteor
-
-*   use a Meteor backend for react-native
+* Small footprint
+* Framework agnostic. Use the tools you already know and love to build your app
+* Allows to use Meteor as a full-blown backend or just as a real-time platform
+  pluggable into any existing project
+* Easily connect to multiple Meteor servers at the same time, perfect for
+  building admin interfaces
 
 ## Install
 
-Download the package:
-
-```sh
     npm install --save asteroid
-```
 
-Require it in your project:
+## Usage
 
-```javascript
-    import {createClass} from "asteroid";
-```
-
-
-## Example usage
-
-In this example we use asteroid with the immutable mixin:
-
-```javascript
+```js
 import {createClass} from "asteroid";
 
 const Asteroid = createClass();
@@ -63,7 +50,7 @@ const asteroid = new Asteroid({
 });
 
 // Use real-time collections
-asteroid.subscribe("tasksPubblication");
+asteroid.subscribe("tasksPublication");
 
 asteroid.ddp.on("added", ({collection, id, fields}) => {
     console.log(`Element added to collection ${collection}`);
@@ -71,179 +58,293 @@ asteroid.ddp.on("added", ({collection, id, fields}) => {
     console.log(fields);
 });
 
-// Login with password-login
+// Login
 asteroid.loginWithPassword({username, email, password});
 
 // Call method and use promises
-var ret = asteroid.call("newUser");
-
-ret.result
-    .then(function (result) {
-        console.log("Success: ", result);
+asteroid.call("newUser")
+    .then(result => {
+        console.log("Success");
+        console.log(result);
     })
-    .catch(function (error) {
-        console.error("Error: ", error);
+    .catch(error => {
+        console.log("Error");
+        console.error(error);
     });
-
 ```
 
-## Mixin
+## Mixins
 
-With the method `createClass`, it's possible to add other mixin to the
-base-mixins.
+Mixins are used to extend Asteroid's functionalities. You add mixins by passing
+them to the `createClass` function.
 
-### Available mixins
+A mixin is an object with a set of enumerable function properties. Those
+functions will all be mixed into `Asteroid.prototype`. The special function
+`init` won't end up the in `prototype`. Instead it will be called on
+instantiation with the arguments passed to the constructor.
 
-The mixins now available are:
+### Included mixins
 
-*   asteroid-immutable-collections-mixin
+* `ddp`: establishes the ddp connection
+* `methods`: adds methods for invoking ddp remote methods
+* `subscriptions`: adds methods for subscribing to ddp publications
+* `login`: adds methods for logging in
+* `password-login`: adds methods for password logins / user creation
 
-*   asteroid-oauth-mixinx
+### Third-party mixins
 
+* [asteroid-immutable-collections-mixin](https://github.com/mondora/asteroid-immutable-collections-mixin):
+  stores collections published by the server into an immutable map
+* [asteroid-oauth-mixinx](https://github.com/mondora/asteroid-oauth-mixin):
+  allows logging in via oauth
 
+## Development environment setup
 
-## Advantages over the canonical Meteor front-end
-
-* Small footprint.
-
-* Framework agnostic. Use the tools you already know and love to build your app.
-
-* Allows to use Meteor as a full-blown backend or just as a real-time platform
-  pluggable into any existing project.
-
-* Easily connect to multiple Meteor servers at the same time, perfect for
-  building admin interfaces.
-
-
-## Build asteroid locally
-
-Clone the repository (or your fork) on your computer.
-
-```sh
-    git clone https://github.com/mondora/asteroid.git
-```
-
-Enter the project's directory and install the required dependencies:
-
-```sh
-    cd asteroid/
-    npm install
-```
-
-Start the development environment:
-
-```sh
-    npm run dev
-```
+After cloning the repository, install `npm` dependencies with `npm install`.
+Run `npm test` to run unit tests, or `npm run dev` to have `mocha` re-run your
+tests when source or test files change.
 
 ## Contribute
 
-Contributions are as always very very welcome. If you have written some mixin
-for asteroid, we can insert it in the asteroid documentation.
+Contributions are as always very welcome. If you have written a mixin for
+asteroid, feel free to make a PR to add it to this README.
 
 ## API
 
-## Asteroid methods
+### module.createClass([mixins])
 
-### createClass([mixin])
-
-Create the asteroid class, with the base-mixin already in asteroid and any mixin
-that you want to add.
+Create the `Asteroid` class. Any passed-in mixins will be added to the default
+mixins.
 
 ##### Arguments
 
-* `mixin` **function** _optional_: the mixin that you want to add
+* `mixins` **Array< object >** _optional_: mixins you want to use
 
 ##### Returns
 
-The Asteroid class.
+The `Asteroid` class.
 
---------------------------------------------------------------------------------
+---
 
-### new Asteroid({endpoint, SocketConstructor, arguments})
+### new Asteroid(options)
 
-Creates a new Asteroid instance, that is, a connection to a
-Meteor server (via DDP).
+Creates a new Asteroid instance (which is also an `EventEmitter`).
 
-After being constructed, the instance will connect itself to the Meteor backend.
-It will also try, upon connection, to resume a previous login session (with a
-token saved in localstorage). The `Asteroid.resumeLogin` property stores a
-promise which will be resolved if the resume was successful, rejected otherwise.
-
-If `SocketConstructor` is defined, it will be used as the socket transport.
-Otherwise `WebSocket` will be used. Note that `SocketConstructor` is required
-for IE9 support.
+On instantiation:
+* the `ddp` mixin will automatically connect to the Meteor backend
+* the `login` mixin will try to resume a previous session
 
 ##### Arguments
 
-* `endpoint` **string** _required_: the address of the Meteor server, e.g.
-`example.meteor.com`.
-
-* `arguments` **all** _optional_: all the arguments that are needed to the
-`init` method of the mixins that you have added.
+* `options` **object** _required_:
+  * `endpoint` **string** _required_: the DDP endpoint to connect to, e.g.
+    `ws://example.com/websocket`
+  * `SocketConstructor` **function** _optional_ [default: `WebSocket`]: the
+    class to be used to create the websocket connection to the server. In node,
+    use `faye-websocket-node`'s `Client`. In older browsers which do not support
+    `WebSocket`, use `sockjs-client`'s `SockJS`
+  * `autoConnect` **boolean** _optional_ [default: `true`]: whether to
+    auto-connect to the server on instantiation. Otherwise the `connect` method
+    can be used to establish the connection
+  * `autoReconnect` **boolean** _optional_ [default: `true`]: wheter to
+    auto-reconnect when the connection drops for whatever reason. This option
+    will be ignored - and the connection won't be re-established - if the
+    connection is terminated by calling the `disconnect` method
+  * `reconnectInterval` **number** _optional_ [default: 10000]: the interval in
+    ms between reconnection attempts
 
 ##### Returns
 
 An Asteroid instance.
 
-------------------------------------------------------------------------------
+---
 
+### connect()
 
-### createUser({username, email, password})
+Provided by the `ddp` mixin.
+
+Establishes a connection to the ddp server. No-op if a connection is already
+established.
+
+##### Arguments
+
+None.
+
+##### Returns
+
+Nothing.
+
+---
+
+### disconnect()
+
+Provided by the `ddp` mixin.
+
+Terminates the connection to the ddp server. No-op if there's no active
+connection.
+
+##### Arguments
+
+None.
+
+##### Returns
+
+Nothing.
+
+---
+
+### call(method, [param1, param2, ...])
+
+Provided by the `methods` mixin.
+
+Calls a server-side method with the specified arguments.
+
+##### Arguments
+
+* `method` **string** _required_: the name of the method to call
+* `param1, param2, ...` **...any** _optional_: parameters passed to the server
+  method
+
+##### Returns
+
+A promise to the method return value (the promise is rejected if the method
+throws).
+
+---
+
+### apply(method, params)
+
+Provided by the `methods` mixin.
+
+Same as `call`, but using as array of parameters instead of a list.
+
+##### Arguments
+
+* `method` **string** _required_: the name of the method to call
+* `params` **Array< any >** _optional_: an array of parameters passed to the
+  server method
+
+##### Returns
+
+Same as `call`, see above.
+
+---
+
+### subscribe(name, [param1, param2, ...])
+
+Provided by the `subscriptions` mixin.
+
+Subscribes to the specified publication. If an identical subscription (name
+and parameters) has already been made, Asteroid will not re-subscribe and
+return that subscription instead (subscriptions are idempotent, so it does not
+make sense to re-subscribe).
+
+##### Arguments
+
+* `name` **string** _required_: the name of the publication
+
+* `param1, param2, ...` **...any** _optional_: a list of parameters that are
+  passed to the publication function on the server
+
+##### Returns
+
+A subscription object. Subscription objects have an `id`, which you can
+later use to unsubscribe, and are `EventEmitter`-s. You can listen for the
+following events:
+
+* `ready`: emitted without parameters when the subscription is marked as `ready`
+  by the server
+* `error`: emitted with the error as first and only parameter when the server
+  signals an error occurred on the subscription
+* **TODO** `stopped`: emitted when the subscription stops
+
+---
+
+### unsubscribe(id)
+
+Provided by the `subscriptions` mixin.
+
+Unsubscribes from a publication.
+
+##### Arguments
+
+* `id` **string** _required_: the `id` of the subscription
+
+##### Returns
+
+Nothing.
+
+---
+
+### createUser(options)
+
+Provided by the `password-login` mixin.
 
 Creates a user and logs him in. **Does not** hash the password before sending
-it to the server. This is not a problem, since you'll probably be using SSL
-anyway.
+it to the server. This should not be a problem, since you'll probably be using
+SSL anyway.
 
 ##### Arguments
 
-* `username and/or email` **string** _required_: the username and email.
+* `options` **object** _required_:
+  * `username` **string** _optional_
+  * `email` **string** _optional_
+  * `password` **string** _required_
 
-* `password` **string** _required_: the password.
+Note: you must specify either `options.username` or `options.email`.
 
 ##### Returns
 
-A promise which will be resolved with the logged user id if the creation and
-login are successful. Otherwise it'll be rejected with an error.
+A promise which resolves to the `userId` of the created user when the creation
+succeeds, or rejects when it fails.
 
-------------------------------------------------------------------------------
+---
 
-### loginWithPassword({username, email, password})
+### loginWithPassword(options)
 
-Logs the user in username/email and password. **Does not** hash the password
-before sending it to the server. This is not a problem, since you'll probably
-be using SSL anyway.
+Provided by the `password-login` mixin.
+
+Logs the user in using username/email and password. **Does not** hash the
+password before sending it to the server. This should not be a problem, since
+you'll probably be using SSL anyway.
 
 ##### Arguments
 
-* `username and/or email` **string** _required_: the username and/or email.
+* `options` **object** _required_:
+  * `username` **string** _optional_
+  * `email` **string** _optional_
+  * `password` **string** _required_
 
-* `password` **string** _required_: the password.
+Note: you must specify either `options.username` or `options.email`.
 
 ##### Returns
 
-A promise which will be resolved with the logged user id if the login is
-successful. Otherwise it'll be rejected with an error.
+A promise which resolves to the `userId` of the logged in user when the login
+succeeds, or rejects when it fails.
 
-------------------------------------------------------------------------------
+---
 
 ### login(params)
+
+Provided by the `login` mixin.
 
 Log in the user.
 
 ##### Arguments
 
-* `params` **string** _required_: params to pass for login with a custom
-provider.
+* `params` **object** _required_: params to pass for login with a custom
+  provider
 
 ##### Returns
 
-A promise which will be resolved with the logged user id if the login is
-successful. Otherwise it'll be rejected with an error.
+A promise which resolves to the `userId` of the logged in user when the login
+succeeds, or rejects when it fails.
 
-------------------------------------------------------------------------------
+---
 
 ### logout()
+
+Provided by the `login` mixin.
 
 Logs out the user.
 
@@ -253,85 +354,14 @@ None
 
 ##### Returns
 
-A promise which will be resolved with if the logout is successful. Otherwise
-it'll be rejected with the error.
+A promise which resolves to null when the logout succeeds, or rejects when it
+fails.
 
-------------------------------------------------------------------------------
-### subscribe(name, [param1, param2, ...])
+---
 
-Subscribes to the specified subscription. If an identical subscription (name
-and parameters) has already been made, Asteroid will return that subscription.
+### Public `Asteroid` events
 
-##### Arguments
-
-* `name` **string** _required_: the name of the subscription.
-
-* `param1, param2, ...` _optional_: a list of parameters
-  that will be passed to the publish function on the server.
-
-##### Returns
-
-A subscription instance.
-
-------------------------------------------------------------------------------
-### unsubscribe(id)
-
-Subscription instances have the following properties:
-
-##### Arguments
-
-* `id` **string** _required_: the `id` of the subscription, as
-  returned by the `ddp.sub` method
-
-##### Returns
-
-Sends the ddp `unsub` message and deletes the subscription so it can be
-garbage collected.
-
-------------------------------------------------------------------------------
-
-### call(method, [param1, param2, ...])
-
-Calls a server-side method with the specified arguments.
-
-##### Arguments
-
-* `method` **string** _required_: the name of the method to call.
-
-* `param1, param2, ...` _optional_: a list of parameters that will be passed
-to the method on the server.
-
-##### Returns
-
-An object with two properties: `result` and `updated`. Both properties are
-promises.
-
-If the method is successful, the `result` promise will be resolved with the
-return value passed by the server. The `updated` promise will be resolved with
-nothing once the server emits the `updated` message, that tells the client
-that any side-effect that the method execution caused on the database has been
-reflected on the client (for example, if the method caused the insertion of an
-item into a collection, the client has been notified of said insertion).
-
-If the method fails, the `result` promise will be rejected with the error
-returned by the server. The `updated` promise will be rejected as well (with
-nothing).
-
-------------------------------------------------------------------------------
-
-### apply(method, params)
-
-Same as `call`, but using as array of parameters instead of a list.
-
-##### Arguments
-
-* `method` **string** _required_: the name of the method to call.
-
-* `params` **array** _optional_: an array of parameters that will be passed to
-the method on the server.
-
-##### Returns
-
-Same as `call`, see above.
-
-------------------------------------------------------------------------------
+* `connected` (emitted by the `ddp` mixin)
+* `disconnected` (emitted by the `ddp` mixin)
+* `loggedIn` (emitted by the `login` mixin)
+* `loggedOut` (emitted by the `login` mixin)

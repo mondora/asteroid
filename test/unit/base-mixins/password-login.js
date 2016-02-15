@@ -3,27 +3,25 @@ import chaiAsPromised from "chai-as-promised";
 import sinon from "sinon";
 import sinonChai from "sinon-chai";
 
+import * as passwordLogin from "base-mixins/password-login";
+
 chai.use(chaiAsPromised);
 chai.use(sinonChai);
 
-import * as passwordLogin from "base-mixins/password-login";
-
-describe("`passwordLogin` mixin", function () {
+describe("`passwordLogin` mixin", () => {
 
     const onLogin = sinon.spy();
-
-    beforeEach(function () {
+    beforeEach(() => {
         onLogin.reset();
         passwordLogin.__Rewire__("onLogin", onLogin);
     });
-
-    afterEach(function () {
+    afterEach(() => {
         passwordLogin.__ResetDependency__("onLogin");
     });
 
-    describe("`createUser` method", function () {
+    describe("`createUser` method", () => {
 
-        it("should call the `call` instance method with the correct parameters", function () {
+        it("should call the `call` instance method with the correct parameters", () => {
             const instance = {
                 call: sinon.stub().returns(Promise.resolve({}))
             };
@@ -43,7 +41,7 @@ describe("`passwordLogin` mixin", function () {
             expect(instance.call).to.have.been.calledWith("createUser", expectedParameter);
         });
 
-        it("should call the `onLogin` function when the `call` instance method is resolved", function () {
+        it("should call the `onLogin` function when the `call` instance method is resolved", () => {
             const instance = {
                 call: sinon.stub().returns(Promise.resolve({}))
             };
@@ -53,7 +51,7 @@ describe("`passwordLogin` mixin", function () {
                 password: "password"
             };
             return passwordLogin.createUser.call(instance, options)
-                .then(function () {
+                .then(() => {
                     expect(onLogin).to.have.callCount(1);
                     expect(onLogin).to.have.calledOn(instance);
                 });
@@ -61,9 +59,9 @@ describe("`passwordLogin` mixin", function () {
 
     });
 
-    describe("`loginWithPassword` method", function () {
+    describe("`loginWithPassword` method", () => {
 
-        it("should call the `call` instance method with the correct parameters", function () {
+        it("should call the `call` instance method with the correct parameters", () => {
             const instance = {
                 call: sinon.stub().returns(Promise.resolve({}))
             };
@@ -83,7 +81,7 @@ describe("`passwordLogin` mixin", function () {
             expect(instance.call).to.have.been.calledWith("login", expectedParameter);
         });
 
-        it("should call the `onLogin` function when the `call` instance method is resolved", function () {
+        it("should call the `onLogin` function when the `call` instance method is resolved", () => {
             const instance = {
                 call: sinon.stub().returns(Promise.resolve({}))
             };
@@ -93,7 +91,7 @@ describe("`passwordLogin` mixin", function () {
                 password: "password"
             };
             return passwordLogin.loginWithPassword.call(instance, options)
-                .then(function () {
+                .then(() => {
                     expect(onLogin).to.have.callCount(1);
                     expect(onLogin).to.have.calledOn(instance);
                 });

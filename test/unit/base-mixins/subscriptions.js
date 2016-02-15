@@ -4,16 +4,16 @@ import sinon from "sinon";
 import sinonChai from "sinon-chai";
 import EventEmitter from "wolfy87-eventemitter";
 
+import * as subscriptionsMixin from "base-mixins/subscriptions";
+
 chai.use(chaiAsPromised);
 chai.use(sinonChai);
 
-import * as subscriptionsMixin from "base-mixins/subscriptions";
+describe("`subscriptions` mixin", () => {
 
-describe("`subscriptions` mixin", function () {
+    describe("`ready` event handler", () => {
 
-    describe("`ready` event handler", function () {
-
-        it("triggers the `ready` event on the appropriate subscriptions", function () {
+        it("triggers the `ready` event on the appropriate subscriptions", () => {
             const instance = {
                 ddp: new EventEmitter()
             };
@@ -34,9 +34,9 @@ describe("`subscriptions` mixin", function () {
 
     });
 
-    describe("`nosub` event handler", function () {
+    describe("`nosub` event handler", () => {
 
-        it("triggers the `error` event on the appropriate subscription if an error occurred", function () {
+        it("triggers the `error` event on the appropriate subscription if an error occurred", () => {
             const instance = {
                 ddp: new EventEmitter()
             };
@@ -53,7 +53,7 @@ describe("`subscriptions` mixin", function () {
             expect(emit2).to.have.callCount(0);
         });
 
-        it("does not trigger the `error` event if no error occurred", function () {
+        it("does not trigger the `error` event if no error occurred", () => {
             const instance = {
                 ddp: new EventEmitter()
             };
@@ -69,7 +69,7 @@ describe("`subscriptions` mixin", function () {
             expect(emit2).to.have.callCount(0);
         });
 
-        it("deletes the subscription from the cache", function () {
+        it("deletes the subscription from the cache", () => {
             const instance = {
                 ddp: new EventEmitter()
             };
@@ -91,9 +91,9 @@ describe("`subscriptions` mixin", function () {
 
     });
 
-    describe("`connected` event handler", function () {
+    describe("`connected` event handler", () => {
 
-        it("triggers a re-subscription to cached subscriptions which are not still in ddp's queue", function () {
+        it("triggers a re-subscription to cached subscriptions which are not still in ddp's queue", () => {
             const instance = {
                 ddp: new EventEmitter(),
                 subscribe: sinon.spy()
@@ -118,7 +118,7 @@ describe("`subscriptions` mixin", function () {
             expect(instance.subscribe.secondCall).to.have.been.calledWith("n2", "2", "22", "222");
         });
 
-        it("doesn't trigger a re-subscription to cached subscriptions which are still in ddp's queue", function () {
+        it("doesn't trigger a re-subscription to cached subscriptions which are still in ddp's queue", () => {
             const instance = {
                 ddp: new EventEmitter(),
                 subscribe: sinon.spy()
@@ -144,9 +144,9 @@ describe("`subscriptions` mixin", function () {
 
     });
 
-    describe("`subscribe` method", function () {
+    describe("`subscribe` method", () => {
 
-        it("returns the subscription from cache if it's present", function () {
+        it("returns the subscription from cache if it's present", () => {
             const cachedSub = {};
             const instance = {
                 subscriptions: {
@@ -163,7 +163,7 @@ describe("`subscriptions` mixin", function () {
             expect(instance.ddp.sub).to.have.callCount(0);
         });
 
-        it("subscribes and saves the subscription to cache if it's not present", function () {
+        it("subscribes and saves the subscription to cache if it's not present", () => {
             const instance = {
                 subscriptions: {
                     cache: {
@@ -185,9 +185,9 @@ describe("`subscriptions` mixin", function () {
 
     });
 
-    describe("`unsubscribe` method", function () {
+    describe("`unsubscribe` method", () => {
 
-        it("calls `ddp.unsub`", function () {
+        it("calls `ddp.unsub`", () => {
             const instance = {
                 ddp: {
                     unsub: sinon.spy()

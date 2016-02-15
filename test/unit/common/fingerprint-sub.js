@@ -1,13 +1,13 @@
 import chai, {expect} from "chai";
 import sinonChai from "sinon-chai";
 
+import fingerprintSub from "common/fingerprint-sub";
+
 chai.use(sinonChai);
 
-import fingerprintSub from "lib/fingerprint-sub";
+describe("`fingerprintSub` lib", () => {
 
-describe("`fingerprintSub` lib", function () {
-
-    it("should return a fingerprint (implemented by JSON.stringify) of the subscription", function () {
+    it("should return a fingerprint (implemented by JSON.stringify) of the subscription", () => {
         const name = "name";
         const params = ["param1", "param2"];
         const ret = fingerprintSub(name, params);

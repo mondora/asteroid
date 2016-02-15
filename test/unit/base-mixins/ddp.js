@@ -1,31 +1,50 @@
 import chai, {expect} from "chai";
+import DDP from "ddp.js";
 import sinon from "sinon";
 import sinonChai from "sinon-chai";
-import takeTen from "../take-ten";
+
+import {init, connect, disconnect} from "base-mixins/ddp";
 
 chai.use(sinonChai);
 
-import {init} from "base-mixins/ddp";
-
 class SocketConstructorMock {}
 
-describe("`ddp` mixin", function () {
+describe("`ddp` mixin", () => {
 
-    it("should expose the `endpoint` public property", function () {
-        const instance = {
-            emit: sinon.spy()
-        };
-        const options = {
-            endpoint: "endpoint",
-            SocketConstructor: SocketConstructorMock
-        };
-        init.call(instance, options);
-        expect(instance.endpoint).to.equal("endpoint");
+    beforeEach(() => {
+        sinon.stub(global, "setTimeout", fn => fn());
+    });
+    afterEach(() => {
+        global.setTimeout.restore();
     });
 
-    describe("`connected` event handler", function () {
+    describe("`init` method", () => {
 
-        it("emit `connected` event", function (done) {
+        it("creates a DDP instance and stores it on the `ddp` property", () => {
+            const instance = {};
+            const options = {
+                endpoint: "endpoint",
+                SocketConstructor: SocketConstructorMock
+            };
+            init.call(instance, options);
+            expect(instance.ddp).to.be.an.instanceOf(DDP);
+        });
+
+        it("should expose the `endpoint` public property", () => {
+            const instance = {};
+            const options = {
+                endpoint: "endpoint",
+                SocketConstructor: SocketConstructorMock
+            };
+            init.call(instance, options);
+            expect(instance.endpoint).to.equal("endpoint");
+        });
+
+    });
+
+    describe("`connected` event handler", () => {
+
+        it("emit `connected` event", () => {
             const instance = {
                 emit: sinon.spy()
             };
@@ -35,16 +54,14 @@ describe("`ddp` mixin", function () {
             };
             init.call(instance, options);
             instance.ddp.emit("connected");
-            takeTen(() => {
-                expect(instance.emit).to.have.been.calledWith("connected");
-            }, done);
+            expect(instance.emit).to.have.been.calledWith("connected");
         });
 
     });
 
-    describe("`disconnected` event handler", function () {
+    describe("`disconnected` event handler", () => {
 
-        it("emit `disconnected` event", function (done) {
+        it("emit `disconnected` event", () => {
             const instance = {
                 emit: sinon.spy()
             };
@@ -54,9 +71,35 @@ describe("`ddp` mixin", function () {
             };
             init.call(instance, options);
             instance.ddp.emit("disconnected");
-            takeTen(() => {
-                expect(instance.emit).to.have.been.calledWith("disconnected");
-            }, done);
+            expect(instance.emit).to.have.been.calledWith("disconnected");
+        });
+
+    });
+
+    describe("`connect` method", () => {
+
+        it("calls the `ddp.connect` method", () => {
+            const instance = {
+                ddp: {
+                    connect: sinon.spy()
+                }
+            };
+            connect.call(instance);
+            expect(instance.ddp.connect).to.have.callCount(1);
+        });
+
+    });
+
+    describe("`disconnect` method", () => {
+
+        it("calls the `ddp.disconnect` method", () => {
+            const instance = {
+                ddp: {
+                    disconnect: sinon.spy()
+                }
+            };
+            disconnect.call(instance);
+            expect(instance.ddp.disconnect).to.have.callCount(1);
         });
 
     });
