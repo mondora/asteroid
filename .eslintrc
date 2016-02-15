@@ -1,12 +1,11 @@
-
 {
     "extends": "eslint:recommended",
     "parser": "babel-eslint",
     "env": {
         "browser": true,
-        "es6": true,
         "mocha": true,
-        "node": true
+        "node": true,
+        "meteor": true
     },
     "globals": {
         "chrome": true,
@@ -16,10 +15,10 @@
         "brace-style": [2, "1tbs"],
         "comma-spacing": [2, {"before": false, "after": true}],
         "computed-property-spacing": [2, "never"],
-        "dot-notation": [0],
         "indent": [2, 4],
         "linebreak-style": [2, "unix"],
         "new-cap": [2, {"capIsNew": false}],
+        "no-console": [0],
         "no-multi-spaces": [0],
         "no-underscore-dangle": [0],
         "object-curly-spacing": [2, "never"],
@@ -30,7 +29,6 @@
         "space-before-blocks": [2, "always"],
         "space-before-function-paren": [2, "always"],
         "space-in-parens": [2, "never"],
-        "spaced-comment": [2, "always"],
         "strict": [2, "never"]
     }
 }
