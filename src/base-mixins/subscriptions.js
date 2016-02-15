@@ -12,6 +12,7 @@
 
 import assign from "lodash.assign";
 import EventEmitter from "wolfy87-eventemitter";
+
 import SubscriptionCache from "../common/subscription-cache";
 import fingerprintSub from "../common/fingerprint-sub";
 
