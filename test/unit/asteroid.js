@@ -35,6 +35,16 @@ describe("`createClass` method", () => {
         expect(peacemaker).not.to.throw();
     });
 
+    it("instantiation doesn't throw if no mixins are passed", () => {
+        const Asteroid = asteroid.createClass();
+        const peacemaker = () => {
+            new Asteroid({
+                SocketConstructor: SocketConstructorMock
+            });
+        };
+        expect(peacemaker).not.to.throw();
+    });
+
 });
 
 describe("The `Asteroid` class returned by `createClass`", () => {

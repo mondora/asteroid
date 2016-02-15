@@ -23,7 +23,7 @@ import * as subscriptions from "./base-mixins/subscriptions";
 *   ```
 */
 
-export function createClass (customMixins) {
+export function createClass (customMixins = []) {
 
     // Include base mixins before custom ones
     const mixins = [ddp, methods, subscriptions, login, loginWithPassword]

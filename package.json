@@ -13,7 +13,7 @@
     "prepublish": "npm run clean && npm run build",
     "test": "env NODE_ENV=test env NODE_PATH=src mocha --compilers js:babel-core/register --recursive test/unit",
     "start-meteor": "cd test/server/ && meteor",
-    "e2e-test": "mocha --compilers js:babel-core/register --recursive test/e2e",
+    "e2e-test": "env NODE_ENV=test env NODE_PATH=src mocha --compilers js:babel-core/register --recursive test/e2e",
     "e2e-dev": "npm run e2e-test -- --watch"
   },
   "repository": {
@@ -42,6 +42,7 @@
     "chai-as-promised": "^5.2.0",
     "coveralls": "^2.11.6",
     "eslint": "^1.10.3",
+    "faye-websocket": "^0.10.0",
     "isparta": "^4.0.0",
     "mocha": "^2.4.5",
     "sinon": "^1.17.3",

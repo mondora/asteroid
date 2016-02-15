@@ -32,10 +32,18 @@ export function init (options) {
         endpoint,
         SocketConstructor = WebSocket,
         autoConnect,
-        autoReconnect
+        autoReconnect,
+        reconnectInterval
     } = options;
     this.endpoint = endpoint;
-    this.ddp = new DDP({endpoint, SocketConstructor, autoConnect, autoReconnect})
+    const ddpOptions = {
+        endpoint,
+        SocketConstructor,
+        autoConnect,
+        autoReconnect,
+        reconnectInterval
+    };
+    this.ddp = new DDP(ddpOptions)
         .on("connected", () => this.emit("connected"))
         .on("disconnected", () => this.emit("disconnected"));
 }
