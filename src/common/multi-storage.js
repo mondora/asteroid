@@ -1,7 +1,7 @@
 const genericStorage = {};
 
 export function get (key) {
-    return new Promise(function (resolve, reject) {
+    return new Promise((resolve, reject) => {
         if (typeof chrome !== "undefined" && chrome.storage) {
             chrome.storage.local.get(key, data => resolve(data[key]));
         } else if (typeof localStorage !== "undefined") {
@@ -21,7 +21,7 @@ export function get (key) {
 }
 
 export function set (key, value) {
-    return new Promise(function (resolve, reject) {
+    return new Promise((resolve, reject) => {
         if (typeof chrome !== "undefined" && chrome.storage) {
             const data = {
                 [key]: value
@@ -46,7 +46,7 @@ export function set (key, value) {
 }
 
 export function del (key) {
-    return new Promise(function (resolve, reject) {
+    return new Promise((resolve, reject) => {
         if (typeof chrome !== "undefined" && chrome.storage) {
             chrome.storage.local.remove(key, resolve);
         } else if (typeof localStorage !== "undefined") {

@@ -3,23 +3,23 @@ import chaiAsPromised from "chai-as-promised";
 import sinon from "sinon";
 import sinonChai from "sinon-chai";
 
+import * as multiStorage from "common/multi-storage";
+
 chai.use(chaiAsPromised);
 chai.use(sinonChai);
 
-import * as multiStorage from "common/multi-storage";
+describe("`multiStorage` lib", () => {
 
-describe("`multiStorage` lib", function () {
+    describe("`get` method", () => {
 
-    describe("`get` method", function () {
-
-        it("should return a Promise", function () {
+        it("should return a Promise", () => {
             const ret = multiStorage.get.call("key");
             expect(ret).to.be.an.instanceOf(Promise);
         });
 
-        describe("`chrome` storage", function () {
+        describe("`chrome` storage", () => {
 
-            before(function () {
+            before(() => {
                 global.chrome = {
                     storage: {
                         local: {
@@ -32,53 +32,50 @@ describe("`multiStorage` lib", function () {
                     }
                 };
             });
-
-            after(function () {
+            after(() => {
                 delete global.chrome;
             });
 
-            it("should resolve the promise with the correct parameters", function () {
+            it("should resolve the promise with the correct parameters", () => {
                 return expect(multiStorage.get("key")).to.become("value");
             });
 
         });
 
-        describe("`localStorage`", function () {
+        describe("`localStorage`", () => {
 
-            before(function () {
+            before(() => {
                 global.localStorage = {
                     key: "value"
                 };
             });
-
-            after(function () {
+            after(() => {
                 delete global.localStorage;
             });
 
-            it("should resolve the promise with the correct parameters", function () {
+            it("should resolve the promise with the correct parameters", () => {
                 return expect(multiStorage.get("key")).to.become("value");
             });
 
         });
 
-        describe("`react-native` storage", function () {
+        describe("`react-native` storage", () => {
 
-            before(function () {
+            before(() => {
                 global.AsyncStorage = {};
             });
-
-            after(function () {
+            after(() => {
                 delete global.AsyncStorage;
             });
 
-            it("should resolve the promise with the correct parameters", function () {
+            it("should resolve the promise with the correct parameters", () => {
                 global.AsyncStorage.getItem = sinon.spy(function (key, cb) {
                     cb(undefined, "value");
                 });
                 return expect(multiStorage.get("key")).to.become("value");
             });
 
-            it("should reject the promise if there is an error", function () {
+            it("should reject the promise if there is an error", () => {
                 global.AsyncStorage.getItem = sinon.spy(function (key, cb) {
                     cb("error", undefined);
                 });
@@ -87,19 +84,17 @@ describe("`multiStorage` lib", function () {
 
         });
 
-        describe("`genericStorage`", function () {
+        describe("`genericStorage`", () => {
 
             const genericStorage = {key: "value"};
-
-            before(function () {
+            before(() => {
                 multiStorage.__Rewire__("genericStorage", genericStorage);
             });
-
-            after(function () {
+            after(() => {
                 multiStorage.__ResetDependency__("genericStorage");
             });
 
-            it("should resolve the promise with the correct parameters", function () {
+            it("should resolve the promise with the correct parameters", () => {
                 return expect(multiStorage.get("key")).to.become("value");
             });
 
@@ -107,16 +102,16 @@ describe("`multiStorage` lib", function () {
 
     });
 
-    describe("`set` method", function () {
+    describe("`set` method", () => {
 
-        it("should return a Promise", function () {
+        it("should return a Promise", () => {
             const ret = multiStorage.get.call("key");
             expect(ret).to.be.an.instanceOf(Promise);
         });
 
-        describe("`chrome` storage", function () {
+        describe("`chrome` storage", () => {
 
-            before(function () {
+            before(() => {
                 global.chrome = {
                     storage: {
                         local: {
@@ -125,52 +120,49 @@ describe("`multiStorage` lib", function () {
                     }
                 };
             });
-
-            after(function () {
+            after(() => {
                 delete global.chrome;
             });
 
-            it("should set a value in the `chrome` storage", function () {
+            it("should set a value in the `chrome` storage", () => {
                 multiStorage.set("key", "value");
                 expect(chrome.storage.local.set).to.be.calledWith({"key": "value"});
             });
 
         });
 
-        describe("`localStorage`", function () {
+        describe("`localStorage`", () => {
 
-            before(function () {
+            before(() => {
                 global.localStorage = {};
             });
-
-            after(function () {
+            after(() => {
                 delete global.localStorage;
             });
 
-            it("should set a value in the `localStorage`", function () {
+            it("should set a value in the `localStorage`", () => {
                 multiStorage.set("key", "value");
                 expect(localStorage.key).to.be.equal("value");
             });
 
         });
 
-        describe("`react-native`", function () {
+        describe("`react-native`", () => {
 
-            before(function () {
+            before(() => {
                 global.AsyncStorage = {};
             });
-
-            after(function () {
+            after(() => {
                 delete global.AsyncStorage;
             });
 
-            it("should set a value in the `AsyncStorage` storage", function () {
+            it("should set a value in the `AsyncStorage` storage", () => {
                 global.AsyncStorage.setItem = sinon.spy();
                 multiStorage.set("key", "value");
                 expect(AsyncStorage.setItem).to.be.calledWith("key", "value");
             });
 
-            it("should resolve the promise if there isn't any error", function () {
+            it("should resolve the promise if there isn't any error", () => {
                 global.AsyncStorage.setItem = sinon.spy(function (key, value, cb) {
                     cb(undefined);
                 });
@@ -178,7 +170,7 @@ describe("`multiStorage` lib", function () {
                 return expect(ret).to.become(undefined);
             });
 
-            it("should reject the promise if there is an error", function () {
+            it("should reject the promise if there is an error", () => {
                 global.AsyncStorage.setItem = sinon.spy(function (key, value, cb) {
                     cb("error");
                 });
@@ -189,19 +181,18 @@ describe("`multiStorage` lib", function () {
 
         });
 
-        describe("`genericStorage`", function () {
+        describe("`genericStorage`", () => {
 
             const genericStorage = {};
 
-            before(function () {
+            before(() => {
                 multiStorage.__Rewire__("genericStorage", genericStorage);
             });
-
-            after(function () {
+            after(() => {
                 multiStorage.__ResetDependency__("genericStorage");
             });
 
-            it("should set a value in the `genericStorage`", function () {
+            it("should set a value in the `genericStorage`", () => {
                 multiStorage.set("key", "value");
                 expect(genericStorage.key).to.be.equal("value");
             });
@@ -210,16 +201,16 @@ describe("`multiStorage` lib", function () {
 
     });
 
-    describe("`del` method", function () {
+    describe("`del` method", () => {
 
-        it("should return a Promise", function () {
+        it("should return a Promise", () => {
             const ret = multiStorage.get.call("key");
             expect(ret).to.be.an.instanceOf(Promise);
         });
 
-        describe("`chrome` storage", function () {
+        describe("`chrome` storage", () => {
 
-            before(function () {
+            before(() => {
                 global.chrome = {
                     storage: {
                         local: {
@@ -228,54 +219,51 @@ describe("`multiStorage` lib", function () {
                     }
                 };
             });
-
-            after(function () {
+            after(() => {
                 delete global.chrome;
             });
 
-            it("should remove a value from the `chrome` storage", function () {
+            it("should remove a value from the `chrome` storage", () => {
                 multiStorage.del("key");
                 expect(chrome.storage.local.remove).to.be.calledWith("key");
             });
 
         });
 
-        describe("`localStorage`", function () {
+        describe("`localStorage`", () => {
 
-            before(function () {
+            before(() => {
                 global.localStorage = {
                     key: "value"
                 };
             });
-
-            after(function () {
+            after(() => {
                 delete global.localStorage;
             });
 
-            it("should remove a value from the `localStorage`", function () {
+            it("should remove a value from the `localStorage`", () => {
                 multiStorage.del("key");
                 expect(localStorage.key).to.be.equal(undefined);
             });
 
         });
 
-        describe("`react-native` storage", function () {
+        describe("`react-native` storage", () => {
 
-            before(function () {
+            before(() => {
                 global.AsyncStorage = {};
             });
-
-            after(function () {
+            after(() => {
                 delete global.AsyncStorage;
             });
 
-            it("should remove a value from the `react-native` storage", function () {
+            it("should remove a value from the `react-native` storage", () => {
                 AsyncStorage.removeItem = sinon.spy();
                 multiStorage.del("key");
                 expect(AsyncStorage.removeItem).to.be.calledWith("key");
             });
 
-            it("should resolve the promise if there isn't any error", function () {
+            it("should resolve the promise if there isn't any error", () => {
                 global.AsyncStorage.removeItem = sinon.spy(function (key, cb) {
                     cb(undefined);
                 });
@@ -283,7 +271,7 @@ describe("`multiStorage` lib", function () {
                 return expect(ret).to.become(undefined);
             });
 
-            it("should reject the promise if there is an error", function () {
+            it("should reject the promise if there is an error", () => {
                 global.AsyncStorage.removeItem = sinon.spy(function (key, cb) {
                     cb("error");
                 });
@@ -293,21 +281,19 @@ describe("`multiStorage` lib", function () {
 
         });
 
-        describe("`genericStorage`", function () {
+        describe("`genericStorage`", () => {
 
             const genericStorage = {
                 key: "value"
             };
-
-            before(function () {
+            before(() => {
                 multiStorage.__Rewire__("genericStorage", genericStorage);
             });
-
-            after(function () {
+            after(() => {
                 multiStorage.__ResetDependency__("genericStorage");
             });
 
-            it("should remove a value from the `genericStorage`", function () {
+            it("should remove a value from the `genericStorage`", () => {
                 multiStorage.del("key");
                 expect(genericStorage.key).to.be.equal(undefined);
             });

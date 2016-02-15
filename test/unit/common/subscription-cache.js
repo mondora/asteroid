@@ -3,12 +3,12 @@ import sinon from "sinon";
 import chaiAsPromised from "chai-as-promised";
 import sinonChai from "sinon-chai";
 
+import SubscriptionCache from "common/subscription-cache";
+
 chai.use(chaiAsPromised);
 chai.use(sinonChai);
 
-import SubscriptionCache from "common/subscription-cache";
-
-describe("`SubscriptionCache` class", function () {
+describe("`SubscriptionCache` class", () => {
 
     const sub1 = {
         id: "id1",
@@ -19,9 +19,9 @@ describe("`SubscriptionCache` class", function () {
         fingerprint: "fingerprint2"
     };
 
-    describe("`constructor` method", function () {
+    describe("`constructor` method", () => {
 
-        it("should set `byFingerprint` and `byId` variable to {}", function () {
+        it("should set `byFingerprint` and `byId` variable to {}", () => {
             const cache = new SubscriptionCache();
             expect(cache.byFingerprint).to.deep.equal({});
             expect(cache.byId).to.deep.equal({});
@@ -29,9 +29,9 @@ describe("`SubscriptionCache` class", function () {
 
     });
 
-    describe("`add` method", function () {
+    describe("`add` method", () => {
 
-        it("should add the passed-in subscription to the `byFingerprint` and `byId` containers", function () {
+        it("should add the passed-in subscription to the `byFingerprint` and `byId` containers", () => {
             const cache = new SubscriptionCache();
             cache.add(sub1);
             expect(cache.get("id1")).to.equal(sub1);
@@ -40,27 +40,27 @@ describe("`SubscriptionCache` class", function () {
 
     });
 
-    describe("`get` method", function () {
+    describe("`get` method", () => {
 
         const cache = new SubscriptionCache();
         cache.add(sub1);
         cache.add(sub2);
 
-        it("should get a subscription by fingerprint", function () {
+        it("should get a subscription by fingerprint", () => {
             const ret1 = cache.get("fingerprint1");
             const ret2 = cache.get("fingerprint2");
             expect(ret1).to.equal(sub1);
             expect(ret2).to.equal(sub2);
         });
 
-        it("should get a subscription by id", function () {
+        it("should get a subscription by id", () => {
             const ret1 = cache.get("id1");
             const ret2 = cache.get("id2");
             expect(ret1).to.equal(sub1);
             expect(ret2).to.equal(sub2);
         });
 
-        it("should return null if there aren't id or fingerprint correspondences", function () {
+        it("should return null if there aren't id or fingerprint correspondences", () => {
             const ret1 = cache.get("id3");
             const ret2 = cache.get("fingerprint3");
             expect(ret1).to.equal(null);
@@ -69,9 +69,9 @@ describe("`SubscriptionCache` class", function () {
 
     });
 
-    describe("`del` method", function () {
+    describe("`del` method", () => {
 
-        it("should (only) delete the subscription by fingerprint", function () {
+        it("should (only) delete the subscription by fingerprint", () => {
             const cache = new SubscriptionCache();
             cache.add(sub1);
             cache.add(sub2);
@@ -80,7 +80,7 @@ describe("`SubscriptionCache` class", function () {
             expect(cache.get("fingerprint2")).to.equal(sub2);
         });
 
-        it("should (only) delete the subscription by `byId` variable", function () {
+        it("should (only) delete the subscription by `byId` variable", () => {
             const cache = new SubscriptionCache();
             cache.add(sub1);
             cache.add(sub2);
@@ -91,9 +91,9 @@ describe("`SubscriptionCache` class", function () {
 
     });
 
-    describe("`forEach` method", function () {
+    describe("`forEach` method", () => {
 
-        it("should iterate over the cache", function () {
+        it("should iterate over the cache", () => {
             const cache = new SubscriptionCache();
             cache.add(sub1);
             cache.add(sub2);

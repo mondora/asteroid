@@ -3,18 +3,17 @@ import chaiAsPromised from "chai-as-promised";
 import sinon from "sinon";
 import sinonChai from "sinon-chai";
 import EventEmitter from "wolfy87-eventemitter";
-import takeTen from "../take-ten";
+
+import {init, apply, call} from "base-mixins/methods";
 
 chai.use(chaiAsPromised);
 chai.use(sinonChai);
 
-import {init, apply, call} from "base-mixins/methods";
+describe("`methods` mixin", () => {
 
-describe("`methods` mixin", function () {
+    describe("`result` event handler", () => {
 
-    describe("`result` event handler", function () {
-
-        it("resolves the promise in the `methods.cache` if no errors occurred", function () {
+        it("resolves the promise in the `methods.cache` if no errors occurred", () => {
             const instance = {
                 ddp: new EventEmitter()
             };
@@ -30,7 +29,7 @@ describe("`methods` mixin", function () {
             expect(reject).to.have.callCount(0);
         });
 
-        it("rejects the promise in the `methods.cache` if errors occurred", function () {
+        it("rejects the promise in the `methods.cache` if errors occurred", () => {
             const instance = {
                 ddp: new EventEmitter()
             };
@@ -48,9 +47,9 @@ describe("`methods` mixin", function () {
 
     });
 
-    describe("`apply` method", function () {
+    describe("`apply` method", () => {
 
-        it("returns a promise", function () {
+        it("returns a promise", () => {
             const instance = {
                 ddp: {
                     method: sinon.spy()
@@ -61,23 +60,21 @@ describe("`methods` mixin", function () {
             expect(ret.then).to.be.a("function");
         });
 
-        it("calls `ddp.method`", function (done) {
+        it("calls `ddp.method`", () => {
             const instance = {
                 ddp: {
                     method: sinon.spy()
                 }
             };
             apply.call(instance, "method", [{}]);
-            takeTen(() => {
-                expect(instance.ddp.method).to.have.been.calledWith("method", [{}]);
-            }, done);
+            expect(instance.ddp.method).to.have.been.calledWith("method", [{}]);
         });
 
     });
 
-    describe("`call` method", function () {
+    describe("`call` method", () => {
 
-        it("calls `ddp.method`", function () {
+        it("calls `ddp.method`", () => {
             const instance = {
                 apply: sinon.spy(() => "Promise")
             };
