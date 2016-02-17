@@ -93,10 +93,9 @@ instantiation with the arguments passed to the constructor.
 
 ### Third-party mixins
 
-* [asteroid-immutable-collections-mixin](https://github.com/mondora/asteroid-immutable-collections-mixin):
-  stores collections published by the server into an immutable map
-* [asteroid-oauth-mixinx](https://github.com/mondora/asteroid-oauth-mixin):
-  allows logging in via oauth
+* [asteroid-immutable-collections-mixin](https://git.io/vgAz6): stores
+  collections published by the server into an immutable map
+* [asteroid-oauth-mixin](https://git.io/vgAKT): allows logging in via oauth
 
 ## Development environment setup
 
