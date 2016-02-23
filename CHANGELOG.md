@@ -1,3 +1,7 @@
+## 2.0.2 (February 23, 2016)
+
+Updated ddp.js to `2.1.0`.
+
 ## 2.0.1 (February 16, 2016)
 
 No changes. Only published to fix the `latest` tag on npm.
