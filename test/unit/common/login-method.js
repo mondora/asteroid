@@ -3,7 +3,7 @@ import chaiAsPromised from "chai-as-promised";
 import sinon from "sinon";
 import sinonChai from "sinon-chai";
 
-import * as loginMethod from "common/login-method";
+import loginMethod, {onLogin, onLogout, resumeLogin} from "common/login-method";
 
 chai.use(chaiAsPromised);
 chai.use(sinonChai);
@@ -30,7 +30,7 @@ describe("`onLogin` function", () => {
         const instance = {
             emit: sinon.spy()
         };
-        loginMethod.onLogin.call(instance, onLoginParameters);
+        onLogin.call(instance, onLoginParameters);
         expect(instance).to.have.property("userId", "userId");
     });
 
@@ -38,7 +38,7 @@ describe("`onLogin` function", () => {
         const instance = {
             emit: sinon.spy()
         };
-        loginMethod.onLogin.call(instance, onLoginParameters);
+        onLogin.call(instance, onLoginParameters);
         expect(instance).to.have.property("loggedIn", true);
     });
 
@@ -47,7 +47,7 @@ describe("`onLogin` function", () => {
             emit: sinon.spy(),
             endpoint: "endpoint"
         };
-        loginMethod.onLogin.call(instance, onLoginParameters);
+        onLogin.call(instance, onLoginParameters);
         expect(multiStorage.set).to.have.callCount(1);
         expect(multiStorage.set).to.have.calledWith("endpoint__login_token__", "token");
     });
@@ -57,7 +57,7 @@ describe("`onLogin` function", () => {
             emit: sinon.spy(),
             endpoint: "endpoint"
         };
-        return loginMethod.onLogin.call(instance, onLoginParameters)
+        return onLogin.call(instance, onLoginParameters)
             .then(() => {
                 expect(instance.emit).to.be.callCount(1);
                 expect(instance.emit).to.be.calledOn(instance);
@@ -69,7 +69,7 @@ describe("`onLogin` function", () => {
         const instance = {
             emit: sinon.spy()
         };
-        return loginMethod.onLogin.call(instance, onLoginParameters)
+        return onLogin.call(instance, onLoginParameters)
             .then(ret => {
                 expect(ret).to.equal("userId");
             });
@@ -94,7 +94,7 @@ describe("`onLogout` function", () => {
         const instance = {
             emit: sinon.spy()
         };
-        loginMethod.onLogout.call(instance);
+        onLogout.call(instance);
         expect(instance).to.have.property("userId", null);
     });
 
@@ -102,7 +102,7 @@ describe("`onLogout` function", () => {
         const instance = {
             emit: sinon.spy()
         };
-        loginMethod.onLogout.call(instance);
+        onLogout.call(instance);
         expect(instance).to.have.property("loggedIn", false);
     });
 
@@ -111,7 +111,7 @@ describe("`onLogout` function", () => {
             emit: sinon.spy(),
             endpoint: "endpoint"
         };
-        loginMethod.onLogout.call(instance);
+        onLogout.call(instance);
         expect(multiStorage.del).to.have.callCount(1);
         expect(multiStorage.del).to.have.calledWith("endpoint__login_token__");
     });
@@ -121,7 +121,7 @@ describe("`onLogout` function", () => {
             emit: sinon.spy(),
             endpoint: "endpoint"
         };
-        return loginMethod.onLogout.call(instance)
+        return onLogout.call(instance)
             .then(() => {
                 expect(instance.emit).to.be.callCount(1);
                 expect(instance.emit).to.be.calledOn(instance);
@@ -133,7 +133,7 @@ describe("`onLogout` function", () => {
         const instance = {
             emit: sinon.spy()
         };
-        return loginMethod.onLogout.call(instance)
+        return onLogout.call(instance)
             .then(ret => {
                 expect(ret).to.equal(null);
             });
@@ -164,7 +164,7 @@ describe("`resumeLogin` function", () => {
             endpoint: "endpoint"
         };
         multiStorage.get.returns(Promise.resolve("loginToken"));
-        return loginMethod.resumeLogin.call(instance)
+        return resumeLogin.call(instance)
             .then(() => {
                 expect(instance.login).to.have.callCount(1);
                 expect(instance.login).to.have.calledOn(instance);
@@ -180,7 +180,7 @@ describe("`resumeLogin` function", () => {
             endpoint: "endpoint"
         };
         multiStorage.get.returns(Promise.resolve(undefined));
-        return loginMethod.resumeLogin.call(instance)
+        return resumeLogin.call(instance)
             .then(() => {
                 expect(instance.login).to.have.callCount(0);
             });
@@ -192,7 +192,7 @@ describe("`resumeLogin` function", () => {
             endpoint: "endpoint"
         };
         multiStorage.get.returns(Promise.resolve(undefined));
-        return loginMethod.resumeLogin.call(instance)
+        return resumeLogin.call(instance)
             .then(() => {
                 expect(onLogout).to.have.callCount(1);
             });

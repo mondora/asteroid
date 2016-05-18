@@ -3,7 +3,7 @@ import chaiAsPromised from "chai-as-promised";
 import sinon from "sinon";
 import sinonChai from "sinon-chai";
 
-import * as multiStorage from "common/multi-storage";
+import multiStorage, {get, set, del} from "common/multi-storage";
 
 chai.use(chaiAsPromised);
 chai.use(sinonChai);
@@ -13,7 +13,7 @@ describe("`multiStorage` lib", () => {
     describe("`get` method", () => {
 
         it("should return a Promise", () => {
-            const ret = multiStorage.get.call("key");
+            const ret = get.call("key");
             expect(ret).to.be.an.instanceOf(Promise);
         });
 
@@ -37,7 +37,7 @@ describe("`multiStorage` lib", () => {
             });
 
             it("should resolve the promise with the correct parameters", () => {
-                return expect(multiStorage.get("key")).to.become("value");
+                return expect(get("key")).to.become("value");
             });
 
         });
@@ -54,7 +54,7 @@ describe("`multiStorage` lib", () => {
             });
 
             it("should resolve the promise with the correct parameters", () => {
-                return expect(multiStorage.get("key")).to.become("value");
+                return expect(get("key")).to.become("value");
             });
 
         });
@@ -72,14 +72,14 @@ describe("`multiStorage` lib", () => {
                 global.AsyncStorage.getItem = sinon.spy(function (key, cb) {
                     cb(undefined, "value");
                 });
-                return expect(multiStorage.get("key")).to.become("value");
+                return expect(get("key")).to.become("value");
             });
 
             it("should reject the promise if there is an error", () => {
                 global.AsyncStorage.getItem = sinon.spy(function (key, cb) {
                     cb("error", undefined);
                 });
-                return expect(multiStorage.get("key")).to.be.rejectedWith("error");
+                return expect(get("key")).to.be.rejectedWith("error");
             });
 
         });
@@ -95,7 +95,7 @@ describe("`multiStorage` lib", () => {
             });
 
             it("should resolve the promise with the correct parameters", () => {
-                return expect(multiStorage.get("key")).to.become("value");
+                return expect(get("key")).to.become("value");
             });
 
         });
@@ -105,7 +105,7 @@ describe("`multiStorage` lib", () => {
     describe("`set` method", () => {
 
         it("should return a Promise", () => {
-            const ret = multiStorage.get.call("key");
+            const ret = get.call("key");
             expect(ret).to.be.an.instanceOf(Promise);
         });
 
@@ -125,7 +125,7 @@ describe("`multiStorage` lib", () => {
             });
 
             it("should set a value in the `chrome` storage", () => {
-                multiStorage.set("key", "value");
+                set("key", "value");
                 expect(chrome.storage.local.set).to.be.calledWith({"key": "value"});
             });
 
@@ -141,7 +141,7 @@ describe("`multiStorage` lib", () => {
             });
 
             it("should set a value in the `localStorage`", () => {
-                multiStorage.set("key", "value");
+                set("key", "value");
                 expect(localStorage.key).to.be.equal("value");
             });
 
@@ -158,7 +158,7 @@ describe("`multiStorage` lib", () => {
 
             it("should set a value in the `AsyncStorage` storage", () => {
                 global.AsyncStorage.setItem = sinon.spy();
-                multiStorage.set("key", "value");
+                set("key", "value");
                 expect(AsyncStorage.setItem).to.be.calledWith("key", "value");
             });
 
@@ -166,7 +166,7 @@ describe("`multiStorage` lib", () => {
                 global.AsyncStorage.setItem = sinon.spy(function (key, value, cb) {
                     cb(undefined);
                 });
-                const ret = multiStorage.set("key", "value");
+                const ret = set("key", "value");
                 return expect(ret).to.become(undefined);
             });
 
@@ -174,7 +174,7 @@ describe("`multiStorage` lib", () => {
                 global.AsyncStorage.setItem = sinon.spy(function (key, value, cb) {
                     cb("error");
                 });
-                const ret = multiStorage.set("key", "value");
+                const ret = set("key", "value");
                 return expect(ret).to.be.rejectedWith("error");
             });
 
@@ -193,7 +193,7 @@ describe("`multiStorage` lib", () => {
             });
 
             it("should set a value in the `genericStorage`", () => {
-                multiStorage.set("key", "value");
+                set("key", "value");
                 expect(genericStorage.key).to.be.equal("value");
             });
 
@@ -204,7 +204,7 @@ describe("`multiStorage` lib", () => {
     describe("`del` method", () => {
 
         it("should return a Promise", () => {
-            const ret = multiStorage.get.call("key");
+            const ret = get.call("key");
             expect(ret).to.be.an.instanceOf(Promise);
         });
 
@@ -224,7 +224,7 @@ describe("`multiStorage` lib", () => {
             });
 
             it("should remove a value from the `chrome` storage", () => {
-                multiStorage.del("key");
+                del("key");
                 expect(chrome.storage.local.remove).to.be.calledWith("key");
             });
 
@@ -242,7 +242,7 @@ describe("`multiStorage` lib", () => {
             });
 
             it("should remove a value from the `localStorage`", () => {
-                multiStorage.del("key");
+                del("key");
                 expect(localStorage.key).to.be.equal(undefined);
             });
 
@@ -259,7 +259,7 @@ describe("`multiStorage` lib", () => {
 
             it("should remove a value from the `react-native` storage", () => {
                 AsyncStorage.removeItem = sinon.spy();
-                multiStorage.del("key");
+                del("key");
                 expect(AsyncStorage.removeItem).to.be.calledWith("key");
             });
 
@@ -267,7 +267,7 @@ describe("`multiStorage` lib", () => {
                 global.AsyncStorage.removeItem = sinon.spy(function (key, cb) {
                     cb(undefined);
                 });
-                const ret = multiStorage.del("key");
+                const ret = del("key");
                 return expect(ret).to.become(undefined);
             });
 
@@ -275,7 +275,7 @@ describe("`multiStorage` lib", () => {
                 global.AsyncStorage.removeItem = sinon.spy(function (key, cb) {
                     cb("error");
                 });
-                const ret = multiStorage.del("key");
+                const ret = del("key");
                 return expect(ret).to.be.rejectedWith("error");
             });
 
@@ -294,7 +294,7 @@ describe("`multiStorage` lib", () => {
             });
 
             it("should remove a value from the `genericStorage`", () => {
-                multiStorage.del("key");
+                del("key");
                 expect(genericStorage.key).to.be.equal(undefined);
             });
 

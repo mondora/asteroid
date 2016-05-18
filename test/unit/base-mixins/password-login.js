@@ -3,7 +3,7 @@ import chaiAsPromised from "chai-as-promised";
 import sinon from "sinon";
 import sinonChai from "sinon-chai";
 
-import * as passwordLogin from "base-mixins/password-login";
+import passwordLogin, {createUser, loginWithPassword} from "base-mixins/password-login";
 
 chai.use(chaiAsPromised);
 chai.use(sinonChai);
@@ -37,7 +37,7 @@ describe("`passwordLogin` mixin", () => {
                     email: "test@email.com"
                 }
             };
-            passwordLogin.createUser.call(instance, parameters);
+            createUser.call(instance, parameters);
             expect(instance.call).to.have.been.calledWith("createUser", expectedParameter);
         });
 
@@ -50,7 +50,7 @@ describe("`passwordLogin` mixin", () => {
                 username: "username",
                 password: "password"
             };
-            return passwordLogin.createUser.call(instance, options)
+            return createUser.call(instance, options)
                 .then(() => {
                     expect(onLogin).to.have.callCount(1);
                     expect(onLogin).to.have.calledOn(instance);
@@ -77,7 +77,7 @@ describe("`passwordLogin` mixin", () => {
                     email: "test@email.com"
                 }
             };
-            passwordLogin.loginWithPassword.call(instance, options);
+            loginWithPassword.call(instance, options);
             expect(instance.call).to.have.been.calledWith("login", expectedParameter);
         });
 
@@ -90,7 +90,7 @@ describe("`passwordLogin` mixin", () => {
                 username: "username",
                 password: "password"
             };
-            return passwordLogin.loginWithPassword.call(instance, options)
+            return loginWithPassword.call(instance, options)
                 .then(() => {
                     expect(onLogin).to.have.callCount(1);
                     expect(onLogin).to.have.calledOn(instance);

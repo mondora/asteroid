@@ -11,7 +11,7 @@ describe("`fingerprintSub` lib", () => {
         const name = "name";
         const params = ["param1", "param2"];
         const ret = fingerprintSub(name, params);
-        expect(ret).to.equal(`{"name":"name","params":["param1","param2"]}`);
+        expect(ret).to.equal('{"name":"name","params":["param1","param2"]}');
     });
 
 });

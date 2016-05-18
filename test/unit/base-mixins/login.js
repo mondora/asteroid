@@ -4,7 +4,7 @@ import sinon from "sinon";
 import sinonChai from "sinon-chai";
 import EventEmitter from "wolfy87-eventemitter";
 
-import * as loginMixin from "base-mixins/login";
+import loginMixin, {init, login, logout} from "base-mixins/login";
 
 chai.use(chaiAsPromised);
 chai.use(sinonChai);
@@ -31,7 +31,7 @@ describe("`login` mixin", () => {
             const instance = {
                 ddp: new EventEmitter()
             };
-            loginMixin.init.call(instance);
+            init.call(instance);
             instance.ddp.emit("connected");
             expect(resumeLogin).to.have.callCount(1);
             expect(resumeLogin).to.be.calledOn(instance);
@@ -41,7 +41,7 @@ describe("`login` mixin", () => {
             const instance = {
                 ddp: new EventEmitter()
             };
-            loginMixin.init.call(instance);
+            init.call(instance);
             expect(instance).to.have.property("userId", null);
         });
 
@@ -49,7 +49,7 @@ describe("`login` mixin", () => {
             const instance = {
                 ddp: new EventEmitter()
             };
-            loginMixin.init.call(instance);
+            init.call(instance);
             expect(instance).to.have.property("loggedIn", false);
         });
 
@@ -71,7 +71,7 @@ describe("`login` mixin", () => {
                 call: sinon.stub().returns(Promise.resolve({}))
             };
             const loginParameters = {};
-            loginMixin.login.call(instance, loginParameters);
+            login.call(instance, loginParameters);
             expect(instance.call).to.have.been.calledWith("login", loginParameters);
         });
 
@@ -80,7 +80,7 @@ describe("`login` mixin", () => {
                 call: sinon.stub().returns(Promise.resolve({}))
             };
             const loginParameters = {};
-            return loginMixin.login.call(instance, loginParameters)
+            return login.call(instance, loginParameters)
                 .then(() => {
                     expect(onLogin).to.have.callCount(1);
                     expect(onLogin).to.have.calledOn(instance);
@@ -91,7 +91,7 @@ describe("`login` mixin", () => {
             const instance = {
                 call: sinon.stub().returns(Promise.resolve({}))
             };
-            return loginMixin.login.call(instance)
+            return login.call(instance)
                 .then(ret => {
                     expect(ret).to.equal("onLoginReturnValue");
                 });
@@ -114,7 +114,7 @@ describe("`login` mixin", () => {
             const instance = {
                 call: sinon.stub().returns(Promise.resolve({}))
             };
-            loginMixin.logout.call(instance);
+            logout.call(instance);
             expect(instance.call).to.have.been.calledWith("logout");
         });
 
@@ -122,7 +122,7 @@ describe("`login` mixin", () => {
             const instance = {
                 call: sinon.stub().returns(Promise.resolve({}))
             };
-            return loginMixin.logout.call(instance)
+            return logout.call(instance)
                 .then(() => {
                     expect(onLogout).to.have.callCount(1);
                     expect(onLogout).to.have.calledOn(instance);
@@ -133,7 +133,7 @@ describe("`login` mixin", () => {
             const instance = {
                 call: sinon.stub().returns(Promise.resolve({}))
             };
-            return loginMixin.logout.call(instance)
+            return logout.call(instance)
                 .then(ret => {
                     expect(ret).to.equal("onLogoutReturnValue");
                 });

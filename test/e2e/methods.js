@@ -31,7 +31,7 @@ describe("methods", () => {
 
     it("calling a method that does not exists returns a promise which is rejected", () => {
         const responsePromise = asteroid.call("nonExistingMethod");
-        return expect(responsePromise).to.be.rejectedWith("Method not found");
+        return expect(responsePromise).to.be.rejectedWith("Method 'nonExistingMethod' not found");
     });
 
 });
