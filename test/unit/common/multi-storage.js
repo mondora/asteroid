@@ -59,31 +59,6 @@ describe("`multiStorage` lib", () => {
 
         });
 
-        describe("`react-native` storage", () => {
-
-            before(() => {
-                global.AsyncStorage = {};
-            });
-            after(() => {
-                delete global.AsyncStorage;
-            });
-
-            it("should resolve the promise with the correct parameters", () => {
-                global.AsyncStorage.getItem = sinon.spy(function (key, cb) {
-                    cb(undefined, "value");
-                });
-                return expect(get("key")).to.become("value");
-            });
-
-            it("should reject the promise if there is an error", () => {
-                global.AsyncStorage.getItem = sinon.spy(function (key, cb) {
-                    cb("error", undefined);
-                });
-                return expect(get("key")).to.be.rejectedWith("error");
-            });
-
-        });
-
         describe("`genericStorage`", () => {
 
             const genericStorage = {key: "value"};
@@ -144,40 +119,6 @@ describe("`multiStorage` lib", () => {
                 set("key", "value");
                 expect(localStorage.key).to.be.equal("value");
             });
-
-        });
-
-        describe("`react-native`", () => {
-
-            before(() => {
-                global.AsyncStorage = {};
-            });
-            after(() => {
-                delete global.AsyncStorage;
-            });
-
-            it("should set a value in the `AsyncStorage` storage", () => {
-                global.AsyncStorage.setItem = sinon.spy();
-                set("key", "value");
-                expect(AsyncStorage.setItem).to.be.calledWith("key", "value");
-            });
-
-            it("should resolve the promise if there isn't any error", () => {
-                global.AsyncStorage.setItem = sinon.spy(function (key, value, cb) {
-                    cb(undefined);
-                });
-                const ret = set("key", "value");
-                return expect(ret).to.become(undefined);
-            });
-
-            it("should reject the promise if there is an error", () => {
-                global.AsyncStorage.setItem = sinon.spy(function (key, value, cb) {
-                    cb("error");
-                });
-                const ret = set("key", "value");
-                return expect(ret).to.be.rejectedWith("error");
-            });
-
 
         });
 
@@ -244,39 +185,6 @@ describe("`multiStorage` lib", () => {
             it("should remove a value from the `localStorage`", () => {
                 del("key");
                 expect(localStorage.key).to.be.equal(undefined);
-            });
-
-        });
-
-        describe("`react-native` storage", () => {
-
-            before(() => {
-                global.AsyncStorage = {};
-            });
-            after(() => {
-                delete global.AsyncStorage;
-            });
-
-            it("should remove a value from the `react-native` storage", () => {
-                AsyncStorage.removeItem = sinon.spy();
-                del("key");
-                expect(AsyncStorage.removeItem).to.be.calledWith("key");
-            });
-
-            it("should resolve the promise if there isn't any error", () => {
-                global.AsyncStorage.removeItem = sinon.spy(function (key, cb) {
-                    cb(undefined);
-                });
-                const ret = del("key");
-                return expect(ret).to.become(undefined);
-            });
-
-            it("should reject the promise if there is an error", () => {
-                global.AsyncStorage.removeItem = sinon.spy(function (key, cb) {
-                    cb("error");
-                });
-                const ret = del("key");
-                return expect(ret).to.be.rejectedWith("error");
             });
 
         });

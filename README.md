@@ -92,6 +92,7 @@ instantiation with the arguments passed to the constructor.
 * `subscriptions`: adds methods for subscribing to ddp publications
 * `login`: adds methods for logging in
 * `password-login`: adds methods for password logins / user creation
+* `storage`: adds methods for invoking custom storage api.
 
 ### Third-party mixins
 
@@ -153,6 +154,7 @@ On instantiation:
     connection is terminated by calling the `disconnect` method
   * `reconnectInterval` **number** _optional_ [default: 10000]: the interval in
     ms between reconnection attempts
+  * `storage` **object** _optional_ [default: `chrome` or `localStorage`]: an object with `get`, `set` and `del` promise that wrap a selected storage. To use with `react-native's AsyncStorage`, use [react-native-storage-wrapper](https://git.io/vrRjN).
 
 ##### Returns
 

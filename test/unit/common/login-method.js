@@ -10,15 +10,12 @@ chai.use(sinonChai);
 
 describe("`onLogin` function", () => {
 
-    const multiStorage = {
+    const storage = {
         set: sinon.stub().returns(Promise.resolve({}))
     };
+
     beforeEach(() => {
-        multiStorage.set.reset();
-        loginMethod.__Rewire__("multiStorage", multiStorage);
-    });
-    afterEach(() => {
-        loginMethod.__ResetDependency__("multiStorage");
+        storage.set.reset();
     });
 
     const onLoginParameters = {
@@ -28,7 +25,8 @@ describe("`onLogin` function", () => {
 
     it("sets the `userId` property to `id`", () => {
         const instance = {
-            emit: sinon.spy()
+            emit: sinon.spy(),
+            storage
         };
         onLogin.call(instance, onLoginParameters);
         expect(instance).to.have.property("userId", "userId");
@@ -36,26 +34,29 @@ describe("`onLogin` function", () => {
 
     it("sets the `loggedIn` property to `true`", () => {
         const instance = {
-            emit: sinon.spy()
+            emit: sinon.spy(),
+            storage
         };
         onLogin.call(instance, onLoginParameters);
         expect(instance).to.have.property("loggedIn", true);
     });
 
-    it("writes the login `token` to `multiStorage`", () => {
+    it("writes the login `token` to `storage`", () => {
         const instance = {
             emit: sinon.spy(),
-            endpoint: "endpoint"
+            endpoint: "endpoint",
+            storage
         };
         onLogin.call(instance, onLoginParameters);
-        expect(multiStorage.set).to.have.callCount(1);
-        expect(multiStorage.set).to.have.calledWith("endpoint__login_token__", "token");
+        expect(storage.set).to.have.callCount(1);
+        expect(storage.set).to.have.calledWith("endpoint__login_token__", "token");
     });
 
     it("emits the `loggedIn` event with the id of the logged in user", () => {
         const instance = {
             emit: sinon.spy(),
-            endpoint: "endpoint"
+            endpoint: "endpoint",
+            storage
         };
         return onLogin.call(instance, onLoginParameters)
             .then(() => {
@@ -67,7 +68,8 @@ describe("`onLogin` function", () => {
 
     it("returns a promise resolving to the id of the logged in user", () => {
         const instance = {
-            emit: sinon.spy()
+            emit: sinon.spy(),
+            storage
         };
         return onLogin.call(instance, onLoginParameters)
             .then(ret => {
@@ -79,20 +81,18 @@ describe("`onLogin` function", () => {
 
 describe("`onLogout` function", () => {
 
-    const multiStorage = {
+    const storage = {
         del: sinon.stub().returns(Promise.resolve({}))
     };
+
     beforeEach(() => {
-        multiStorage.del.reset();
-        loginMethod.__Rewire__("multiStorage", multiStorage);
-    });
-    afterEach(() => {
-        loginMethod.__ResetDependency__("multiStorage");
+        storage.del.reset();
     });
 
     it("sets the `userId` property to `null`", () => {
         const instance = {
-            emit: sinon.spy()
+            emit: sinon.spy(),
+            storage
         };
         onLogout.call(instance);
         expect(instance).to.have.property("userId", null);
@@ -100,26 +100,29 @@ describe("`onLogout` function", () => {
 
     it("sets the `loggedIn` property to `false`", () => {
         const instance = {
-            emit: sinon.spy()
+            emit: sinon.spy(),
+            storage
         };
         onLogout.call(instance);
         expect(instance).to.have.property("loggedIn", false);
     });
 
-    it("deletes the login `token` from `multiStorage`", () => {
+    it("deletes the login `token` from `storage`", () => {
         const instance = {
             emit: sinon.spy(),
-            endpoint: "endpoint"
+            endpoint: "endpoint",
+            storage
         };
         onLogout.call(instance);
-        expect(multiStorage.del).to.have.callCount(1);
-        expect(multiStorage.del).to.have.calledWith("endpoint__login_token__");
+        expect(storage.del).to.have.callCount(1);
+        expect(storage.del).to.have.calledWith("endpoint__login_token__");
     });
 
     it("emits the `loggedOut` event", () => {
         const instance = {
             emit: sinon.spy(),
-            endpoint: "endpoint"
+            endpoint: "endpoint",
+            storage
         };
         return onLogout.call(instance)
             .then(() => {
@@ -131,7 +134,8 @@ describe("`onLogout` function", () => {
 
     it("returns a promise resolving to `null`", () => {
         const instance = {
-            emit: sinon.spy()
+            emit: sinon.spy(),
+            storage
         };
         return onLogout.call(instance)
             .then(ret => {
@@ -144,26 +148,25 @@ describe("`onLogout` function", () => {
 describe("`resumeLogin` function", () => {
 
     const onLogout = sinon.spy();
-    const multiStorage = {
+    const storage = {
         get: sinon.stub()
     };
     beforeEach(() => {
-        multiStorage.get.reset();
-        loginMethod.__Rewire__("multiStorage", multiStorage);
+        storage.get.reset();
         onLogout.reset();
         loginMethod.__Rewire__("onLogout", onLogout);
     });
     afterEach(() => {
-        loginMethod.__ResetDependency__("multiStorage");
         loginMethod.__ResetDependency__("onLogout");
     });
 
-    it("tries logging in if a login token is found in `multiStorage`", () => {
+    it("tries logging in if a login token is found in `storage`", () => {
         const instance = {
             login: sinon.spy(),
-            endpoint: "endpoint"
+            endpoint: "endpoint",
+            storage
         };
-        multiStorage.get.returns(Promise.resolve("loginToken"));
+        storage.get.returns(Promise.resolve("loginToken"));
         return resumeLogin.call(instance)
             .then(() => {
                 expect(instance.login).to.have.callCount(1);
@@ -174,24 +177,26 @@ describe("`resumeLogin` function", () => {
             });
     });
 
-    it("doesn't try logging in if no token is found in `multiStorage`", () => {
+    it("doesn't try logging in if no token is found in `storage`", () => {
         const instance = {
             login: sinon.spy(),
-            endpoint: "endpoint"
+            endpoint: "endpoint",
+            storage
         };
-        multiStorage.get.returns(Promise.resolve(undefined));
+        storage.get.returns(Promise.resolve(undefined));
         return resumeLogin.call(instance)
             .then(() => {
                 expect(instance.login).to.have.callCount(0);
             });
     });
 
-    it("logs out if no token is found in `multiStorage`", () => {
+    it("logs out if no token is found in `storage`", () => {
         const instance = {
             login: sinon.spy(),
-            endpoint: "endpoint"
+            endpoint: "endpoint",
+            storage
         };
-        multiStorage.get.returns(Promise.resolve(undefined));
+        storage.get.returns(Promise.resolve(undefined));
         return resumeLogin.call(instance)
             .then(() => {
                 expect(onLogout).to.have.callCount(1);
