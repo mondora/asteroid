@@ -51,6 +51,6 @@
   "dependencies": {
     "ddp.js": "^2.1.0",
     "lodash.assign": "^4.0.9",
-    "wolfy87-eventemitter": "^5.0.0"
+    "wolfy87-eventemitter": "^4.3.0"
   }
 }
