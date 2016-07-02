@@ -21,13 +21,10 @@ import fingerprintSub from "../common/fingerprint-sub";
 *   they are not exported so they don't clutter the Asteroid class prototype.
 */
 
-function restartSubscription ({id, name, params, stillInQueue}) {
+function restartSubscription ({ id, name, params, stillInQueue }) {
     // Only restart the subscription if it isn't still in ddp's queue.
     if (!stillInQueue) {
-        // The subscription must be deleted *before* re-subscribing, otherwise
-        // `subscribe` hits the cache and does nothing
-        this.subscriptions.cache.del(id);
-        this.subscribe(name, ...params);
+        this.resubcribe(id, name, params);
     }
 }
 
@@ -62,6 +59,10 @@ export function subscribe (name, ...params) {
 
 export function unsubscribe (id) {
     this.ddp.unsub(id);
+}
+
+export function resubcribe (id, name, params) {
+    this.ddp.sub(name, params, id);
 }
 
 /*
