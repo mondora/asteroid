@@ -96,7 +96,8 @@ describe("`subscriptions` mixin", () => {
         it("triggers a re-subscription to cached subscriptions which are not still in ddp's queue", () => {
             const instance = {
                 ddp: new EventEmitter(),
-                subscribe: sinon.spy()
+                subscribe: sinon.spy(),
+                resubscribe: sinon.spy()
             };
             subscriptionsMixin.init.call(instance);
             instance.subscriptions.cache.add({
@@ -114,14 +115,14 @@ describe("`subscriptions` mixin", () => {
                 stillInQueue: false
             });
             instance.ddp.emit("connected");
-            expect(instance.subscribe.firstCall).to.have.been.calledWith("n1", "1", "11", "111");
-            expect(instance.subscribe.secondCall).to.have.been.calledWith("n2", "2", "22", "222");
+            expect(instance.resubscribe).to.have.callCount(2);
         });
 
         it("doesn't trigger a re-subscription to cached subscriptions which are still in ddp's queue", () => {
             const instance = {
                 ddp: new EventEmitter(),
-                subscribe: sinon.spy()
+                subscribe: sinon.spy(),
+                resubscribe: sinon.spy()
             };
             subscriptionsMixin.init.call(instance);
             instance.subscriptions.cache.add({
@@ -139,7 +140,9 @@ describe("`subscriptions` mixin", () => {
                 stillInQueue: false
             });
             instance.ddp.emit("connected");
-            expect(instance.subscribe).to.have.callCount(1);
+            expect(instance.resubscribe).to.have.callCount(1);
+            instance.ddp.emit("connected");
+            expect(instance.resubscribe).to.have.callCount(2);
         });
 
     });
