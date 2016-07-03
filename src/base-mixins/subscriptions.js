@@ -25,6 +25,8 @@ function restartSubscription (sub) {
     // Only restart the subscription if it isn't still in ddp's queue.
     if (!sub.stillInQueue) {
         this.resubscribe(sub);
+    } else {
+        sub.stillInQueue = false;
     }
 }
 
