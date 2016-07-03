@@ -139,10 +139,23 @@ describe("`subscriptions` mixin", () => {
                 params: ["2", "22", "222"],
                 stillInQueue: false
             });
+
+            instance.ddp.status = 'connected';
             instance.ddp.emit("connected");
+
+            // re-subscribe should only be called for subscriptions
+            // those were not in queue already
             expect(instance.resubscribe).to.have.callCount(1);
+
+            // all subscriptions should be removed from the queue
+            instance.subscriptions.cache.forEach(sub => {
+                expect(sub).to.have.property('stillInQueue', false);
+            });
+
+            // re a re-connection happens, resubscribe should be 
+            // called twice more, reconnecting both subscribtions
             instance.ddp.emit("connected");
-            expect(instance.resubscribe).to.have.callCount(2);
+            expect(instance.resubscribe).to.have.callCount(3);
         });
 
     });
