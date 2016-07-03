@@ -140,7 +140,7 @@ describe("`subscriptions` mixin", () => {
                 stillInQueue: false
             });
 
-            instance.ddp.status = 'connected';
+            instance.ddp.status = "connected";
             instance.ddp.emit("connected");
 
             // re-subscribe should only be called for subscriptions
@@ -149,7 +149,7 @@ describe("`subscriptions` mixin", () => {
 
             // all subscriptions should be removed from the queue
             instance.subscriptions.cache.forEach(sub => {
-                expect(sub).to.have.property('stillInQueue', false);
+                expect(sub).to.have.property("stillInQueue", false);
             });
 
             // re a re-connection happens, resubscribe should be 
