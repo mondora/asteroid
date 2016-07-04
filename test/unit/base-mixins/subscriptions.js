@@ -3,6 +3,7 @@ import chaiAsPromised from "chai-as-promised";
 import sinon from "sinon";
 import sinonChai from "sinon-chai";
 import EventEmitter from "wolfy87-eventemitter";
+import assign from "lodash.assign"
 
 import * as subscriptionsMixin from "base-mixins/subscriptions";
 
@@ -95,7 +96,10 @@ describe("`subscriptions` mixin", () => {
 
         it("triggers a re-subscription to cached subscriptions which are not still in ddp's queue", () => {
             const instance = {
-                ddp: new EventEmitter(),
+                ddp: assign(new EventEmitter(), {
+                    sub: sinon.spy(),
+                    status: false // something that is not "connected"
+                }),
                 subscribe: sinon.spy(),
                 resubscribe: sinon.spy()
             };
@@ -114,13 +118,17 @@ describe("`subscriptions` mixin", () => {
                 params: ["2", "22", "222"],
                 stillInQueue: false
             });
+            instance.ddp.status = "connected";
             instance.ddp.emit("connected");
             expect(instance.resubscribe).to.have.callCount(2);
         });
 
         it("doesn't trigger a re-subscription to cached subscriptions which are still in ddp's queue", () => {
             const instance = {
-                ddp: new EventEmitter(),
+                ddp: assign(new EventEmitter(), {
+                    sub: sinon.spy(),
+                    status: false // something that is not "connected"
+                }),
                 subscribe: sinon.spy(),
                 resubscribe: sinon.spy()
             };
@@ -199,6 +207,51 @@ describe("`subscriptions` mixin", () => {
             expect(instance.ddp.sub).to.have.been.calledWith("name", ["param1", "param2"]);
         });
 
+    });
+
+    describe("`resubscribe` method", () => {
+        it("sets stillInQueue if ddp status is not 'connected'", () => {
+            var idCounter = 0;
+            const instance = {
+                ddp: assign(new EventEmitter(), {
+                    sub: sinon.spy(function(name, params, id) {
+                        return id || ++idCounter
+                    }),
+                    status: false // something that is not "connected"
+                }),
+                subscribe: subscriptionsMixin.subscribe,
+                resubscribe: subscriptionsMixin.resubscribe
+            };
+            subscriptionsMixin.init.call(instance);
+            
+            instance.subscribe("1", "1", "11", "111");
+
+            expect(instance.ddp.sub).to.have.callCount(1);
+
+            instance.ddp.status = "connected";
+            instance.ddp.emit("connected");
+
+            expect(instance.ddp.sub).to.have.callCount(1);
+
+            instance.subscribe("2", "2", "22", "222");
+
+            expect(instance.ddp.sub).to.have.callCount(2);
+
+            instance.subscriptions.cache.forEach(sub => {
+                expect(sub.stillInQueue).to.equal(false);
+            });
+
+            // reconnect happens!
+            instance.ddp.emit("connected");
+
+            // both subscriptions should be re-subscribed
+            expect(instance.ddp.sub).to.have.callCount(4);
+
+            // all subscriptions should be removed from the queue
+            instance.subscriptions.cache.forEach(sub => {
+                expect(sub.stillInQueue).to.equal(false);
+            });
+        });
     });
 
     describe("`unsubscribe` method", () => {
