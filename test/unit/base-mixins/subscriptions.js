@@ -3,7 +3,7 @@ import chaiAsPromised from "chai-as-promised";
 import sinon from "sinon";
 import sinonChai from "sinon-chai";
 import EventEmitter from "wolfy87-eventemitter";
-import assign from "lodash.assign"
+import assign from "lodash.assign";
 
 import * as subscriptionsMixin from "base-mixins/subscriptions";
 
@@ -214,8 +214,8 @@ describe("`subscriptions` mixin", () => {
             var idCounter = 0;
             const instance = {
                 ddp: assign(new EventEmitter(), {
-                    sub: sinon.spy(function(name, params, id) {
-                        return id || ++idCounter
+                    sub: sinon.spy(function (name, params, id) {
+                        return id || ++idCounter;
                     }),
                     status: false // something that is not "connected"
                 }),
