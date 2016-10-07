@@ -1,13 +1,13 @@
 {
   "name": "asteroid",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "description": "Alternative Meteor client",
   "main": "lib/asteroid.js",
   "scripts": {
     "build": "babel src --out-dir lib",
     "clean": "rimraf lib coverage",
     "coverage": "env NODE_ENV=test env NODE_PATH=src babel-node $(npm bin)/isparta cover _mocha -- --recursive test/unit",
-    "coveralls": "cat ./coverage/lcov.info | coveralls" ,
+    "coveralls": "cat ./coverage/lcov.info | coveralls",
     "dev": "npm test -- --watch",
     "lint": "eslint src test",
     "prepublish": "npm run clean && npm run build",
