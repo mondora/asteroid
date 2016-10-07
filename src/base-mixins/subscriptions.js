@@ -24,6 +24,12 @@ import fingerprintSub from "../common/fingerprint-sub";
 function restartSubscription (sub) {
     // Only restart the subscription if it isn't still in ddp's queue.
     if (!sub.stillInQueue) {
+        // Handlers to ddp's connected event are invoked asynchronously (see
+        // https://github.com/mondora/ddp.js/blob/master/src/ddp.js#L20).
+        // Therefore there is a (very very small) chance that between the time
+        // when the connected message is received and the time when the
+        // connected handler is invoked, the ddp instance disconnected.
+        // Therefore we update the stillInQueue status fo the subscription
         this.ddp.sub(sub.name, sub.params, sub.id);
         sub.stillInQueue = (this.ddp.status !== "connected");
     } else {

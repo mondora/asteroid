@@ -94,79 +94,136 @@ describe("`subscriptions` mixin", () => {
 
     describe("`connected` event handler", () => {
 
-        it("triggers a re-subscription to cached subscriptions which are not still in ddp's queue", () => {
-            const instance = {
-                ddp: assign(new EventEmitter(), {
-                    sub: sinon.spy(),
-                    status: false // something that is not "connected"
-                }),
-                subscribe: sinon.spy()
-            };
-            subscriptionsMixin.init.call(instance);
-            instance.subscriptions.cache.add({
-                id: "id1",
-                fingerprint: "id1",
-                name: "n1",
-                params: ["1", "11", "111"],
-                stillInQueue: false
+        describe("for cached subscriptions which are not still in ddp's queue", () => {
+
+            it("triggers a re-subscription", () => {
+                const instance = {
+                    ddp: assign(new EventEmitter(), {
+                        sub: sinon.spy(),
+                        status: "disconnected"
+                    })
+                };
+                subscriptionsMixin.init.call(instance);
+                instance.subscriptions.cache.add({
+                    id: "id",
+                    fingerprint: "fingerprint",
+                    name: "name",
+                    params: ["1", "11", "111"],
+                    stillInQueue: false
+                });
+                instance.ddp.status = "connected";
+                instance.ddp.emit("connected");
+                expect(instance.ddp.sub).to.have.callCount(1);
+                expect(instance.ddp.sub).to.have.been.calledWith("name", ["1", "11", "111"], "id");
             });
-            instance.subscriptions.cache.add({
-                id: "id2",
-                fingerprint: "id2",
-                name: "n2",
-                params: ["2", "22", "222"],
-                stillInQueue: false
+
+            describe("updates the stillInQueue property of the subscription, depending on the ddp instance status", () => {
+
+                it("case: ddp still connected", () => {
+                    const instance = {
+                        ddp: assign(new EventEmitter(), {
+                            sub: sinon.spy(),
+                            status: "disconnected"
+                        })
+                    };
+                    subscriptionsMixin.init.call(instance);
+                    instance.subscriptions.cache.add({
+                        id: "id",
+                        fingerprint: "fingerprint",
+                        name: "name",
+                        params: ["1", "11", "111"],
+                        stillInQueue: false
+                    });
+                    instance.ddp.status = "connected";
+                    instance.ddp.emit("connected");
+                    const subscription = instance.subscriptions.cache.get("id");
+                    expect(subscription).to.have.property("stillInQueue", false);
+                });
+
+                it("case: ddp disconnected in the meantime", done => {
+                    const instance = {
+                        ddp: assign(new EventEmitter(), {
+                            sub: sinon.spy(),
+                            status: "disconnected"
+                        })
+                    };
+                    // While in other tests even a sync implementation of ddp
+                    // emit method was ok, here we are testing a behaviour
+                    // caused by the async implementation, hence we need to
+                    // replicate it
+                    const syncEmit = instance.ddp.emit;
+                    instance.ddp.emit = function (...args) {
+                        setTimeout(syncEmit.bind(this, ...args), 0);
+                    };
+                    subscriptionsMixin.init.call(instance);
+                    instance.subscriptions.cache.add({
+                        id: "id",
+                        fingerprint: "fingerprint",
+                        name: "name",
+                        params: ["1", "11", "111"],
+                        stillInQueue: false
+                    });
+                    instance.ddp.status = "connected";
+                    instance.ddp.emit("connected");
+                    instance.ddp.status = "disconnected";
+                    setTimeout(() => {
+                        try {
+                            const subscription = instance.subscriptions.cache.get("id");
+                            expect(subscription).to.have.property("stillInQueue", true);
+                            done();
+                        } catch (err) {
+                            done(err);
+                        }
+                    }, 100);
+                });
+
             });
-            instance.ddp.status = "connected";
-            instance.ddp.emit("connected");
-            expect(instance.ddp.sub).to.have.callCount(2);
-            expect(instance.ddp.sub.firstCall).to.have.been.calledWith("n1", ["1", "11", "111"], "id1");
-            expect(instance.ddp.sub.secondCall).to.have.been.calledWith("n2", ["2", "22", "222"], "id2");
-            instance.subscriptions.cache.forEach(sub => {
-                expect(sub.stillInQueue).to.equal(false);
-            });
+
         });
 
-        it("doesn't trigger a re-subscription to cached subscriptions which are still in ddp's queue", () => {
-            const instance = {
-                ddp: assign(new EventEmitter(), {
-                    sub: sinon.spy(),
-                    status: false // something that is not "connected"
-                }),
-                subscribe: sinon.spy()
-            };
-            subscriptionsMixin.init.call(instance);
-            instance.subscriptions.cache.add({
-                id: "id1",
-                fingerprint: "id1",
-                name: "1",
-                params: ["1", "11", "111"],
-                stillInQueue: true
-            });
-            instance.subscriptions.cache.add({
-                id: "id2",
-                fingerprint: "id2",
-                name: "2",
-                params: ["2", "22", "222"],
-                stillInQueue: false
+        describe("for cached subscriptions which are still in ddp's queue", () => {
+
+            it("doesn't trigger a re-subscription", () => {
+                const instance = {
+                    ddp: assign(new EventEmitter(), {
+                        sub: sinon.spy(),
+                        status: "disconnected"
+                    })
+                };
+                subscriptionsMixin.init.call(instance);
+                instance.subscriptions.cache.add({
+                    id: "id",
+                    fingerprint: "fingerprint",
+                    name: "name",
+                    params: ["1", "11", "111"],
+                    stillInQueue: true
+                });
+                instance.ddp.status = "connected";
+                instance.ddp.emit("connected");
+                expect(instance.ddp.sub).to.have.callCount(0);
             });
 
-            instance.ddp.status = "connected";
-            instance.ddp.emit("connected");
-
-            // re-subscribe should only be called for subscriptions
-            // those were not in queue already
-            expect(instance.ddp.sub).to.have.callCount(1);
-
-            // all subscriptions should be removed from the queue
-            instance.subscriptions.cache.forEach(sub => {
-                expect(sub).to.have.property("stillInQueue", false);
+            it("sets their stillInQueue property to false", () => {
+                const instance = {
+                    ddp: assign(new EventEmitter(), {
+                        sub: sinon.spy(),
+                        status: "disconnected"
+                    })
+                };
+                subscriptionsMixin.init.call(instance);
+                instance.subscriptions.cache.add({
+                    id: "id",
+                    fingerprint: "fingerprint",
+                    name: "name",
+                    params: ["1", "11", "111"],
+                    stillInQueue: true
+                });
+                instance.ddp.status = "connected";
+                instance.ddp.emit("connected");
+                const subscription = instance.subscriptions.cache.get("id");
+                expect(subscription).to.have.property("stillInQueue", false);
             });
 
-            // when a re-connection happens, `ddp.sub` should be
-            // called twice more, reconnecting both subscribtions
-            instance.ddp.emit("connected");
-            expect(instance.ddp.sub).to.have.callCount(3);
         });
 
     });
