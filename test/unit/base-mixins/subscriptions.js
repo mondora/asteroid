@@ -100,8 +100,7 @@ describe("`subscriptions` mixin", () => {
                     sub: sinon.spy(),
                     status: false // something that is not "connected"
                 }),
-                subscribe: sinon.spy(),
-                resubscribe: sinon.spy()
+                subscribe: sinon.spy()
             };
             subscriptionsMixin.init.call(instance);
             instance.subscriptions.cache.add({
@@ -120,7 +119,12 @@ describe("`subscriptions` mixin", () => {
             });
             instance.ddp.status = "connected";
             instance.ddp.emit("connected");
-            expect(instance.resubscribe).to.have.callCount(2);
+            expect(instance.ddp.sub).to.have.callCount(2);
+            expect(instance.ddp.sub.firstCall).to.have.been.calledWith("n1", ["1", "11", "111"], "id1");
+            expect(instance.ddp.sub.secondCall).to.have.been.calledWith("n2", ["2", "22", "222"], "id2");
+            instance.subscriptions.cache.forEach(sub => {
+                expect(sub.stillInQueue).to.equal(false);
+            });
         });
 
         it("doesn't trigger a re-subscription to cached subscriptions which are still in ddp's queue", () => {
@@ -129,8 +133,7 @@ describe("`subscriptions` mixin", () => {
                     sub: sinon.spy(),
                     status: false // something that is not "connected"
                 }),
-                subscribe: sinon.spy(),
-                resubscribe: sinon.spy()
+                subscribe: sinon.spy()
             };
             subscriptionsMixin.init.call(instance);
             instance.subscriptions.cache.add({
@@ -153,17 +156,17 @@ describe("`subscriptions` mixin", () => {
 
             // re-subscribe should only be called for subscriptions
             // those were not in queue already
-            expect(instance.resubscribe).to.have.callCount(1);
+            expect(instance.ddp.sub).to.have.callCount(1);
 
             // all subscriptions should be removed from the queue
             instance.subscriptions.cache.forEach(sub => {
                 expect(sub).to.have.property("stillInQueue", false);
             });
 
-            // re a re-connection happens, resubscribe should be 
+            // when a re-connection happens, `ddp.sub` should be
             // called twice more, reconnecting both subscribtions
             instance.ddp.emit("connected");
-            expect(instance.resubscribe).to.have.callCount(3);
+            expect(instance.ddp.sub).to.have.callCount(3);
         });
 
     });
@@ -207,51 +210,6 @@ describe("`subscriptions` mixin", () => {
             expect(instance.ddp.sub).to.have.been.calledWith("name", ["param1", "param2"]);
         });
 
-    });
-
-    describe("`resubscribe` method", () => {
-        it("sets stillInQueue if ddp status is not 'connected'", () => {
-            var idCounter = 0;
-            const instance = {
-                ddp: assign(new EventEmitter(), {
-                    sub: sinon.spy(function (name, params, id) {
-                        return id || ++idCounter;
-                    }),
-                    status: false // something that is not "connected"
-                }),
-                subscribe: subscriptionsMixin.subscribe,
-                resubscribe: subscriptionsMixin.resubscribe
-            };
-            subscriptionsMixin.init.call(instance);
-            
-            instance.subscribe("1", "1", "11", "111");
-
-            expect(instance.ddp.sub).to.have.callCount(1);
-
-            instance.ddp.status = "connected";
-            instance.ddp.emit("connected");
-
-            expect(instance.ddp.sub).to.have.callCount(1);
-
-            instance.subscribe("2", "2", "22", "222");
-
-            expect(instance.ddp.sub).to.have.callCount(2);
-
-            instance.subscriptions.cache.forEach(sub => {
-                expect(sub.stillInQueue).to.equal(false);
-            });
-
-            // reconnect happens!
-            instance.ddp.emit("connected");
-
-            // both subscriptions should be re-subscribed
-            expect(instance.ddp.sub).to.have.callCount(4);
-
-            // all subscriptions should be removed from the queue
-            instance.subscriptions.cache.forEach(sub => {
-                expect(sub.stillInQueue).to.equal(false);
-            });
-        });
     });
 
     describe("`unsubscribe` method", () => {

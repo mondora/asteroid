@@ -24,8 +24,12 @@ import fingerprintSub from "../common/fingerprint-sub";
 function restartSubscription (sub) {
     // Only restart the subscription if it isn't still in ddp's queue.
     if (!sub.stillInQueue) {
-        this.resubscribe(sub);
+        this.ddp.sub(sub.name, sub.params, sub.id);
+        sub.stillInQueue = (this.ddp.status !== "connected");
     } else {
+        // Since we're restarting subscriptions after a connection, we know
+        // that now the subscriptions which were in ddp's queue will be sent,
+        // therefore we need to remove the stillInQueue flag from them
         sub.stillInQueue = false;
     }
 }
@@ -61,11 +65,6 @@ export function subscribe (name, ...params) {
 
 export function unsubscribe (id) {
     this.ddp.unsub(id);
-}
-
-export function resubscribe (sub) {
-    this.ddp.sub(sub.name, sub.params, sub.id);
-    sub.stillInQueue = (this.ddp.status !== "connected");
 }
 
 /*
