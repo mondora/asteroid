@@ -1,3 +1,7 @@
+## 2.0.3 (October 7, 2016)
+
+Fixed a bug on the subscription base mixin when restart the subscription.
+
 ## 2.0.2 (February 23, 2016)
 
 Updated ddp.js to `2.1.0`.
