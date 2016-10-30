@@ -11,9 +11,35 @@ chai.use(sinonChai);
 
 describe("`methods` mixin", () => {
 
+    describe("`updated` event handle", () => {
+
+        it("resolves the promise with the returned value", () => {
+            const result = {
+                foo: "bar"
+            };
+            const instance = {
+                ddp: new EventEmitter()
+            };
+            init.call(instance);
+            const resolve = sinon.spy();
+            const reject = sinon.spy();
+            instance.methods.cache["id"] = {resolve, reject};
+            instance.ddp.emit("result", {
+                id: "id",
+                result
+            });
+            instance.ddp.emit("updated", {
+                id: "id"
+            });
+            expect(resolve).to.have.been.calledWith(result);
+            expect(reject).to.have.callCount(0);
+        });
+
+    });
+
     describe("`result` event handler", () => {
 
-        it("resolves the promise in the `methods.cache` if no errors occurred", () => {
+        it("does not resolve the promise in the `methods.cache` if no errors occurred", () => {
             const instance = {
                 ddp: new EventEmitter()
             };
@@ -25,7 +51,7 @@ describe("`methods` mixin", () => {
                 id: "id",
                 result: {}
             });
-            expect(resolve).to.have.been.calledWith({});
+            expect(resolve).to.have.callCount(0);
             expect(reject).to.have.callCount(0);
         });
 

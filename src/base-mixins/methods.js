@@ -34,8 +34,15 @@ export function init () {
         const method = this.methods.cache[id];
         if (error) {
             method.reject(error);
+        }
+        this.methods.cache[id].result = result;
+    });
+    this.ddp.on("updated", ({id, error}) => {
+        const method = this.methods.cache[id];
+        if (error) {
+            method.reject(error);
         } else {
-            method.resolve(result);
+            method.resolve(method.result);
         }
         delete this.methods.cache[id];
     });
