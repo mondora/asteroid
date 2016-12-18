@@ -1,7 +1,7 @@
 {
-  "name": "asteroid",
+  "name": "backlog-asteroid",
   "version": "2.0.3",
-  "description": "Alternative Meteor client",
+  "description": "Temporary clone of asteroid",
   "main": "lib/asteroid.js",
   "scripts": {
     "build": "babel src --out-dir lib",

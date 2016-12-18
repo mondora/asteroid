@@ -12,9 +12,19 @@
 */
 
 export function apply (method, params) {
+    let onResult = params && params[params.length - 1];
+    if (typeof onResult === "function") {
+        params.pop();
+    } else {
+        onResult = undefined;
+    }
     return new Promise((resolve, reject) => {
         const id = this.ddp.method(method, params);
-        this.methods.cache[id] = {resolve, reject};
+        this.methods.cache[id] = {
+            resolve,
+            reject,
+            onResult,
+        };
     });
 }
 
@@ -64,6 +74,9 @@ export function init () {
             // result and resolve the promise with this result when the
             // `updated` event is emitted
             this.methods.cache[id].result = result;
+            if (this.methods.cache[id].onResult) {
+                this.methods.cache[id].onResult(result);
+            }
             return;
         }
         delete this.methods.cache[id];
