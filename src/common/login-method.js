@@ -8,11 +8,11 @@ export function onLogin ({id, token}) {
         .then(() => id);
 }
 
-export function onLogout () {
+export function onLogout (err) {
     this.userId = null;
     this.loggedIn = false;
     return multiStorage.del(this.endpoint + "__login_token__")
-        .then(this.emit.bind(this, "loggedOut"))
+        .then(this.emit.bind(this, "loggedOut", err))
         .then(() => null);
 }
 

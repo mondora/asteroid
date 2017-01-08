@@ -11,9 +11,12 @@ chai.use(sinonChai);
 
 describe("`methods` mixin", () => {
 
-    describe("`result` event handler", () => {
+    describe("`updated` event handle", () => {
 
-        it("resolves the promise in the `methods.cache` if no errors occurred", () => {
+        it("resolves the promise with the value from `result`", () => {
+            const result = {
+                foo: "bar"
+            };
             const instance = {
                 ddp: new EventEmitter()
             };
@@ -23,13 +26,76 @@ describe("`methods` mixin", () => {
             instance.methods.cache["id"] = {resolve, reject};
             instance.ddp.emit("result", {
                 id: "id",
-                result: {}
+                result
             });
-            expect(resolve).to.have.been.calledWith({});
+            instance.ddp.emit("updated", {
+                methods: ["id"]
+            });
+            expect(resolve).to.have.been.calledWith(result);
             expect(reject).to.have.callCount(0);
         });
 
-        it("rejects the promise in the `methods.cache` if errors occurred", () => {
+        it("should not resolve when there was no previous `result` event", () => {
+            const instance = {
+                ddp: new EventEmitter()
+            };
+            init.call(instance);
+            const resolve = sinon.spy();
+            const reject = sinon.spy();
+            instance.methods.cache["id"] = {resolve, reject};
+            instance.ddp.emit("updated", {
+                methods: ["id"]
+            });
+            expect(resolve).to.have.callCount(0);
+            expect(reject).to.have.callCount(0);
+        });
+
+    });
+
+    describe("`result` event handler", () => {
+
+        it("does resolve if no errors occurred and there was a previous `update` event", () => {
+            const result = {
+                foo: "bar"
+            };
+            const instance = {
+                ddp: new EventEmitter()
+            };
+            init.call(instance);
+            const resolve = sinon.spy();
+            const reject = sinon.spy();
+            instance.methods.cache["id"] = {resolve, reject};
+            instance.ddp.emit("updated", {
+                methods: ["id"]
+            });
+            instance.ddp.emit("result", {
+                id: "id",
+                result
+            });
+            expect(resolve).to.have.been.calledWith(result);
+            expect(reject).to.have.callCount(0);
+        });
+
+        it("does not resolve if no errors occurred", () => {
+            const result = {
+                foo: "bar"
+            };
+            const instance = {
+                ddp: new EventEmitter()
+            };
+            init.call(instance);
+            const resolve = sinon.spy();
+            const reject = sinon.spy();
+            instance.methods.cache["id"] = {resolve, reject};
+            instance.ddp.emit("result", {
+                id: "id",
+                result
+            });
+            expect(resolve).to.have.callCount(0);
+            expect(reject).to.have.callCount(0);
+        });
+
+        it("rejects if errors occurred", () => {
             const instance = {
                 ddp: new EventEmitter()
             };
@@ -45,6 +111,26 @@ describe("`methods` mixin", () => {
             expect(reject).to.have.been.calledWith({});
         });
 
+        it("calls onResult callback", () => {
+            const onResult = sinon.spy();
+            const result = {foo: "bar"};
+            const instance = {ddp: new EventEmitter()};
+            init.call(instance);
+            const resolve = sinon.spy();
+            const reject = sinon.spy();
+            instance.methods.cache["id"] = {
+                resolve,
+                reject,
+                onResult,
+            };
+            instance.ddp.emit("result", {
+                id: "id",
+                result
+            });
+            expect(onResult.calledOnce).to.equal(true);
+            expect(onResult.firstCall.args[0]).to.deep.equal(result);
+        });
+
     });
 
     describe("`apply` method", () => {
@@ -53,7 +139,10 @@ describe("`methods` mixin", () => {
             const instance = {
                 ddp: {
                     method: sinon.spy()
-                }
+                },
+                methods: {
+                    cache: {},
+                },
             };
             const ret = apply.call(instance);
             expect(ret).to.be.an.instanceOf(Promise);
@@ -64,10 +153,27 @@ describe("`methods` mixin", () => {
             const instance = {
                 ddp: {
                     method: sinon.spy()
-                }
+                },
+                methods: {
+                    cache: {},
+                },
             };
             apply.call(instance, "method", [{}]);
             expect(instance.ddp.method).to.have.been.calledWith("method", [{}]);
+        });
+
+        it("should store onResult callback", () => {
+            const onResult = () => "bar";
+            const instance = {
+                ddp: {
+                    method: sinon.spy(() => "method-id-1")
+                },
+                methods: {
+                    cache: {},
+                },
+            };
+            apply.call(instance, "method", ["foo", onResult]);
+            expect(instance.methods.cache["method-id-1"].onResult).to.equal(onResult);
         });
 
     });
