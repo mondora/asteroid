@@ -111,6 +111,26 @@ describe("`methods` mixin", () => {
             expect(reject).to.have.been.calledWith({});
         });
 
+        it("calls onResult callback", () => {
+            const onResult = sinon.spy();
+            const result = {foo: "bar"};
+            const instance = {ddp: new EventEmitter()};
+            init.call(instance);
+            const resolve = sinon.spy();
+            const reject = sinon.spy();
+            instance.methods.cache["id"] = {
+                resolve,
+                reject,
+                onResult,
+            };
+            instance.ddp.emit("result", {
+                id: "id",
+                result
+            });
+            expect(onResult.calledOnce).to.equal(true);
+            expect(onResult.firstCall.args[0]).to.deep.equal(result);
+        });
+
     });
 
     describe("`apply` method", () => {
@@ -119,7 +139,10 @@ describe("`methods` mixin", () => {
             const instance = {
                 ddp: {
                     method: sinon.spy()
-                }
+                },
+                methods: {
+                    cache: {},
+                },
             };
             const ret = apply.call(instance);
             expect(ret).to.be.an.instanceOf(Promise);
@@ -130,10 +153,27 @@ describe("`methods` mixin", () => {
             const instance = {
                 ddp: {
                     method: sinon.spy()
-                }
+                },
+                methods: {
+                    cache: {},
+                },
             };
             apply.call(instance, "method", [{}]);
             expect(instance.ddp.method).to.have.been.calledWith("method", [{}]);
+        });
+
+        it("should store onResult callback", () => {
+            const onResult = () => "bar";
+            const instance = {
+                ddp: {
+                    method: sinon.spy(() => "method-id-1")
+                },
+                methods: {
+                    cache: {},
+                },
+            };
+            apply.call(instance, "method", ["foo", onResult]);
+            expect(instance.methods.cache["method-id-1"].onResult).to.equal(onResult);
         });
 
     });
