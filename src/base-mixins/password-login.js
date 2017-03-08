@@ -10,23 +10,31 @@ import {onLogin} from "../common/login-method";
 *   Public methods
 */
 
-export function createUser ({username, email, password}) {
-    const options = {
-        password,
-        user: {
-            username,
-            email
-        }
-    };
+/**
+* @param {Object} options
+*   @param {String} username - The username of the user. One of username or email is required.
+*   @param {String} email - The email of the user. One of username or email is required.
+*   @param {String} password - The password of the user.
+*   @param {Object} profile - Additional parameter to save in user profile.
+*/
+export function createUser (options) {
     return this.call("createUser", options).then(onLogin.bind(this));
 }
 
-export function loginWithPassword ({username, email, password}) {
+/**
+* @param {Object} options
+*   @param {String} username - The username of the user. One of username or email is required.
+*   @param {String} email - The email of the user. One of username or email is required.
+*   @param {String} id - The id of the user. One of username or email is required.
+*   @param {String} password - The password of the user.
+*/
+export function loginWithPassword ({username, email, password, id}) {
     const loginParameters = {
         password,
         user: {
             username,
-            email
+            email,
+            id
         }
     };
     return this.call("login", loginParameters).then(onLogin.bind(this));

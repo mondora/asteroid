@@ -30,15 +30,8 @@ describe("`passwordLogin` mixin", () => {
                 username: "username",
                 password: "password"
             };
-            const expectedParameter = {
-                password: "password",
-                user: {
-                    username: "username",
-                    email: "test@email.com"
-                }
-            };
             createUser.call(instance, parameters);
-            expect(instance.call).to.have.been.calledWith("createUser", expectedParameter);
+            expect(instance.call).to.have.been.calledWith("createUser", parameters);
         });
 
         it("should call the `onLogin` function when the `call` instance method is resolved", () => {
