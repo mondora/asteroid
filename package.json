@@ -50,7 +50,6 @@
     "sinon-chai": "^2.8.0"
   },
   "dependencies": {
-    "bcrypt": "^1.0.2",
     "ddp.js": "^2.2.0",
     "lodash.assign": "^4.2.0",
     "wolfy87-eventemitter": "^5.1.0"

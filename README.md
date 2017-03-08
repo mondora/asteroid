@@ -291,6 +291,7 @@ SSL anyway.
   * `username` **string** _optional_
   * `email` **string** _optional_
   * `password` **string** _required_
+  * `profile` **object** _optional_
 
 Note: you must specify either `options.username` or `options.email`.
 

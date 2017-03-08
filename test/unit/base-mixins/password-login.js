@@ -61,13 +61,15 @@ describe("`passwordLogin` mixin", () => {
             const options = {
                 email: "test@email.com",
                 username: "username",
-                password: "password"
+                password: "password",
+                id: "id"
             };
             const expectedParameter = {
                 password: "password",
                 user: {
                     username: "username",
-                    email: "test@email.com"
+                    email: "test@email.com",
+                    id: "id"
                 }
             };
             loginWithPassword.call(instance, options);
