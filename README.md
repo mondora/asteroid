@@ -315,9 +315,10 @@ you'll probably be using SSL anyway.
 * `options` **object** _required_:
   * `username` **string** _optional_
   * `email` **string** _optional_
+  * `id` **string** _optional_
   * `password` **string** _required_
 
-Note: you must specify either `options.username` or `options.email`.
+Note: you must specify `options.username`, `options.id` or `options.email`.
 
 ##### Returns
 

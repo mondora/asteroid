@@ -23,9 +23,9 @@ export function createUser (options) {
 
 /**
 * @param {Object} options
-*   @param {String} username - The username of the user. One of username or email is required.
-*   @param {String} email - The email of the user. One of username or email is required.
-*   @param {String} id - The id of the user. One of username or email is required.
+*   @param {String} username - The username of the user. You must specify one of username, email or id.
+*   @param {String} email - The email of the user. You must specify one of username, email or id.
+*   @param {String} id - The id of the user. You must specify one of username, email or id.
 *   @param {String} password - The password of the user.
 */
 export function loginWithPassword ({username, email, password, id}) {
