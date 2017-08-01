@@ -1,3 +1,7 @@
+## 2.0.4 (Augustus 1, 2017)
+
+Added WebSocket import for node
+
 ## 2.0.3 (October 7, 2016)
 
 Fixed a bug on the subscription base mixin when restart the subscription.

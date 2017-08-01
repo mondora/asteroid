@@ -11,6 +11,8 @@
 
 import DDP from "ddp.js";
 
+import WebSocket from "ws";
+
 /*
 *   Public methods
 */

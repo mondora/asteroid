@@ -1,6 +1,6 @@
 {
   "name": "asteroid",
-  "version": "2.0.3",
+  "version": "2.0.4",
   "description": "Alternative Meteor client",
   "main": "lib/asteroid.js",
   "scripts": {
@@ -51,6 +51,7 @@
   "dependencies": {
     "ddp.js": "^2.2.0",
     "lodash.assign": "^4.2.0",
-    "wolfy87-eventemitter": "^5.1.0"
+    "wolfy87-eventemitter": "^5.1.0",
+    "ws": "^3.1.0"
   }
 }
